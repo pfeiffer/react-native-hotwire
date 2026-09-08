@@ -47,7 +47,7 @@ echo "ios-sha: $IOS_SHA"
 echo "android-sha: $ANDROID_SHA"
 echo
 echo "Compare this upstream dependency block with android/hotwire-core/build.gradle:"
-sed -n '/dependencies {/,/^}/p' "$WORK/android/core/build.gradle" 2>/dev/null || true
+for f in "$WORK/android/core/build.gradle" "$WORK/android/core/build.gradle.kts"; do [ -f "$f" ] && sed -n '/dependencies {/,/^}/p' "$f"; done
 
 LOST=""
 for f in $MODIFIED; do

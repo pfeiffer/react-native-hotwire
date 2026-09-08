@@ -2,20 +2,17 @@
 
 This package embeds the Turbo session implementation from Hotwire Native rather than
 depending on the upstream packages: hotwire-native-ios ships as SwiftPM only, and the
-Android core cannot be adapted to a React Native view hierarchy without touching two of
+Android core cannot be adapted to a React Native view hierarchy without touching a few of
 its files. Everything React Native specific lives outside the vendored directories.
 
 `scripts/sync-upstream.sh` reads the tags below and replaces the vendored sources.
 
 ios-tag: 1.1.3
 android-tag: 1.1.1
-ios-sha: (record after first sync from a real clone)
-android-sha: (record after first sync from a real clone)
+ios-sha: 56196ac91a63a619ef13e8d2c135b6346b541192
+android-sha: 8d66697a66949f150c4a348c62eba44465b55eef
 
-Initial import was reconstructed from the react-native-turbo fork's vendored copies with
-that fork's patches reverse-applied, because the upstream repos could not be cloned from
-the authoring session. Run the sync script once against the real tags and confirm
-`git diff` is empty apart from the deviations listed here.
+The vendored trees were verified against clones of these tags on 2026-09-08.
 
 ## iOS: `ios/Vendor/HotwireNative/`
 
