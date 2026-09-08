@@ -1,11 +1,13 @@
 #!/bin/sh
-# Replaces the vendored Hotwire Native sources with the tags recorded in VENDOR.md.
+# Replaces the vendored Hotwire Native sources with the tags recorded in VENDOR.md,
+# keeping the trimmed layout described there.
 #
 #   sh scripts/sync-upstream.sh
 #
-# Then review `git diff ios/Vendor android/hotwire-core/src`, fix any compile errors
-# in our adapter files (never in the vendored ones), update the SHAs in VENDOR.md,
-# and build the consuming app on both platforms.
+# Afterwards: re-apply the modifications listed in VENDOR.md (the script overwrites
+# them), review `git diff ios/Vendor android/hotwire-core/src`, fix compile errors in
+# our adapter files (never in vendored ones), update the SHAs in VENDOR.md, and build
+# the consuming app on both platforms.
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -16,14 +18,23 @@ trap 'rm -rf "$WORK"' EXIT
 
 echo "hotwire-native-ios @ $IOS_TAG"
 git clone -q --depth 1 --branch "$IOS_TAG" https://github.com/hotwired/hotwire-native-ios.git "$WORK/ios"
-rm -rf "$ROOT/ios/Vendor/HotwireNative/Source"
-rsync -a --exclude '*.xcodeproj' --exclude '.swiftpm' "$WORK/ios/Source/" "$ROOT/ios/Vendor/HotwireNative/Source/"
+IOS_DEST="$ROOT/ios/Vendor/HotwireNative"
+rm -rf "$IOS_DEST"
+mkdir -p "$IOS_DEST"
+cp -R "$WORK/ios/Source/Turbo" "$IOS_DEST/Turbo"
+rm -rf "$IOS_DEST/Turbo/Navigator" "$IOS_DEST/Turbo/.swiftpm"
+find "$IOS_DEST" -name '*.xcodeproj' -prune -exec rm -rf {} +
+cp "$WORK/ios/Source/HotwireLogger.swift" "$WORK/ios/Source/ScriptMessageHandler.swift" "$IOS_DEST/"
 IOS_SHA=$(git -C "$WORK/ios" rev-parse HEAD)
 
 echo "hotwire-native-android @ $ANDROID_TAG"
 git clone -q --depth 1 --branch "$ANDROID_TAG" https://github.com/hotwired/hotwire-native-android.git "$WORK/android"
-rm -rf "$ROOT/android/hotwire-core/src/main"
-rsync -a "$WORK/android/core/src/main/" "$ROOT/android/hotwire-core/src/main/"
+ANDROID_DEST="$ROOT/android/hotwire-core/src/main"
+rm -rf "$ANDROID_DEST"
+cp -R "$WORK/android/core/src/main" "$ANDROID_DEST"
+rm -rf "$ANDROID_DEST/kotlin/dev/hotwire/core/bridge" \
+  "$ANDROID_DEST/assets/js/bridge_components.js" \
+  "$ANDROID_DEST/assets/json"
 ANDROID_SHA=$(git -C "$WORK/android" rev-parse HEAD)
 
 echo
@@ -31,5 +42,6 @@ echo "Synced. Record these in VENDOR.md:"
 echo "ios-sha: $IOS_SHA"
 echo "android-sha: $ANDROID_SHA"
 echo
-echo "Upstream core/build.gradle dependencies (compare with android/hotwire-core/build.gradle):"
+echo "Now re-apply the modifications listed in VENDOR.md (HotwireConfig.kt, HotwireWebView.kt,"
+echo "GeolocationPermissionDelegate.kt) and compare this dependency block with android/hotwire-core/build.gradle:"
 sed -n '/dependencies {/,/^}/p' "$WORK/android/core/build.gradle" 2>/dev/null || true

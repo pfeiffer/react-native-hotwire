@@ -1,7 +1,10 @@
 require 'json'
 
-package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
+package = JSON.parse(File.read(File.join(__dir__, '..', 'package.json')))
 
+# Lives under ios/ because Expo autolinking only discovers podspecs in top-level
+# subdirectories of a package; a root podspec is linked by React Native as a plain
+# pod and the module is never registered.
 Pod::Spec.new do |s|
   s.name           = 'RNHotwired'
   s.version        = package['version']
@@ -17,13 +20,13 @@ Pod::Spec.new do |s|
 
   s.dependency 'ExpoModulesCore'
 
-  # Our adapter plus the verbatim Hotwire Native sources under ios/Vendor (see VENDOR.md).
-  s.source_files = 'ios/**/*.swift'
+  # Our adapter plus the vendored Hotwire Native sources under Vendor/ (see VENDOR.md).
+  s.source_files = '**/*.swift'
 
-  # Hotwire Native loads turbo.js / bridge.js through `Bundle.module`, which SwiftPM
-  # generates. ios/Bundle+Module.swift resolves it to this resource bundle instead.
+  # Hotwire Native loads turbo.js through `Bundle.module`, which SwiftPM generates.
+  # Bundle+Module.swift resolves it to this resource bundle instead.
   s.resource_bundles = {
-    'Hotwired' => ['ios/Vendor/HotwireNative/Source/**/*.js']
+    'Hotwired' => ['Vendor/**/*.js']
   }
 
   s.pod_target_xcconfig = {
