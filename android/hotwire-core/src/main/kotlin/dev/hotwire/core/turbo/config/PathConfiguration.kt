@@ -4,31 +4,46 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
-import com.google.gson.annotations.SerializedName
+import dev.hotwire.core.logging.logDebug
+import dev.hotwire.core.turbo.config.PathConfigurationLoadState.Loaded
+import dev.hotwire.core.turbo.config.PathConfigurationLoadState.NotLoaded
 import dev.hotwire.core.turbo.nav.Presentation
 import dev.hotwire.core.turbo.nav.PresentationContext
 import dev.hotwire.core.turbo.nav.QueryStringPresentation
-import java.net.URL
+import dev.hotwire.core.turbo.util.dispatcherProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 /**
  * Provides the ability to load, parse, and retrieve url path
  * properties from the app's JSON configuration file.
  */
-class PathConfiguration {
+class PathConfiguration internal constructor() {
     private val cachedProperties: HashMap<String, PathConfigurationProperties> = hashMapOf()
+    private val _loadState = MutableStateFlow<PathConfigurationLoadState>(NotLoaded)
+    private val loadingScope: CoroutineScope = CoroutineScope(dispatcherProvider.io + SupervisorJob())
+    private var loadingJob: Job? = null
 
-    internal var loader: PathConfigurationLoader? = null
+    internal var loader = PathConfigurationLoader()
 
-    @SerializedName("rules")
-    internal var rules: List<PathConfigurationRule> = emptyList()
+    /**
+     * A [StateFlow] that emits the current state of the path configuration
+     * loading process. Observe this to know when the configuration has been
+     * loaded and from which source (bundled asset, cached remote, or fresh remote).
+     */
+    val loadState: StateFlow<PathConfigurationLoadState> = _loadState.asStateFlow()
 
     /**
      * Gets the top-level settings specified in the app's path configuration.
      * The settings are map of key/value `String` items.
      */
-    @SerializedName("settings")
-    var settings: PathConfigurationSettings = PathConfigurationSettings()
-        private set
+    val settings: PathConfigurationSettings
+        get() = synchronized(this) { currentConfiguration.settings }
 
     /**
      * Represents the location of the app's path configuration JSON file(s).
@@ -55,18 +70,39 @@ class PathConfiguration {
     )
 
     /**
+     * Loader options when fetching remote path configuration files from your server.
+     */
+    data class LoaderOptions(
+        /**
+         * Custom HTTP headers to send with each remote path configuration file request.
+         */
+        val httpHeaders: Map<String, String> = emptyMap()
+    )
+
+    /**
      * Loads and parses the specified configuration file(s) from their local
      * and/or remote locations.
      */
-    fun load(context: Context, location: Location) {
-        if (loader == null) {
-            loader = PathConfigurationLoader(context.applicationContext)
+    fun load(
+        context: Context,
+        location: Location,
+        options: LoaderOptions
+    ) {
+        logDebug("pathConfigurationLoading", location.toString())
+
+        val appContext = context.applicationContext
+        loadingJob?.cancel()
+
+        loader.loadCachedOrBundledConfiguration(appContext, location)?.let {
+            applyLoadedState(it)
         }
 
-        loader?.load(location) {
-            cachedProperties.clear()
-            rules = it.rules
-            settings = it.settings
+        loadingJob = loadingScope.launch {
+            location.remoteFileUrl?.let { url ->
+                loader.loadRemoteConfigurationForUrl(appContext, url, options)?.let {
+                    applyLoadedState(it)
+                }
+            }
         }
     }
 
@@ -80,36 +116,39 @@ class PathConfiguration {
      * @return The map of key/value `String` properties
      */
     fun properties(location: String): PathConfigurationProperties {
-        cachedProperties[location]?.let { return it }
+        synchronized(this) {
+            cachedProperties[location]?.let { return it }
 
-        val properties = PathConfigurationProperties()
-        val path = path(location)
+            val properties = currentConfiguration.properties(location)
+            cachedProperties[location] = properties
 
-        for (rule in rules) {
-            if (rule.matches(path)) properties.putAll(rule.properties)
-        }
-
-        cachedProperties[location] = properties
-
-        return properties
-    }
-
-    private fun path(location: String): String {
-        val url = URL(location)
-
-        return when (url.query) {
-            null -> url.path
-            else -> "${url.path}?${url.query}"
+            return properties
         }
     }
+
+    private fun applyLoadedState(state: Loaded) = synchronized(this) {
+        cachedProperties.clear()
+        _loadState.value = state
+
+        logDebug(
+            "pathConfigurationUpdated", listOf(
+                "source" to state.javaClass.simpleName,
+                "rules" to state.configuration.rules.size,
+                "settings" to state.configuration.settings.size
+            )
+        )
+    }
+
+    private val currentConfiguration: PathConfigurationData
+        get() = (_loadState.value as? Loaded)?.configuration ?: PathConfigurationData()
 }
 
-typealias PathConfigurationProperties = HashMap<String, String>
-typealias PathConfigurationSettings = HashMap<String, String>
+typealias PathConfigurationProperties = HashMap<String, Any>
+typealias PathConfigurationSettings = HashMap<String, Any>
 
 val PathConfigurationProperties.presentation: Presentation
     @SuppressLint("DefaultLocale") get() = try {
-        val value = get("presentation") ?: "default"
+        val value = get("presentation")?.toString() ?: "default"
         Presentation.valueOf(value.uppercase())
     } catch (e: IllegalArgumentException) {
         Presentation.DEFAULT
@@ -117,7 +156,7 @@ val PathConfigurationProperties.presentation: Presentation
 
 val PathConfigurationProperties.queryStringPresentation: QueryStringPresentation
     @SuppressLint("DefaultLocale") get() = try {
-        val value = get("query_string_presentation") ?: "default"
+        val value = get("query_string_presentation")?.toString() ?: "default"
         QueryStringPresentation.valueOf(value.uppercase())
     } catch (e: IllegalArgumentException) {
         QueryStringPresentation.DEFAULT
@@ -125,20 +164,26 @@ val PathConfigurationProperties.queryStringPresentation: QueryStringPresentation
 
 val PathConfigurationProperties.context: PresentationContext
     @SuppressLint("DefaultLocale") get() = try {
-        val value = get("context") ?: "default"
+        val value = get("context")?.toString() ?: "default"
         PresentationContext.valueOf(value.uppercase())
     } catch (e: IllegalArgumentException) {
         PresentationContext.DEFAULT
     }
 
 val PathConfigurationProperties.uri: Uri?
-    get() = get("uri")?.toUri()
+    get() = get("uri")?.toString()?.toUri()
 
 val PathConfigurationProperties.fallbackUri: Uri?
-    get() = get("fallback_uri")?.toUri()
+    get() = get("fallback_uri")?.toString()?.toUri()
 
 val PathConfigurationProperties.title: String?
-    get() = get("title")
+    get() = get("title")?.toString()
 
 val PathConfigurationProperties.pullToRefreshEnabled: Boolean
-    get() = get("pull_to_refresh_enabled")?.toBoolean() ?: false
+    get() = get("pull_to_refresh_enabled")?.let { it as Boolean } ?: false
+
+val PathConfigurationProperties.animated: Boolean
+    get() = get("animated")?.let { it as Boolean } ?: true
+
+val PathConfigurationProperties.isHistoricalLocation: Boolean
+    get() = get("historical_location")?.let { it as Boolean } ?: false

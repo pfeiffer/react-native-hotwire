@@ -7,29 +7,33 @@ its files. Everything React Native specific lives outside the vendored directori
 
 `scripts/sync-upstream.sh` reads the tags below and replaces the vendored sources.
 
-ios-tag: 1.1.3
-android-tag: 1.1.1
-ios-sha: 56196ac91a63a619ef13e8d2c135b6346b541192
-android-sha: 8d66697a66949f150c4a348c62eba44465b55eef
+ios-tag: 1.3.1
+android-tag: 1.3.1
+ios-sha: dbc4fc0fec0d2401f0be46015793bfcb29ec07a4
+android-sha: a49cb9bf87e095d52c2f9529f951c78f20b2dc23
 
-The vendored trees were verified against clones of these tags on 2026-09-08.
+The vendored trees were verified against clones of these tags on 2026-09-08 (1.1.x) and bumped to 1.3.1 the same day.
 
 ## iOS: `ios/Vendor/HotwireNative/`
 
 Copied from `Source/` at the tag:
 
 - `Turbo/Session`, `Turbo/Visit`, `Turbo/Visitable`, `Turbo/WebView`, `Turbo/Networking`,
-  `Turbo/Path Configuration`, `Turbo/TurboError.swift` (verbatim)
-- `HotwireLogger.swift`, `ScriptMessageHandler.swift` (verbatim)
+  `Turbo/Path Configuration`, `Turbo/Errors`, `Turbo/Utils` (verbatim)
+- `Turbo/Navigator/Extensions/WKNavigationAction+Utils.swift`, copied to `Turbo/Extensions/`
+  (verbatim; the session delegate's policy decisions use it)
+- `Logging/`, `ScriptMessageHandler.swift` (verbatim)
 
-Not copied: `Turbo/Navigator`, `Bridge`, `HotwireNavigationController.swift`,
-`HotwireWebViewController.swift`, `Router.swift`, `WebView.swift`, `Hotwire.swift`,
-`HotwireConfig.swift`, Xcode project and SwiftPM metadata. Navigation is React
+Not copied: the rest of `Turbo/Navigator`, `Turbo/ViewControllers`, `Turbo/Models`, `Bridge`,
+`NavigationHandler.swift`, `WebView.swift`, `Hotwire.swift`, `HotwireConfig.swift`, Xcode project
+and SwiftPM metadata. Navigation is React
 Navigation's job and bridge components are implemented in JavaScript.
 
 Replaced by our own files in `ios/`:
 
-- `HotwireConfig.swift`: the vendored code only reads `Hotwire.config.pathConfiguration`.
+- `HotwireConfig.swift`: the vendored code only reads `Hotwire.config.pathConfiguration`,
+  `redirectResolutionTimeout` and the logging switch. Also provides the `WebViewPolicyManager.Decision`
+  type that `SessionDelegate` uses; the manager itself belongs to the Navigator.
 - `Bundle+Module.swift`: provides the `Bundle.module` accessor SwiftPM would generate.
 
 ## Android: `android/hotwire-core/`
@@ -50,9 +54,6 @@ Modified files, each marked with a `react-native-hotwired:` comment:
 - `turbo/webview/HotwireWebView.kt`: `initDayNightTheming()` wrapped in a
   `ClassCastException` guard. Some WebView providers on older Android versions throw from
   `WebSettingsCompat`; this crashed in production. Upstream still lacks the guard.
-- `files/delegates/GeolocationPermissionDelegate.kt`: two nullability fixes required by
-  Kotlin 2 (upstream 1.1.1 was written for Kotlin 1.9). Likely fixed upstream in a later tag;
-  drop when syncing if the file compiles without them.
 
 ## Upgrading
 

@@ -17,6 +17,7 @@ public class Session: NSObject {
 
     private var isShowingStaleContent = false
     private var isSnapshotCacheStale = false
+    private var retriedVisitIdentifiers: Set<String> = []
 
     /// Automatically creates a web view with the passed-in configuration
     public convenience init(webViewConfiguration: WKWebViewConfiguration? = nil) {
@@ -55,10 +56,6 @@ public class Session: NSObject {
     }
 
     public func visit(_ visitable: Visitable, options: VisitOptions? = nil, reload: Bool = false) {
-        guard visitable.visitableURL != nil else {
-            fatalError("Visitable must provide a url!")
-        }
-
         visitable.visitableDelegate = self
 
         if reload {
@@ -84,8 +81,12 @@ public class Session: NSObject {
     }
 
     public func reload() {
-        guard let visitable = topmostVisitable else { return }
+        guard let visitable = topmostVisitable else {
+            log("Skipping session reload: no visitable found")
+            return
+        }
 
+        log("Reloading session with visitable: \(visitable)")
         initialized = false
         visit(visitable)
         topmostVisit = currentVisit
@@ -170,7 +171,7 @@ extension Session: VisitDelegate {
         delegate?.sessionDidFinishRequest(self)
     }
 
-    func visit(_ visit: Visit, requestDidFailWithError error: Error) {
+    func visit(_ visit: Visit, requestDidFailWithError error: HotwireNativeError) {
         delegate?.session(self, didFailRequestForVisitable: visit.visitable, error: error)
     }
 
@@ -205,6 +206,7 @@ extension Session: VisitDelegate {
     }
 
     func visitDidComplete(_ visit: Visit) {
+        retriedVisitIdentifiers.removeAll()
         guard let restorationIdentifier = visit.restorationIdentifier else { return }
         storeRestorationIdentifier(restorationIdentifier, forVisitable: visit.visitable)
     }
@@ -223,7 +225,17 @@ extension Session: VisitDelegate {
     }
 
     func visit(_ visit: Visit, didReceiveAuthenticationChallenge challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
-        delegate?.session(self, didReceiveAuthenticationChallenge: challenge, completionHandler: completionHandler)
+        guard let delegate else {
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+        delegate.session(self, didReceiveAuthenticationChallenge: challenge, completionHandler: completionHandler)
+    }
+
+    func visitDidProposeVisitToLocation(_ location: URL) {
+        let properties = pathConfiguration?.properties(for: location) ?? [:]
+        let proposal = VisitProposal(url: location, options: VisitOptions(), properties: properties)
+        delegate?.session(self, didProposeVisit: proposal)
     }
 }
 
@@ -272,6 +284,11 @@ extension Session: VisitableDelegate {
         // Navigating backward from a web view screen to a web view screen.
         if visitable !== topmostVisit.visitable {
             visit(visitable, action: .restore)
+            return
+        }
+        
+        // If the topmost visitable is already the active visitable, nothing needs to be done
+        if topmostVisitable === activeVisitable {
             return
         }
 
@@ -342,7 +359,7 @@ extension Session: WebViewDelegate {
     }
 
     /// Initial page load failed, this will happen when we couldn't find Turbo JS on the page
-    func webView(_ webView: WebViewBridge, didFailInitialPageLoadWithError error: Error) {
+    func webView(_ webView: WebViewBridge, didFailInitialPageLoadWithError error: HotwireNativeError) {
         guard let currentVisit = currentVisit, !initialized else { return }
 
         initialized = false
@@ -371,28 +388,34 @@ extension Session: WebViewDelegate {
     ///   - webView: The web view bridge.
     ///   - location: The original visit location requested.
     ///   - identifier: A unique identifier for the visit.
-    func webView(_ webView: WebViewBridge, didFailRequestWithNonHttpStatusToLocation location: URL, identifier: String) {
+    func webView(_ webView: WebViewBridge, didFailRequestWithNonHttpStatusToLocation location: URL, identifier: String, statusCode: Int) {
         log("didFailRequestWithNonHttpStatusToLocation",
-            ["location": location,
-             "visitIdentifier": identifier]
+            [
+                "location": location,
+                "visitIdentifier": identifier,
+                "statusCode": statusCode
+            ]
         )
 
-        Task {
-            await resolveRedirect(to: location, identifier: identifier)
+        Task { [weak self] in
+            await self?.resolveRedirect(to: location, identifier: identifier, statusCode: statusCode)
         }
     }
 
-    private func resolveRedirect(to location: URL, identifier: String) async {
+    private func resolveRedirect(to location: URL, identifier: String, statusCode: Int) async {
         do {
-            let result = try await RedirectHandler().resolve(location: location)
+            let result = try await JSFetchRecoveryHandler().resolve(location: location)
             switch result {
             case .noRedirect:
-                log("resolveRedirect: no redirect",
+                // The server is reachable (JSFetchRecoveryHandler confirmed an HTTP response
+                // with no redirect). The Turbo.js fetch failure was transient —
+                // retry with a cold boot visit before showing an error.
+                log("resolveRedirect: no redirect, retrying",
                     ["location": location,
                      "visitIdentifier": identifier]
                 )
-                await failCurrentVisit(
-                    with: TurboError.http(statusCode: 0),
+                await retryOrFailCurrentVisit(
+                    with: HotwireNativeError(turboJSStatusCode: statusCode),
                     visitIdentifier: identifier
                 )
             case .sameOriginRedirect(let url):
@@ -404,7 +427,7 @@ extension Session: WebViewDelegate {
                      "visitIdentifier": identifier]
                 )
                 await failCurrentVisit(
-                    with: TurboError.http(statusCode: 0),
+                    with: HotwireNativeError(turboJSStatusCode: statusCode),
                     visitIdentifier: identifier
                 )
             case .crossOriginRedirect(let url):
@@ -414,22 +437,59 @@ extension Session: WebViewDelegate {
                     visitIdentifier: identifier
                 )
             }
+        } catch let error as JSFetchRecoveryError {
+            log("resolveRedirect: recovery failed",
+                ["location": location,
+                 "visitIdentifier": identifier,
+                 "error": error.localizedDescription])
+
+            let visitError: HotwireNativeError
+            switch error {
+            case .responseValidationFailed(reason: .missingURL),
+                 .responseValidationFailed(reason: .invalidResponse):
+                visitError = .load(.invalidResponse)
+            case .requestFailed(let underlyingError):
+                visitError = .web(WebError(underlyingError))
+            }
+            await retryOrFailCurrentVisit(with: visitError, visitIdentifier: identifier)
         } catch {
-            await failCurrentVisit(
-                with: error,
+            log("resolveRedirect: unexpected error",
+                ["location": location,
+                 "visitIdentifier": identifier,
+                 "error": "\(error)"])
+
+            await retryOrFailCurrentVisit(
+                with: .web(WebError(error)),
                 visitIdentifier: identifier
             )
         }
     }
 
     @MainActor
-    private func failCurrentVisit(with error: Error, visitIdentifier: String) {
+    private func failCurrentVisit(with error: HotwireNativeError, visitIdentifier: String) {
         // This is only relevant to `JavaScriptVisit`, as `ColdBootVisit` currently
         // doesn't go through the same flow.
         guard let visit = currentVisit as? JavaScriptVisit,
               visit.identifier == visitIdentifier else { return }
 
+        retriedVisitIdentifiers.remove(visitIdentifier)
         visit.fail(with: error)
+    }
+
+    @MainActor
+    private func retryOrFailCurrentVisit(with error: HotwireNativeError, visitIdentifier: String) {
+        guard let visit = currentVisit as? JavaScriptVisit,
+              visit.identifier == visitIdentifier else { return }
+
+        // Only retry once per visit to prevent infinite loops.
+        guard !retriedVisitIdentifiers.contains(visitIdentifier) else {
+            retriedVisitIdentifiers.remove(visitIdentifier)
+            visit.fail(with: error)
+            return
+        }
+
+        retriedVisitIdentifiers.insert(visitIdentifier)
+        reload()
     }
 
     @MainActor
@@ -452,57 +512,32 @@ extension Session: WebViewDelegate {
 
 extension Session: WKNavigationDelegate {
     public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-        let navigationDecision = NavigationDecision(navigationAction: navigationAction)
-        decisionHandler(navigationDecision.policy)
-
-        if let url = navigationDecision.externallyOpenableURL {
-            openExternalURL(url)
-        } else if navigationDecision.shouldReloadPage {
-            reload()
+        guard let delegate else {
+            decisionHandler(.allow)
+            return
         }
+
+        let decision = delegate.session(self, decidePolicyFor: navigationAction)
+        decisionHandler(.init(decision: decision))
     }
 
     public func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         log("webViewWebContentProcessDidTerminate")
         delegate?.sessionWebViewProcessDidTerminate(self)
     }
-
-    private func openExternalURL(_ url: URL) {
-        log("openExternalURL", ["url": url])
-        delegate?.session(self, openExternalURL: url)
-    }
-
-    private struct NavigationDecision {
-        let navigationAction: WKNavigationAction
-
-        var policy: WKNavigationActionPolicy {
-            navigationAction.navigationType == .linkActivated || isMainFrameNavigation ? .cancel : .allow
-        }
-
-        var externallyOpenableURL: URL? {
-            if let url = navigationAction.request.url, shouldOpenURLExternally {
-                return url
-            } else {
-                return nil
-            }
-        }
-
-        var shouldOpenURLExternally: Bool {
-            let type = navigationAction.navigationType
-            return type == .linkActivated || (isMainFrameNavigation && type == .other)
-        }
-
-        var shouldReloadPage: Bool {
-            let type = navigationAction.navigationType
-            return isMainFrameNavigation && type == .reload
-        }
-
-        var isMainFrameNavigation: Bool {
-            navigationAction.targetFrame?.isMainFrame ?? false
-        }
-    }
 }
 
 private func log(_ name: String, _ arguments: [String: Any] = [:]) {
     logger.debug("[Session] \(name) \(arguments)")
+}
+
+extension WKNavigationActionPolicy {
+    public init(decision: WebViewPolicyManager.Decision) {
+        switch decision {
+        case .allow:
+            self = .allow
+        case .cancel:
+            self = .cancel
+        }
+    }
 }

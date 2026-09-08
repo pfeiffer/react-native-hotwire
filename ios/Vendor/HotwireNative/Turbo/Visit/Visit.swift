@@ -23,7 +23,7 @@ class Visit: NSObject {
 
     init(visitable: Visitable, options: VisitOptions, bridge: WebViewBridge) {
         self.visitable = visitable
-        self.location = visitable.visitableURL!
+        self.location = visitable.currentVisitableURL
         self.options = options
         self.bridge = bridge
         self.state = .initialized
@@ -58,7 +58,7 @@ class Visit: NSObject {
         delegate?.visitDidFinish(self)
     }
 
-    func fail(with error: Error) {
+    func fail(with error: HotwireNativeError) {
         guard state == .started else { return }
 
         state = .failed

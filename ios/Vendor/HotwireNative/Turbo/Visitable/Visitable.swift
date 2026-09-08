@@ -13,14 +13,16 @@ public protocol VisitableDelegate: AnyObject {
 public protocol Visitable: AnyObject {
     var visitableViewController: UIViewController { get }
     var visitableDelegate: VisitableDelegate? { get set }
-    var visitableView: VisitableView! { get }
-    var visitableURL: URL! { get }
+    var visitableView: VisitableView { get }
+    var initialVisitableURL: URL { get }
+    var currentVisitableURL: URL { get }
 
     func visitableDidRender()
     func showVisitableActivityIndicator()
     func hideVisitableActivityIndicator()
 
     func visitableDidActivateWebView(_ webView: WKWebView)
+    func visitableWillDeactivateWebView()
     func visitableDidDeactivateWebView()
 }
 
@@ -47,10 +49,22 @@ extension Visitable {
 
     func activateVisitableWebView(_ webView: WKWebView) {
         visitableView.activateWebView(webView, forVisitable: self)
+        // Explicitly designate the web view's scroll view as the tracked content
+        // scroll view so behaviour like UINavigationBar.prefersLargeTitles and the
+        // iOS 26 tab bar minimize trigger reliably, without depending on UIKit's
+        // subview-ordering heuristic. `.all` covers the top (nav bar) and bottom
+        // (tab bar) edges.
+        if #available(iOS 15.0, *) {
+            visitableViewController.setContentScrollView(webView.scrollView, for: .all)
+        }
         visitableDidActivateWebView(webView)
     }
 
     func deactivateVisitableWebView() {
+        visitableWillDeactivateWebView()
+        if #available(iOS 15.0, *) {
+            visitableViewController.setContentScrollView(nil, for: .all)
+        }
         visitableView.deactivateWebView()
         visitableDidDeactivateWebView()
     }

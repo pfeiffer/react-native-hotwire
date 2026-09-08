@@ -50,9 +50,7 @@ class GeolocationPermissionDelegate(private val session: Session) {
         )
 
         try {
-            // react-native-hotwired: Kotlin 2 nullability, see VENDOR.md. A null permission
-            // throws and is handled by the catch below.
-            resultLauncher?.launch(permissionToRequest!!)
+            resultLauncher?.launch(permissionToRequest)
         } catch (e: Exception) {
             logError("startGeolocationPermissionError", e)
             permissionDenied()
@@ -109,7 +107,6 @@ class GeolocationPermissionDelegate(private val session: Session) {
                 PackageManager.GET_PERMISSIONS
             )
 
-            // react-native-hotwired: Kotlin 2 nullability, see VENDOR.md.
             packageInfo.requestedPermissions ?: emptyArray()
         } catch (e: PackageManager.NameNotFoundException) {
             logError("manifestPermissionsNotAvailable", e)

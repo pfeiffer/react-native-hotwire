@@ -6,7 +6,7 @@ protocol HotwiredSessionSubscriber: AnyObject {
   func handleMessage(_ message: String)
   func didProposeVisit(_ proposal: VisitProposal)
   func didProposeVisitToCrossOriginRedirect(_ location: URL)
-  func didFailRequest(for visitable: Visitable, error: Error)
+  func didFailRequest(for visitable: Visitable, error: HotwireNativeError)
   func didOpenExternalUrl(_ url: URL)
   func didStartFormSubmission()
   func didFinishFormSubmission()
@@ -77,12 +77,22 @@ extension HotwiredSession: SessionDelegate {
     subscriber?.didProposeVisitToCrossOriginRedirect(location)
   }
 
-  func session(_ session: Session, didFailRequestForVisitable visitable: Visitable, error: Error) {
+  func session(_ session: Session, didFailRequestForVisitable visitable: Visitable, error: HotwireNativeError) {
     subscriber?.didFailRequest(for: visitable, error: error)
   }
 
-  func session(_ session: Session, openExternalURL url: URL) {
-    subscriber?.didOpenExternalUrl(url)
+  /// Navigation policy for web view navigations that are not Turbo visits. Link clicks
+  /// and main-frame navigations are cancelled: same-app links become visit proposals via
+  /// Turbo, everything else is handed to JS as an external URL, and a main-frame reload
+  /// is turned into a session reload.
+  func session(_ session: Session, decidePolicyFor navigationAction: WKNavigationAction) -> WebViewPolicyManager.Decision {
+    if let url = navigationAction.request.url, navigationAction.shouldOpenURLExternally {
+      subscriber?.didOpenExternalUrl(url)
+    } else if navigationAction.shouldReloadPage {
+      session.reload()
+    }
+
+    return navigationAction.shouldNavigateInApp ? .cancel : .allow
   }
 
   func sessionDidStartFormSubmission(_ session: Session) {

@@ -173,6 +173,7 @@ class HotwiredSession(
   override fun visitProposedToCrossOriginRedirect(location: String) { subscriber?.visitProposedToCrossOriginRedirect(location) }
   override fun visitProposedToLocation(location: String, options: VisitOptions) { subscriber?.visitProposedToLocation(location, options) }
   override fun visitRendered() { subscriber?.visitRendered() }
+  override fun visitRequestFinished() {}
   override fun formSubmissionStarted(location: String) { subscriber?.didStartFormSubmission(location) }
   override fun formSubmissionFinished(location: String) { subscriber?.didFinishFormSubmission(location) }
   override fun requestFailedWithError(visitHasCachedSnapshot: Boolean, error: VisitError) {

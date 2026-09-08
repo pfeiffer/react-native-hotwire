@@ -2,8 +2,9 @@ package dev.hotwire.core.config
 
 import android.content.Context
 import android.webkit.WebView
+import dev.hotwire.core.logging.DefaultHotwireLogger
+import dev.hotwire.core.logging.HotwireLogger
 import dev.hotwire.core.turbo.config.PathConfiguration
-import dev.hotwire.core.turbo.http.HotwireHttpClient
 import dev.hotwire.core.turbo.offline.OfflineRequestHandler
 import dev.hotwire.core.turbo.webview.HotwireWebView
 
@@ -22,13 +23,9 @@ class HotwireConfig internal constructor() {
     var offlineRequestHandler: OfflineRequestHandler? = null
 
     /**
-     * Enables/disables debug logging. This should be disabled in production environments.
+     * The logger used by the library. Replace to route logs elsewhere.
      */
-    var debugLoggingEnabled = false
-        set(value) {
-            field = value
-            HotwireHttpClient.reset()
-        }
+    var logger: HotwireLogger = DefaultHotwireLogger
 
     /**
      * Enables/disables debugging of web contents loaded into WebViews.
@@ -55,11 +52,14 @@ class HotwireConfig internal constructor() {
      * The user agent HotwireWebView starts with. react-native-hotwired overrides it
      * per session with one that also lists the JavaScript bridge components.
      */
-    fun userAgent(context: Context): String {
+    val userAgent: String get() {
         return listOf(
             applicationUserAgentPrefix,
-            "Hotwire Native Android; Turbo Native Android;",
-            Hotwire.webViewInfo(context).defaultUserAgent
+            "Hotwire Native Android; Turbo Native Android;"
         ).filterNotNull().joinToString(" ")
+    }
+
+    fun userAgentWithWebViewDefault(context: Context): String {
+        return "$userAgent ${Hotwire.webViewInfo(context).defaultUserAgent}"
     }
 }

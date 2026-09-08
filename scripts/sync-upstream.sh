@@ -26,9 +26,13 @@ IOS_DEST="$ROOT/ios/Vendor/HotwireNative"
 rm -rf "$IOS_DEST"
 mkdir -p "$IOS_DEST"
 cp -R "$WORK/ios/Source/Turbo" "$IOS_DEST/Turbo"
-rm -rf "$IOS_DEST/Turbo/Navigator" "$IOS_DEST/Turbo/.swiftpm"
+rm -rf "$IOS_DEST/Turbo/Navigator" "$IOS_DEST/Turbo/ViewControllers" "$IOS_DEST/Turbo/Models" "$IOS_DEST/Turbo/.swiftpm"
 find "$IOS_DEST" -name '*.xcodeproj' -prune -exec rm -rf {} +
-cp "$WORK/ios/Source/HotwireLogger.swift" "$WORK/ios/Source/ScriptMessageHandler.swift" "$IOS_DEST/"
+# Session's policy decisions need the WKNavigationAction helpers that live under Navigator.
+mkdir -p "$IOS_DEST/Turbo/Extensions"
+cp "$WORK/ios/Source/Turbo/Navigator/Extensions/WKNavigationAction+Utils.swift" "$IOS_DEST/Turbo/Extensions/"
+cp -R "$WORK/ios/Source/Logging" "$IOS_DEST/Logging"
+cp "$WORK/ios/Source/ScriptMessageHandler.swift" "$IOS_DEST/"
 IOS_SHA=$(git -C "$WORK/ios" rev-parse HEAD)
 
 echo "hotwire-native-android @ $ANDROID_TAG"

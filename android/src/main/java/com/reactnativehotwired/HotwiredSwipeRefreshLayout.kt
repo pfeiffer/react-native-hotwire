@@ -22,6 +22,6 @@ class HotwiredSwipeRefreshLayout @JvmOverloads constructor(context: Context, att
 
   override fun canChildScrollUp(): Boolean {
     val webView = children.firstOrNull() as? HotwireWebView ?: return false
-    return webView.scrollY > 0 || webView.elementTouchIsScrollable
+    return webView.scrollY > 0 || webView.elementTouchPreventsPullsToRefresh
   }
 }

@@ -5,7 +5,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.http.SslError
 import android.util.SparseArray
-import android.webkit.*
+import android.webkit.HttpAuthHandler
+import android.webkit.JavascriptInterface
+import android.webkit.RenderProcessGoneDetail
+import android.webkit.SslErrorHandler
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.webkit.WebResourceErrorCompat
@@ -16,14 +23,19 @@ import androidx.webkit.WebViewFeature.isFeatureSupported
 import dev.hotwire.core.config.Hotwire
 import dev.hotwire.core.files.delegates.FileChooserDelegate
 import dev.hotwire.core.files.delegates.GeolocationPermissionDelegate
-import dev.hotwire.core.logging.logEvent
+import dev.hotwire.core.files.delegates.WebViewPermissionDelegate
+import dev.hotwire.core.logging.logDebug
+import dev.hotwire.core.logging.logWarning
 import dev.hotwire.core.turbo.errors.HttpError
 import dev.hotwire.core.turbo.errors.LoadError
 import dev.hotwire.core.turbo.errors.WebError
 import dev.hotwire.core.turbo.errors.WebSslError
 import dev.hotwire.core.turbo.http.HotwireHttpClient
 import dev.hotwire.core.turbo.http.HttpRepository
-import dev.hotwire.core.turbo.offline.*
+import dev.hotwire.core.turbo.offline.OfflineHttpRepository
+import dev.hotwire.core.turbo.offline.OfflinePreCacheRequest
+import dev.hotwire.core.turbo.offline.OfflineRequestHandler
+import dev.hotwire.core.turbo.offline.OfflineWebViewRequestInterceptor
 import dev.hotwire.core.turbo.util.isHttpGetRequest
 import dev.hotwire.core.turbo.util.runOnUiThread
 import dev.hotwire.core.turbo.util.toJson
@@ -31,6 +43,8 @@ import dev.hotwire.core.turbo.visit.Visit
 import dev.hotwire.core.turbo.visit.VisitAction
 import dev.hotwire.core.turbo.visit.VisitOptions
 import dev.hotwire.core.turbo.webview.HotwireWebView
+import dev.hotwire.core.turbo.webview.WebViewInfo
+import dev.hotwire.core.turbo.webview.WebViewVersionCompatibility
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -90,6 +104,12 @@ class Session(
      */
     val geolocationPermissionDelegate = GeolocationPermissionDelegate(this)
 
+    /**
+     * The delegate that handles WebView-issued [android.webkit.PermissionRequest]s
+     * for media-capture resources. Currently audio-only.
+     */
+    val webViewPermissionDelegate = WebViewPermissionDelegate(this)
+
     init {
         initializeWebView()
         HotwireHttpClient.enableCachingWith(context)
@@ -111,7 +131,7 @@ class Session(
 
         offlineHttpRepository.preCache(
             requestHandler, OfflinePreCacheRequest(
-                url = location, userAgent = webView.settings.userAgentString
+                url = location, userAgent = Hotwire.config.userAgentWithWebViewDefault(context)
             )
         )
     }
@@ -168,7 +188,25 @@ class Session(
         visitRendered(visit.identifier)
         visitCompleted(visit.identifier, restorationIdentifier)
 
+        webView.restoreCurrentVisit()
+
         return true
+    }
+
+    /**
+     * Cache a snapshot of the current visit.
+     */
+    fun cacheSnapshot() {
+        if (!isReady) return
+
+        currentVisit?.let {
+            logEvent("cacheSnapshot",
+                "location" to it.location,
+                "visitIdentifier" to it.identifier
+            )
+
+            webView.cacheSnapshot()
+        }
     }
 
     fun removeCallback(callback: SessionCallback) {
@@ -381,6 +419,12 @@ class Session(
     @JavascriptInterface
     fun visitRequestFinished(visitIdentifier: String) {
         logEvent("visitRequestFinished", "visitIdentifier" to visitIdentifier)
+
+        currentVisit?.let { visit ->
+            if (visitIdentifier == visit.identifier) {
+                callback { it.visitRequestFinished() }
+            }
+        }
     }
 
     /**
@@ -568,8 +612,8 @@ class Session(
      * You should never call this directly as it could lead to unintended behavior.
      */
     @JavascriptInterface
-    fun elementTouchStarted(scrollable: Boolean) {
-        webView.elementTouchIsScrollable = scrollable
+    fun elementTouchStarted(preventsPullsToRefresh: Boolean) {
+        webView.elementTouchPreventsPullsToRefresh = preventsPullsToRefresh
     }
 
     /**
@@ -580,31 +624,33 @@ class Session(
      */
     @JavascriptInterface
     fun elementTouchEnded() {
-        webView.elementTouchIsScrollable = false
+        webView.elementTouchPreventsPullsToRefresh = false
     }
 
     // Private
 
     private fun visitLocation(visit: Visit) {
-        val restorationIdentifier = when (visit.options.action) {
-            VisitAction.RESTORE -> restorationIdentifiers[visit.destinationIdentifier] ?: ""
-            VisitAction.ADVANCE -> ""
-            else -> ""
+        val restorationIdentifier = if (visit.options.action == VisitAction.RESTORE) {
+            restorationIdentifiers[visit.destinationIdentifier]
+        } else {
+            null
         }
 
-        val options = when (restorationIdentifier) {
-            "" -> visit.options.copy(action = VisitAction.ADVANCE)
-            else -> visit.options
+        // Only initiate a restore visit if a restorationIdentifier is available
+        val options = if (visit.options.action == VisitAction.RESTORE && restorationIdentifier == null) {
+            visit.options.copy(action = VisitAction.ADVANCE)
+        } else {
+            visit.options
         }
 
         logEvent(
             "visitLocation",
             "location" to visit.location,
             "options" to options,
-            "restorationIdentifier" to restorationIdentifier
+            "restorationIdentifier" to (restorationIdentifier ?: "")
         )
 
-        webView.visitLocation(visit.location, options, restorationIdentifier)
+        webView.visitLocation(visit.location, options, restorationIdentifier ?: "")
     }
 
     private fun visitLocationAsColdBoot(visit: Visit) {
@@ -616,9 +662,10 @@ class Session(
         // sees a WebView.loadUrl() request as a same-page visit instead of
         // requesting a full page reload. To work around this, we call
         // WebView.reload(), which fully reloads the page for all URLs.
-        when (visit.reload) {
-            true -> webView.reload()
-            else -> webView.loadUrl(visit.location)
+        if (visit.reload && webView.url == visit.location) {
+            webView.reload()
+        } else {
+            webView.loadUrl(visit.location)
         }
     }
 
@@ -659,12 +706,26 @@ class Session(
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun initializeWebView() {
+        val webViewInfo = Hotwire.webViewInfo(context)
+        val requiredVersion = WebViewInfo.REQUIRED_WEBVIEW_VERSION
+
         logEvent(
             "WebView info",
-            "package" to (webView.packageName ?: ""),
-            "version" to (webView.versionName ?: ""),
-            "major version" to (webView.majorVersion ?: "")
+            "package" to (webViewInfo.packageInfo?.packageName ?: ""),
+            "type" to (webViewInfo.webViewTypeName),
+            "version" to (webViewInfo.majorVersion ?: "")
         )
+
+        if (WebViewVersionCompatibility.isOutdated(context, requiredVersion)) {
+            logWarning(
+                "WebView outdated",
+                "The Chromium WebView installed on the device is outdated. Minimum version " +
+                    "$requiredVersion is required for modern browsers in Rails 8. " +
+                    "If you're using an emulator, ensure it has Play Services enabled and " +
+                    "install the latest WebView version from the Play Store: " +
+                    "${webViewInfo.playStoreWebViewAppUri}"
+            )
+        }
 
         webView.apply {
             addJavascriptInterface(this@Session, "TurboSession")
@@ -705,7 +766,7 @@ class Session(
 
     private fun logEvent(event: String, vararg params: Pair<String, Any>) {
         val attributes = params.toMutableList().apply { add(0, "session" to sessionName) }
-        logEvent(event, attributes)
+        logDebug(event, attributes)
     }
 
 

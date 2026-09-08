@@ -1,4 +1,5 @@
 import UIKit
+import WebKit
 
 protocol HotwiredVisitableViewControllerDelegate: AnyObject {
   func visitableWillAppear()
@@ -12,10 +13,29 @@ protocol HotwiredVisitableViewControllerDelegate: AnyObject {
 /// The `Visitable` a Hotwire session drives. Hotwire expects one view controller per
 /// page; this one is a child of the React Native screen's view controller and hosts the
 /// VisitableView into which the session moves its shared web view.
+///
+/// Location tracking follows upstream's VisitableViewController: while this visitable
+/// owns the web view its location is the web view's URL (Turbo Frame navigations
+/// included); when the web view moves to another visitable the last URL is frozen so a
+/// later restore or refresh targets the right page.
 final class HotwiredVisitableViewController: UIViewController, Visitable {
   weak var delegate: HotwiredVisitableViewControllerDelegate?
   weak var visitableDelegate: VisitableDelegate?
-  var visitableURL: URL!
+
+  private(set) var initialVisitableURL: URL = URL(string: "about:blank")!
+  var currentVisitableURL: URL {
+    switch locationState {
+    case .resolved: return visitableView.webView?.url ?? initialVisitableURL
+    case .initialized(let url), .deactivated(let url): return url
+    }
+  }
+
+  private enum LocationState {
+    case resolved
+    case initialized(URL)
+    case deactivated(URL)
+  }
+  private var locationState: LocationState = .initialized(URL(string: "about:blank")!)
 
   private weak var hostViewController: UIViewController?
 
@@ -28,6 +48,12 @@ final class HotwiredVisitableViewController: UIViewController, Visitable {
   @available(*, unavailable)
   required init?(coder: NSCoder) {
     fatalError("init(coder:) is not supported")
+  }
+
+  /// Sets the page this visitable represents. Call before the first visit.
+  func setInitialURL(_ url: URL) {
+    initialVisitableURL = url
+    locationState = .initialized(url)
   }
 
   // MARK: View lifecycle
@@ -62,7 +88,7 @@ final class HotwiredVisitableViewController: UIViewController, Visitable {
 
   // MARK: Visitable
 
-  private(set) lazy var visitableView: VisitableView! = {
+  private(set) lazy var visitableView: VisitableView = {
     let view = VisitableView(frame: .zero)
     view.translatesAutoresizingMaskIntoConstraints = false
     return view
@@ -73,6 +99,7 @@ final class HotwiredVisitableViewController: UIViewController, Visitable {
   }
 
   func visitableDidRender() {
+    locationState = .resolved
     delegate?.visitableDidRender()
   }
 
@@ -82,5 +109,9 @@ final class HotwiredVisitableViewController: UIViewController, Visitable {
 
   func hideVisitableActivityIndicator() {
     delegate?.hideVisitableActivityIndicator()
+  }
+
+  func visitableWillDeactivateWebView() {
+    locationState = .deactivated(visitableView.webView?.url ?? initialVisitableURL)
   }
 }

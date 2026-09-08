@@ -2,7 +2,6 @@ package dev.hotwire.core.turbo.webview
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Configuration
 import android.os.Build
 import android.util.AttributeSet
 import android.webkit.WebView
@@ -14,6 +13,7 @@ import androidx.webkit.WebViewFeature
 import com.google.gson.GsonBuilder
 import dev.hotwire.core.config.Hotwire
 import dev.hotwire.core.turbo.util.contentFromAsset
+import dev.hotwire.core.turbo.util.isNightModeEnabled
 import dev.hotwire.core.turbo.util.runOnUiThread
 import dev.hotwire.core.turbo.util.toJson
 import dev.hotwire.core.turbo.visit.VisitOptions
@@ -31,14 +31,14 @@ open class HotwireWebView @JvmOverloads constructor(
 ) : WebView(context, attrs) {
     private val gson = GsonBuilder().disableHtmlEscaping().create()
 
-    var elementTouchIsScrollable = false
+    var elementTouchPreventsPullsToRefresh = false
         internal set
 
     init {
         id = generateViewId()
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
-        settings.userAgentString = Hotwire.config.userAgent(context)
+        settings.userAgentString = Hotwire.config.userAgentWithWebViewDefault(context)
         settings.setSupportMultipleWindows(true)
         layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
         // react-native-hotwired: guarded, see VENDOR.md. Some WebView providers throw
@@ -77,6 +77,14 @@ open class HotwireWebView @JvmOverloads constructor(
         runJavascript("turboNative.visitRenderedForColdBoot('$coldBootVisitIdentifier')")
     }
 
+    internal fun cacheSnapshot() {
+        runJavascript("turboNative.cacheSnapshot()")
+    }
+
+    internal fun restoreCurrentVisit() {
+        runJavascript("turboNative.restoreCurrentVisit()")
+    }
+
     internal fun installBridge(onBridgeInstalled: () -> Unit) {
         val script = "window.turboNative == null"
         val bridge = context.contentFromAsset("js/turbo.js")
@@ -113,16 +121,11 @@ open class HotwireWebView @JvmOverloads constructor(
             }
 
             if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
-                when (isNightModeEnabled(context)) {
+                when (context.isNightModeEnabled) {
                     true -> WebSettingsCompat.setForceDark(settings, WebSettingsCompat.FORCE_DARK_ON)
                     else -> WebSettingsCompat.setForceDark(settings, WebSettingsCompat.FORCE_DARK_AUTO)
                 }
             }
         }
-    }
-
-    private fun isNightModeEnabled(context: Context): Boolean {
-        val currentNightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-        return currentNightMode == Configuration.UI_MODE_NIGHT_YES
     }
 }

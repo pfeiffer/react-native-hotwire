@@ -80,7 +80,6 @@ final class HotwiredVisitableView: ExpoView {
 
   private var alertCompletion: (() -> Void)?
   private var confirmCompletion: ((Bool) -> Void)?
-  private var webViewUrlObservation: NSKeyValueObservation?
 
   private var isRefreshing: Bool {
     controller?.visitableView.isRefreshing ?? false
@@ -118,7 +117,6 @@ final class HotwiredVisitableView: ExpoView {
     super.didMoveToWindow()
 
     guard window != nil, let host = hostViewController, let controller else {
-      stopObservingWebViewUrl()
       return
     }
 
@@ -140,7 +138,6 @@ final class HotwiredVisitableView: ExpoView {
 
   override func removeFromSuperview() {
     super.removeFromSuperview()
-    stopObservingWebViewUrl()
     controller?.willMove(toParent: nil)
     controller?.view.removeFromSuperview()
     controller?.removeFromParent()
@@ -171,10 +168,10 @@ final class HotwiredVisitableView: ExpoView {
   // MARK: Visiting
 
   func visitIfNeeded() {
-    guard let controller, controller.visitableURL?.absoluteString != url, let target = URL(string: url) else {
+    guard let controller, controller.initialVisitableURL.absoluteString != url, let target = URL(string: url) else {
       return
     }
-    controller.visitableURL = target
+    controller.setInitialURL(target)
     let activeSession = createSessionIfNeeded()
     // Apply props that were set before the web view existed.
     configureWebView()
@@ -189,27 +186,6 @@ final class HotwiredVisitableView: ExpoView {
     }
     webView.scrollView.isScrollEnabled = scrollEnabled
     webView.scrollView.contentInset = contentInset
-  }
-
-  /// Keeps `visitableURL` in step with Turbo Frame navigations so pull-to-refresh
-  /// reloads the right page. Only while this controller owns the shared web view,
-  /// otherwise a background visitable's URL would be overwritten.
-  private func startObservingWebViewUrl() {
-    stopObservingWebViewUrl()
-    webViewUrlObservation = webView?.observe(\.url, options: [.new]) { [weak self] _, change in
-      guard let self,
-            let newUrl = change.newValue ?? nil,
-            let controller = self.controller,
-            self.session?.turboSession.activeVisitable === controller,
-            controller.visitableURL != newUrl
-      else { return }
-      controller.visitableURL = newUrl
-    }
-  }
-
-  private func stopObservingWebViewUrl() {
-    webViewUrlObservation?.invalidate()
-    webViewUrlObservation = nil
   }
 
   // MARK: Commands
@@ -232,14 +208,22 @@ final class HotwiredVisitableView: ExpoView {
     confirmCompletion = nil
   }
 
-  private func statusCode(for error: Error) -> Int {
-    switch error as? TurboError {
-    case .networkFailure: return 0
-    case .timeoutFailure: return -1
-    case .contentTypeMismatch: return -2
-    case .pageLoadFailure: return -3
-    case .http(let statusCode): return statusCode
-    case .none: return -4
+  /// Maps Hotwire's error types onto the status codes shared with JS (see SystemStatusCode).
+  private func statusCode(for error: HotwireNativeError) -> Int {
+    switch error {
+    case .http(let httpError):
+      return httpError.statusCode
+    case .load(.contentTypeMismatch):
+      return -2
+    case .load:
+      return -3
+    case .web(let webError):
+      if webError.isTimeout { return -1 }
+      if webError.isOffline || webError.isConnectionError { return 0 }
+      switch webError.errorCode {
+      case 0, -1, -2: return webError.errorCode
+      default: return -4
+      }
     }
   }
 }
@@ -267,9 +251,9 @@ extension HotwiredVisitableView: HotwiredSessionSubscriber {
     onOpenExternalUrl(["url": location.absoluteString])
   }
 
-  func didFailRequest(for visitable: Visitable, error: Error) {
+  func didFailRequest(for visitable: Visitable, error: HotwireNativeError) {
     onError([
-      "url": visitable.visitableURL.absoluteString,
+      "url": visitable.currentVisitableURL.absoluteString,
       "description": error.localizedDescription,
       "statusCode": statusCode(for: error),
     ])
@@ -315,14 +299,12 @@ extension HotwiredVisitableView: HotwiredVisitableViewControllerDelegate {
 
   func visitableDidAppear() {
     configureWebView()
-    startObservingWebViewUrl()
     // The web view is shared, so whichever visitable is on screen claims the scroll
     // view registration; in a pager the last mounted page would otherwise keep it.
     registerContentScrollView()
   }
 
   func visitableWillDisappear() {
-    stopObservingWebViewUrl()
     // Never leave a WebKit completion handler pending.
     sendAlertResult()
     sendConfirmResult(false)

@@ -7,41 +7,59 @@ import dev.hotwire.core.logging.logError
 import dev.hotwire.core.turbo.http.HotwireHttpClient
 import dev.hotwire.core.turbo.util.dispatcherProvider
 import dev.hotwire.core.turbo.util.toJson
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import okhttp3.coroutines.executeAsync
 
 internal class PathConfigurationRepository {
     private val cacheFile = "turbo"
 
-    suspend fun getRemoteConfiguration(url: String): String? {
-        val request = Request.Builder().url(url).build()
+    suspend fun getRemoteConfiguration(
+        url: String,
+        options: PathConfiguration.LoaderOptions
+    ): String? {
+        val requestBuilder = Request.Builder().url(url)
 
-        return withContext(dispatcherProvider.io) {
-            issueRequest(request)
+        options.httpHeaders.forEach { (key, value) ->
+            requestBuilder.header(key, value)
         }
+
+        val request = requestBuilder.build()
+        return issueRequest(request)
     }
 
-    fun getBundledConfiguration(context: Context, filePath: String): String {
+    fun getBundledConfiguration(
+        context: Context,
+        filePath: String
+    ): String {
         return contentFromAsset(context, filePath)
     }
 
-    fun getCachedConfigurationForUrl(context: Context, url: String): String? {
+    fun getCachedConfigurationForUrl(
+        context: Context,
+        url: String
+    ): String? {
         return prefs(context).getString(url, null)
     }
 
-    fun cacheConfigurationForUrl(context: Context, url: String, pathConfiguration: PathConfiguration) {
+    fun cacheConfigurationForUrl(
+        context: Context,
+        url: String,
+        pathConfiguration: PathConfigurationData
+    ) {
         prefs(context).edit {
             putString(url, pathConfiguration.toJson())
         }
     }
 
-    private fun issueRequest(request: Request): String? {
-        return try {
-            val call = HotwireHttpClient.instance.newCall(request)
+    private suspend fun issueRequest(request: Request): String? = try {
+        val call = HotwireHttpClient.instance.newCall(request)
 
-            call.execute().use { response ->
+        call.executeAsync().use { response ->
+            withContext(dispatcherProvider.io) {
                 if (response.isSuccessful) {
-                    response.body?.string()
+                    response.body.string()
                 } else {
                     logError(
                         "remotePathConfigurationFailure",
@@ -50,10 +68,12 @@ internal class PathConfigurationRepository {
                     null
                 }
             }
-        } catch (e: Exception) {
-            logError("remotePathConfigurationException", e)
-            null
         }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        logError("remotePathConfigurationException", e)
+        null
     }
 
     private fun prefs(context: Context): SharedPreferences {
