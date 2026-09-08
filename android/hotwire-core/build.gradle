@@ -30,7 +30,11 @@ android {
 }
 
 // Versions mirror upstream hotwire-native-android core/build.gradle.kts at the vendored
-// tag, except kotlin-reflect, which must follow the app's Kotlin plugin version.
+// tag, with two exceptions:
+// - kotlin-reflect follows the app's Kotlin plugin version.
+// - OkHttp stays on 4.x: React Native pins okhttp 4 and its cookie jar breaks on 5.
+//   Upstream's okhttp-coroutines (5.x only) is therefore not used; see VENDOR.md for the
+//   corresponding change in PathConfigurationRepository.kt.
 dependencies {
   implementation 'org.jetbrains.kotlin:kotlin-reflect'
   implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1'
@@ -40,9 +44,8 @@ dependencies {
   implementation 'androidx.lifecycle:lifecycle-common:2.8.7'
   implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
   implementation 'com.google.code.gson:gson:2.12.1'
-  implementation 'com.squareup.okhttp3:okhttp:5.3.2'
-  implementation 'com.squareup.okhttp3:okhttp-coroutines:5.3.2'
-  implementation 'com.squareup.okhttp3:logging-interceptor:5.3.2'
+  implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+  implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
 
   api 'androidx.appcompat:appcompat:1.7.0'
   api 'androidx.core:core-ktx:1.16.0'

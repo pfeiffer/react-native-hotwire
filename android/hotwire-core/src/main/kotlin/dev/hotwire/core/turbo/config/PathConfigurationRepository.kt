@@ -10,7 +10,6 @@ import dev.hotwire.core.turbo.util.toJson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import okhttp3.Request
-import okhttp3.coroutines.executeAsync
 
 internal class PathConfigurationRepository {
     private val cacheFile = "turbo"
@@ -56,10 +55,12 @@ internal class PathConfigurationRepository {
     private suspend fun issueRequest(request: Request): String? = try {
         val call = HotwireHttpClient.instance.newCall(request)
 
-        call.executeAsync().use { response ->
-            withContext(dispatcherProvider.io) {
+        // react-native-hotwired: OkHttp stays on 4.x (React Native pins it), which has no
+        // okhttp-coroutines artifact, so the call executes synchronously on the IO dispatcher.
+        withContext(dispatcherProvider.io) {
+            call.execute().use { response ->
                 if (response.isSuccessful) {
-                    response.body.string()
+                    response.body?.string()
                 } else {
                     logError(
                         "remotePathConfigurationFailure",
