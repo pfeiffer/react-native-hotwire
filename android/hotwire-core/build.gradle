@@ -1,0 +1,48 @@
+// Builds the vendored Hotwire Native Android `core` module (see VENDOR.md).
+// Included by Expo autolinking as the Gradle project `:hotwire-native-core`
+// through the `android.projects` entry in expo-module.config.json.
+// expo-module-gradle-plugin supplies the Kotlin plugin, SDK levels and JVM target.
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'dev.hotwire'
+version = '1.1.1'
+
+android {
+  namespace 'dev.hotwire.core'
+
+  defaultConfig {
+    versionCode 1
+    versionName '1.1.1'
+  }
+
+  sourceSets {
+    main {
+      java.srcDirs += 'src/main/kotlin'
+    }
+  }
+
+  lint {
+    abortOnError false
+  }
+}
+
+// Versions mirror upstream hotwire-native-android core/build.gradle at the vendored tag.
+dependencies {
+  implementation 'org.jetbrains.kotlin:kotlin-reflect'
+  implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0'
+  implementation 'com.google.android.material:material:1.12.0'
+  implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+  implementation 'androidx.lifecycle:lifecycle-common:2.8.1'
+  implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+  implementation 'com.google.code.gson:gson:2.10.1'
+  implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+  implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+
+  api 'androidx.appcompat:appcompat:1.7.0'
+  api 'androidx.core:core-ktx:1.13.1'
+  api 'androidx.webkit:webkit:1.11.0'
+  api 'androidx.activity:activity-ktx:1.9.0'
+}

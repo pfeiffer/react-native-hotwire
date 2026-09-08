@@ -1,0 +1,41 @@
+{
+  "name": "react-native-hotwired",
+  "version": "1.0.0",
+  "description": "Hotwire Native (Turbo + Bridge Components) for React Native and Expo",
+  "license": "MIT",
+  "repository": "github:pfeiffer/react-native-hotwired",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "react-native": "src/index.ts",
+  "files": [
+    "src",
+    "ios",
+    "android",
+    "expo-module.config.json",
+    "RNHotwired.podspec",
+    "VENDOR.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "sync-upstream": "sh scripts/sync-upstream.sh"
+  },
+  "peerDependencies": {
+    "@react-navigation/core": ">=7",
+    "@react-navigation/native": ">=7",
+    "expo": "*",
+    "expo-modules-core": "*",
+    "react": "*",
+    "react-native": ">=0.86"
+  },
+  "devDependencies": {
+    "@react-navigation/core": "^7",
+    "@react-navigation/native": "^7",
+    "@types/react": "~19.2.10",
+    "expo-modules-core": "~3.0.0",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "typescript": "~5.9.0"
+  }
+}

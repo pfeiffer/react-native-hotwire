@@ -1,0 +1,15 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["HotwiredModule"]
+  },
+  "android": {
+    "modules": ["com.reactnativehotwired.HotwiredModule"],
+    "projects": [
+      {
+        "name": "hotwire-native-core",
+        "path": "android/hotwire-core"
+      }
+    ]
+  }
+}

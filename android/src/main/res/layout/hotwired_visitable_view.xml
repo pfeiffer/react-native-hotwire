@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Port of Hotwire Native's hotwire_view.xml: the shared WebView is attached to and
+     detached from the refresh container; the screenshot covers it during transitions. -->
+<com.reactnativehotwired.HotwiredView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/hotwired_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/hotwired_webview_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/hotwired_screenshot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true"
+        android:scaleType="matrix"
+        android:visibility="gone"
+        tools:ignore="ContentDescription" />
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/hotwired_error_refresh"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <ScrollView
+            android:id="@+id/hotwired_error_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+</com.reactnativehotwired.HotwiredView>

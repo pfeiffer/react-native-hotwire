@@ -1,0 +1,12 @@
+node_modules
+*.log
+.DS_Store
+
+# Native build output only. Vendored sources under ios/Vendor and android/hotwire-core are tracked.
+android/build/
+android/hotwire-core/build/
+android/.gradle/
+ios/build/
+ios/Pods/
+xcuserdata/
+*.xcuserstate
