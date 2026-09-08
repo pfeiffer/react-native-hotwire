@@ -53,6 +53,9 @@ Modified files, each marked with a `react-native-hotwired:` comment:
 - `turbo/webview/HotwireWebView.kt`: `initDayNightTheming()` wrapped in a
   `ClassCastException` guard. Some WebView providers on older Android versions throw from
   `WebSettingsCompat`; this crashed in production. Upstream still lacks the guard.
+- `files/delegates/GeolocationPermissionDelegate.kt`: two nullability fixes required by
+  Kotlin 2 (upstream 1.1.1 was written for Kotlin 1.9). Likely fixed upstream in a later tag;
+  drop when syncing if the file compiles without them.
 
 ## Upgrading
 
