@@ -16,6 +16,10 @@ ANDROID_TAG=$(sed -n 's/^android-tag: *//p' "$ROOT/VENDOR.md")
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
+# Files we modified carry a `react-native-hotwired:` marker (see VENDOR.md). Remember
+# them now; the sync overwrites them and we fail loudly at the end if any lost the marker.
+MODIFIED=$(git -C "$ROOT" grep -l 'react-native-hotwired:' HEAD -- android/hotwire-core/src ios/Vendor | sed 's/^HEAD://')
+
 echo "hotwire-native-ios @ $IOS_TAG"
 git clone -q --depth 1 --branch "$IOS_TAG" https://github.com/hotwired/hotwire-native-ios.git "$WORK/ios"
 IOS_DEST="$ROOT/ios/Vendor/HotwireNative"
@@ -42,6 +46,16 @@ echo "Synced. Record these in VENDOR.md:"
 echo "ios-sha: $IOS_SHA"
 echo "android-sha: $ANDROID_SHA"
 echo
-echo "Now re-apply the modifications listed in VENDOR.md (HotwireConfig.kt, HotwireWebView.kt,"
-echo "GeolocationPermissionDelegate.kt) and compare this dependency block with android/hotwire-core/build.gradle:"
+echo "Compare this upstream dependency block with android/hotwire-core/build.gradle:"
 sed -n '/dependencies {/,/^}/p' "$WORK/android/core/build.gradle" 2>/dev/null || true
+
+LOST=""
+for f in $MODIFIED; do
+  grep -q 'react-native-hotwired:' "$ROOT/$f" 2>/dev/null || LOST="$LOST $f"
+done
+if [ -n "$LOST" ]; then
+  echo
+  echo "Re-apply the modifications described in VENDOR.md to these files (use \`git diff\` to see what changed):"
+  for f in $LOST; do echo "  $f"; done
+  exit 1
+fi

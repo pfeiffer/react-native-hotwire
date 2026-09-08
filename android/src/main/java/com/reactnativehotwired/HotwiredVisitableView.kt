@@ -211,6 +211,8 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   }
 
   override fun detachWebView() {
+    // A view destroyed before it ever attached has no session; don't create one now.
+    val webView = _session?.webView ?: return
     captureScreenshot()
     (webView.parent as? ViewGroup)?.endViewTransition(webView)
     hotwiredView.detachWebView(webView) { forceLayout() }

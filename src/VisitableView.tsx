@@ -22,9 +22,14 @@ import type {
 
 export interface VisitableViewProps {
   url: string;
-  /** Screens sharing a handle share one web view and Turbo session. Defaults to "Default". */
+  /**
+   * Screens sharing a handle share one web view and Turbo session. Defaults to "Default".
+   * The web view is configured by the first screen on a handle: `applicationNameForUserAgent`
+   * and the `bridgeComponents` list in the user agent come from that screen, so give every
+   * screen on a handle the same values.
+   */
   sessionHandle?: string;
-  /** Appended to the web view's user agent, after the bridge-components list. */
+  /** Appended to the web view's user agent, followed by the bridge-components list. */
   applicationNameForUserAgent?: string;
   bridgeComponents?: BridgeComponentType[];
   pullToRefreshEnabled?: boolean;

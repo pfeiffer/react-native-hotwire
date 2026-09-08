@@ -50,24 +50,27 @@ final class HotwiredVisitableView: ExpoView {
   // MARK: State
 
   private let webViewConfiguration = WKWebViewConfiguration()
-  private var _session: HotwiredSession?
 
-  /// Only `visitIfNeeded` creates the session: props arrive in arbitrary order, and the
-  /// WKWebView must not exist before `applicationNameForUserAgent` has been applied to
-  /// its configuration. Everything else works on the session only once it exists.
-  private var session: HotwiredSession? { _session }
-  private var webView: WKWebView? { _session?.webView }
+  /// nil until the first visit or appearance; also nil after removeFromSuperview, which
+  /// is how the view knows it is no longer attached. Prop setters must never create it.
+  private var session: HotwiredSession?
+  private var webView: WKWebView? { session?.webView }
 
+  /// Called from `visitIfNeeded` and `visitableWillAppear`, both of which run after all
+  /// props for the render are applied. Props arrive in arbitrary order, and the WKWebView
+  /// must not exist before `applicationNameForUserAgent` reached its configuration.
+  /// Note the configuration only matters for the first view on a handle: later views
+  /// join the existing session and web view (see README, "Sessions").
   private func createSessionIfNeeded() -> HotwiredSession {
-    if let session = _session {
+    if let session {
       return session
     }
-    let session = HotwiredSessionManager.shared.findOrCreateSession(
+    let created = HotwiredSessionManager.shared.findOrCreateSession(
       handle: sessionHandle,
       webViewConfiguration: webViewConfiguration
     )
-    _session = session
-    return session
+    session = created
+    return created
   }
 
   private lazy var controller: HotwiredVisitableViewController? = HotwiredVisitableViewController(
@@ -141,7 +144,7 @@ final class HotwiredVisitableView: ExpoView {
     controller?.willMove(toParent: nil)
     controller?.view.removeFromSuperview()
     controller?.removeFromParent()
-    _session = nil
+    session = nil
     controller = nil
   }
 
@@ -172,10 +175,10 @@ final class HotwiredVisitableView: ExpoView {
       return
     }
     controller.visitableURL = target
-    let session = createSessionIfNeeded()
+    let activeSession = createSessionIfNeeded()
     // Apply props that were set before the web view existed.
     configureWebView()
-    session.visit(controller)
+    activeSession.visit(controller)
   }
 
   private func configureWebView() {
@@ -307,7 +310,6 @@ extension HotwiredVisitableView: HotwiredSessionSubscriber {
 
 extension HotwiredVisitableView: HotwiredVisitableViewControllerDelegate {
   func visitableWillAppear() {
-    // Props are applied before the view is mounted, so the configuration is complete here.
     createSessionIfNeeded().visitableViewWillAppear(self)
   }
 

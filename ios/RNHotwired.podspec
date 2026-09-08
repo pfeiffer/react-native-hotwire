@@ -2,9 +2,10 @@ require 'json'
 
 package = JSON.parse(File.read(File.join(__dir__, '..', 'package.json')))
 
-# Lives under ios/ because Expo autolinking only discovers podspecs in top-level
-# subdirectories of a package; a root podspec is linked by React Native as a plain
-# pod and the module is never registered.
+# Lives under ios/, the conventional Expo module layout: by default Expo autolinking
+# only looks for podspecs in top-level subdirectories (a root podspec would need
+# `apple.podspecPath` in expo-module.config.json). Without either, React Native links
+# the pod on its own and the module is never registered.
 Pod::Spec.new do |s|
   s.name           = 'RNHotwired'
   s.version        = package['version']

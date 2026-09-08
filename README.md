@@ -57,6 +57,11 @@ Turbo, `injectJavaScript(script)`.
 
 ### Sessions
 
+Every `sessionHandle` owns one web view and one Turbo session, created by the first
+`VisitableView` mounted with that handle and reused by the rest. The web view's user agent,
+including `applicationNameForUserAgent` and the `bridgeComponents` list, is fixed at
+creation, so give every screen on a handle the same values.
+
 `getSessionHandles()`, `reloadSession(handle)`, `refreshSession(handle)`,
 `clearSessionSnapshotCache(handle)`.
 

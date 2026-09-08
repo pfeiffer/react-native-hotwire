@@ -59,9 +59,10 @@ Modified files, each marked with a `react-native-hotwired:` comment:
 
 ## Upgrading
 
-1. Bump the tags above, run `yarn sync-upstream`.
-2. Re-apply the two Android modifications if the sync overwrote them (the script replaces
-   `src/main` wholesale), then `git diff` the rest to review upstream changes.
+1. Bump the tags above, run `yarn sync-upstream`. The script replaces the vendored trees
+   wholesale and then fails if any file that carried a `react-native-hotwired:` marker in
+   HEAD lost it, listing the files to re-apply.
+2. Re-apply the modifications listed above, then `git diff` the rest to review upstream changes.
 3. Compare the dependency block printed by the script with `android/hotwire-core/build.gradle`.
 4. Fix compile errors in the adapter files under `ios/` and `android/src`, never in vendored files.
 5. Build the consuming app on both platforms.
