@@ -42,7 +42,8 @@ class HotwiredView @JvmOverloads constructor(
       // The message queue is out of our control: make sure the view is still attached
       // and the WebView hasn't found a new parent in the meantime.
       if (isAttachedToWindow && webView.parent == null) {
-        webView.updateLayoutParams { height = LayoutParams.WRAP_CONTENT }
+        // The WebView must fill the container so the page viewport gets the container's height.
+        webView.updateLayoutParams { height = LayoutParams.MATCH_PARENT }
         container.addView(webView)
         onAttachedToNewDestination(true)
       }

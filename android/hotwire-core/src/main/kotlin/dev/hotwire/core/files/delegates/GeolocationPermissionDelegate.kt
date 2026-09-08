@@ -51,7 +51,7 @@ class GeolocationPermissionDelegate(private val session: Session) {
 
         try {
             // react-native-hotwired: Kotlin 2 nullability, see VENDOR.md. A null permission
-            // throws and is handled by the catch below, as before.
+            // throws and is handled by the catch below.
             resultLauncher?.launch(permissionToRequest!!)
         } catch (e: Exception) {
             logError("startGeolocationPermissionError", e)

@@ -112,7 +112,7 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
   const { webViewStateComponent, handleShowLoading, handleHideLoading, handleRenderError } =
     useWebViewState(reload, renderLoading, renderError);
 
-  // Same token order as react-native-turbo: "<app identity> bridge-components: [...]".
+  // Token order is part of the contract with the server: "<app identity> bridge-components: [...]".
   const userAgent = useMemo(
     () => [applicationNameForUserAgent, bridgeUserAgent].filter(Boolean).join(' '),
     [applicationNameForUserAgent, bridgeUserAgent]
