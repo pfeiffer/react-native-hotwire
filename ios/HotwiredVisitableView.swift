@@ -51,16 +51,24 @@ final class HotwiredVisitableView: ExpoView {
 
   private let webViewConfiguration = WKWebViewConfiguration()
   private var _session: HotwiredSession?
-  private var session: HotwiredSession? {
-    if _session == nil {
-      _session = HotwiredSessionManager.shared.findOrCreateSession(
-        handle: sessionHandle,
-        webViewConfiguration: webViewConfiguration
-      )
+
+  /// Only `visitIfNeeded` creates the session: props arrive in arbitrary order, and the
+  /// WKWebView must not exist before `applicationNameForUserAgent` has been applied to
+  /// its configuration. Everything else works on the session only once it exists.
+  private var session: HotwiredSession? { _session }
+  private var webView: WKWebView? { _session?.webView }
+
+  private func createSessionIfNeeded() -> HotwiredSession {
+    if let session = _session {
+      return session
     }
-    return _session
+    let session = HotwiredSessionManager.shared.findOrCreateSession(
+      handle: sessionHandle,
+      webViewConfiguration: webViewConfiguration
+    )
+    _session = session
+    return session
   }
-  private var webView: WKWebView? { session?.webView }
 
   private lazy var controller: HotwiredVisitableViewController? = HotwiredVisitableViewController(
     hostViewController: hostViewController,
@@ -164,7 +172,10 @@ final class HotwiredVisitableView: ExpoView {
       return
     }
     controller.visitableURL = target
-    session?.visit(controller)
+    let session = createSessionIfNeeded()
+    // Apply props that were set before the web view existed.
+    configureWebView()
+    session.visit(controller)
   }
 
   private func configureWebView() {
@@ -296,7 +307,8 @@ extension HotwiredVisitableView: HotwiredSessionSubscriber {
 
 extension HotwiredVisitableView: HotwiredVisitableViewControllerDelegate {
   func visitableWillAppear() {
-    session?.visitableViewWillAppear(self)
+    // Props are applied before the view is mounted, so the configuration is complete here.
+    createSessionIfNeeded().visitableViewWillAppear(self)
   }
 
   func visitableDidAppear() {
