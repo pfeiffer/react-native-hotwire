@@ -82,7 +82,20 @@ async function openExternalUrl({ url }: OpenExternalUrlEvent) {
   }
 }
 
-export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((props, ref) => {
+/**
+ * The safe area the view hands to the page (see useContentInsets) has to be read from a
+ * provider that is the view itself, and a component cannot consume the context it renders,
+ * so the provider is mounted here and the view proper is its child.
+ */
+export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((props, ref) => (
+  <SafeAreaProvider style={props.style ?? styles.container}>
+    <VisitableViewContent {...props} ref={ref} style={styles.container} />
+  </SafeAreaProvider>
+));
+
+VisitableView.displayName = 'VisitableView';
+
+const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((props, ref) => {
   const {
     url,
     sessionHandle = 'Default',
@@ -197,8 +210,7 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
   );
 
   return (
-    <SafeAreaProvider style={style}>
-      <View ref={layoutRef} onLayout={onLayout} style={styles.container}>
+    <View ref={layoutRef} onLayout={onLayout} style={style}>
       {bridgeComponents?.map((BridgeComponent, i) => (
         <BridgeComponent
           key={`${url}-${i}`}
@@ -234,12 +246,11 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
         style={styles.container}
       />
       {webViewStateComponent}
-      </View>
-    </SafeAreaProvider>
+    </View>
   );
 });
 
-VisitableView.displayName = 'VisitableView';
+VisitableViewContent.displayName = 'VisitableViewContent';
 
 const styles = StyleSheet.create({
   container: {
