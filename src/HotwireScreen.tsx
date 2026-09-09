@@ -5,7 +5,7 @@ import { useDefaultSessionHandle } from './navigation/useDefaultSessionHandle';
 import { defaultVisitRoutes, useVisitHandler, type VisitHandlerOptions, type VisitParams, type VisitRoutes } from './navigation/useVisitHandler';
 import { VisitableView, type VisitableViewProps, type VisitableViewRef } from './VisitableView';
 import { openExternalUrl } from './openExternalUrl';
-import { useVisitTo } from './navigation/useVisitTo';
+import { useVisit } from './navigation/useVisit';
 import { useResolveURL } from './navigation/useBaseURL';
 import type { ErrorEvent, LoadEvent, OpenExternalUrlEvent } from './types';
 
@@ -36,8 +36,8 @@ export interface HotwireScreenErrorContext {
   pop: () => void;
   /** Replaces this screen with the page at `url`, a path or a URL, without a transition: a pop and a visit in one. */
   replace: (url: string) => void;
-  /** Visits a URL as a page link would. */
-  visitTo: ReturnType<typeof useVisitTo>;
+  /** Visits a URL or a path as a page link would. */
+  visit: ReturnType<typeof useVisit>;
 }
 
 function readParams(params: unknown): Partial<VisitParams> & { baseURL?: string } {
@@ -111,7 +111,7 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
     }
   }, [navigation, titleFromPage]);
 
-  const visitTo = useVisitTo();
+  const visit = useVisit();
   const handleError = useCallback(
     (error: ErrorEvent) => {
       onError?.(error, {
@@ -128,10 +128,10 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
           const params: VisitParams = { url, fullPath: pathOf(url), properties: {} };
           navigation.dispatch(StackActions.replace(route.name, params));
         },
-        visitTo,
+        visit,
       });
     },
-    [navigation, onError, resolve, route.name, visitTo]
+    [navigation, onError, resolve, route.name, visit]
   );
 
   const handleLoad = useCallback(

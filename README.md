@@ -44,7 +44,7 @@ configuration. `hotwireScreens` is the web routes a stack needs, one per present
 first launch and refreshed from the server after. `hotwireLinking` hands every URL under the
 base URL to a web screen, and its prefix is the one place the origin is stated: everything
 under the container resolves paths against it, so `hotwireScreens({ path: '/inbox' })`,
-`visitTo('/inbox')` and `screen.replace('/session/new')` all work (`useBaseURL()` reads it). It is the model Hotwire Native itself has, one stack and one modal
+`visit('/inbox')` and `screen.replace('/session/new')` all work (`useBaseURL()` reads it). It is the model Hotwire Native itself has, one stack and one modal
 layer, and the navigators are yours: tabs, theme, header styling and everything else is
 plain React Navigation. `example/` is exactly this against the official demo server, three
 tabs each with a stack and a session of their own, with the demo's rules written for this
@@ -70,7 +70,7 @@ set `onError` or `onVisitProposal` once for every web route, give `hotwireScreen
 A failed visit shows `renderError` in its screen, a message and a Retry that reloads, as
 upstream's error presenter does. Anything beyond that is the app's, through
 `HotwireScreen`'s `onError(error, screen)`, where `screen` can `retry`, `pop` the screen,
-`replace` it with the page at a URL, or `visitTo` one. `error.statusCode` is the HTTP
+`replace` it with the page at a URL, or `visit` one. `error.statusCode` is the HTTP
 status, or a `SystemStatusCode` for a failure with no response, a network error say. The
 upstream demo's answer to a 401 is one line of it, in `example/App.tsx`: replace the empty
 screen with the sign-in page, and the server redirects back once signed in.
@@ -81,15 +81,15 @@ An app whose navigators come from elsewhere, a config document or named modal fl
 them and places `HotwireScreen` in them, or composes `VisitableView` with its own router:
 
 ```tsx
-import { VisitableView, useCurrentUrl, useVisitTo, getLinkingObject } from 'react-native-hotwire';
+import { VisitableView, useCurrentUrl, useVisit, getLinkingObject } from 'react-native-hotwire';
 
 const linking = getLinkingObject(BASE_URL, linkingConfig); // pass to NavigationContainer
 
 function WebScreen() {
   const url = useCurrentUrl();
-  const visitTo = useVisitTo();
+  const visit = useVisit();
 
-  return <VisitableView url={url} sessionHandle="main" onVisitProposal={({ url, action }) => visitTo(url, action)} />;
+  return <VisitableView url={url} sessionHandle="main" onVisitProposal={({ url, action }) => visit(url, action)} />;
 }
 
 <HotwireProvider applicationNameForUserAgent="MyApp/1.0" bridgeComponents={[NavBarComponent]}>
@@ -134,7 +134,7 @@ compose `VisitableView` with your own router instead.
 |---|---|
 | `url` | Page to visit. Changing it visits the new URL in the same session. |
 | `sessionHandle` | Screens sharing a handle share one web view and Turbo session. Default `"Default"`. |
-| `onVisitProposal` | Required. Turbo proposed a visit; navigate with `useVisitTo`. |
+| `onVisitProposal` | Required. Turbo proposed a visit; navigate with `useVisit`. |
 | `onLoad`, `onError`, `onOpenExternalUrl`, `onFormSubmissionStarted/Finished`, `onContentProcessDidTerminate`, `onMessage` | Session events. |
 | `onAlert`, `onConfirm` | Replace the default `Alert` dialogs for `window.alert` / `window.confirm`. |
 | `renderLoading`, `renderError` | Overlays. |
@@ -281,7 +281,7 @@ message that asked; there is no "last message" to look up.
 - `useCurrentUrl(config?)`: the URL the current screen should load, its `fullPath` param or
   its configured path resolved against the base URL. Both come from the container's
   linking; `config` is for a path config other than the one linking uses.
-- `useVisitTo()`: `visitTo(urlOrTarget, visitAction)`, the counterpart of React Navigation's
+- `useVisit()`: `visit(urlOrPath, visitAction)`, Turbo's `visit` and the counterpart of React Navigation's
   `useLinkTo`. Unmatched URLs resolve to the innermost screen named `Fallback`, so define one
   in each navigator that should catch visits.
 - `useVisitBuilder()`: `buildAction(urlOrTarget, visitAction)` returns the navigation action
@@ -293,7 +293,7 @@ message that asked; there is no "last message" to look up.
    `react-native-hotwire` (git URL above). Remove the `scripts.postinstall` override in the
    old URL; nothing is built at install time any more.
 2. Imports: everything comes from `react-native-hotwire`.
-   `useWebviewNavigate` became `useVisitTo` and `useVisitBuilder`; `useCurrentUrl`,
+   `useWebviewNavigate` became `useVisit` and `useVisitBuilder`; `useCurrentUrl`,
    `getLinkingObject` moved here.
 3. `stradaComponents` → `bridgeComponents`; `StradaComponent` → `BridgeComponentType`;
    `StradaMessage` → `BridgeMessage`.

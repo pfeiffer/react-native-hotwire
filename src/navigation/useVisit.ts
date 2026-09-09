@@ -5,10 +5,11 @@ import { useVisitBuilder, type VisitTarget } from './useVisitBuilder';
 import type { VisitAction } from '../types';
 
 /**
- * Like React Navigation's `useLinkTo`, for Turbo visits: navigates to the screen for a URL
- * (or a screen), pushing, replacing or updating params as the visit action asks.
+ * Turbo's `visit(location, { action })` for the native side, and the counterpart of React
+ * Navigation's `useLinkTo`: navigates to the screen for a URL or a path (or a screen),
+ * pushing, replacing or updating params as the visit action asks.
  */
-export function useVisitTo() {
+export function useVisit() {
   const navigation = useNavigation();
   const { buildAction } = useVisitBuilder();
 

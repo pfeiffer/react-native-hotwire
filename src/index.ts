@@ -16,7 +16,7 @@ export {
 export type { OnAlert, OnConfirm } from './hooks/useWebViewDialogs';
 export type { RenderError, RenderLoading } from './hooks/useWebViewState';
 
-export { useVisitTo } from './navigation/useVisitTo';
+export { useVisit } from './navigation/useVisit';
 export { useVisitBuilder, type BuiltVisitAction, type VisitTarget } from './navigation/useVisitBuilder';
 export {
   useVisitHandler,

@@ -103,7 +103,7 @@ function getMinimalAction(
 /**
  * Like React Navigation's `useLinkBuilder`, for Turbo visits: turns a URL (or a screen) and a
  * visit action into the navigation action that gets there, without dispatching it. For a
- * handler that adjusts the action first; `useVisitTo` covers the common case.
+ * handler that adjusts the action first; `useVisit` covers the common case.
  */
 export function useVisitBuilder() {
   const navigation = useNavigation();
