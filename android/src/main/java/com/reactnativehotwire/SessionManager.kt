@@ -26,8 +26,8 @@ object SessionManager {
   // the page is not fetched again and a flash set on the redirect renders. The proposal
   // reaches JS as a URL and the screen it opens may be on another session, a modal's form
   // redirecting into a tab, so the options wait here, across sessions, for the view that
-  // visits that URL. The visit handler discards them when the app drops a proposal, and
-  // they expire regardless, in case an app routing proposals itself drops one silently.
+  // visits that URL. They expire after seconds: the gap is one JS round trip, and a proposal
+  // the app dropped must not feed an unrelated visit of the same URL later.
   private val proposedVisitOptions = mutableMapOf<String, Pair<VisitOptions, Long>>()
 
   fun storeProposedVisitOptions(url: String, options: VisitOptions) {
@@ -37,11 +37,6 @@ object SessionManager {
   fun takeProposedVisitOptions(url: String): VisitOptions? {
     val (options, at) = proposedVisitOptions.remove(url) ?: return null
     return if (SystemClock.elapsedRealtime() - at < 3_000) options else null
-  }
-
-  /** The app dropped the proposal; nothing will visit it. */
-  fun discardProposedVisitOptions(url: String) {
-    proposedVisitOptions.remove(url)
   }
 
   fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

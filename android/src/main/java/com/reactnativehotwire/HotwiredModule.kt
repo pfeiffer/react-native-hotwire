@@ -64,10 +64,6 @@ class HotwiredModule : Module() {
       Hotwire.config.pathConfiguration.settings
     }
 
-    AsyncFunction("discardProposedVisit") { url: String ->
-      SessionManager.discardProposedVisitOptions(url)
-    }
-
     AsyncFunction("getSessionHandles") {
       SessionManager.handles
     }

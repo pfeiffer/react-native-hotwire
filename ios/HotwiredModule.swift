@@ -58,12 +58,6 @@ public class HotwiredModule: Module, PathConfigurationDelegate {
       Hotwire.config.pathConfiguration.settings
     }.runOnQueue(.main)
 
-    AsyncFunction("discardProposedVisit") { (url: String) in
-      if let url = URL(string: url) {
-        HotwiredSessionManager.shared.discardProposedVisitOptions(for: url)
-      }
-    }.runOnQueue(.main)
-
     AsyncFunction("getSessionHandles") { () -> [String] in
       HotwiredSessionManager.shared.handles
     }.runOnQueue(.main)

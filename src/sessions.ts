@@ -5,7 +5,6 @@ interface HotwiredModule {
   reloadSession(sessionHandle: string): Promise<void>;
   refreshSession(sessionHandle: string): Promise<void>;
   clearSessionSnapshotCache(sessionHandle: string): Promise<void>;
-  discardProposedVisit(url: string): Promise<void>;
 }
 
 const Hotwired = requireNativeModule<HotwiredModule>('Hotwire');
@@ -27,9 +26,4 @@ export function refreshSession(sessionHandle: string): Promise<void> {
 
 export function clearSessionSnapshotCache(sessionHandle: string): Promise<void> {
   return Hotwired.clearSessionSnapshotCache(sessionHandle);
-}
-
-/** Tells native the app dropped a proposal, so the options it carried are not kept for a later visit. */
-export function discardProposedVisit(url: string): Promise<void> {
-  return Hotwired.discardProposedVisit(url);
 }
