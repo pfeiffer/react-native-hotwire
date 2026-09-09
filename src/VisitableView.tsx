@@ -8,9 +8,9 @@ import { useWebViewDialogs, type OnAlert, type OnConfirm } from './hooks/useWebV
 import { useWebViewState, type RenderError, type RenderLoading } from './hooks/useWebViewState';
 import { useContentInsets } from './insets/useContentInsets';
 import { useWindowRect } from './insets/useWindowRect';
+import { useHotwireConfig } from './HotwireProvider';
 import { NativeVisitableView, type NativeVisitableViewRef } from './NativeVisitableView';
 import type {
-  BridgeComponentType,
   ContentInset,
   ContentProcessDidTerminateEvent,
   ErrorEvent,
@@ -28,21 +28,15 @@ export interface VisitableViewProps {
   url: string;
   /**
    * Screens sharing a handle share one web view and Turbo session. Defaults to "Default".
-   * The web view is configured by the first screen on a handle: `applicationNameForUserAgent`
-   * and the `bridgeComponents` list in the user agent come from that screen, so give every
-   * screen on a handle the same values.
+   * The web view's user agent and bridge components come from HotwireProvider, once per app.
    */
   sessionHandle?: string;
-  /** Appended to the web view's user agent, followed by the bridge-components list. */
-  applicationNameForUserAgent?: string;
-  bridgeComponents?: BridgeComponentType[];
   pullToRefreshEnabled?: boolean;
   scrollEnabled?: boolean;
   /** iOS only. */
   contentInset?: ContentInset;
   /** Android only: position of the pull-to-refresh spinner. */
   progressViewOffset?: ProgressViewOffset;
-  webViewDebuggingEnabled?: boolean;
   renderLoading?: RenderLoading;
   renderError?: RenderError;
   onVisitProposal: (proposal: VisitProposal) => void;
@@ -115,13 +109,10 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
   const {
     url,
     sessionHandle = 'Default',
-    applicationNameForUserAgent,
-    bridgeComponents,
     pullToRefreshEnabled = true,
     scrollEnabled = true,
     contentInset,
     progressViewOffset,
-    webViewDebuggingEnabled = false,
     renderLoading,
     renderError,
     onVisitProposal,
@@ -138,6 +129,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     style = styles.container,
   } = props;
 
+  const { applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled } = useHotwireConfig();
   const nativeRef = useRef<NativeVisitableViewRef>(null);
 
   const { registerMessageListener, handleOnMessage } = useMessageQueue(onMessage);
@@ -232,7 +224,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
 
   return (
     <View ref={layoutRef} onLayout={onLayout} style={style}>
-      {bridgeComponents?.map((BridgeComponent, i) => (
+      {bridgeComponents.map((BridgeComponent, i) => (
         <BridgeComponent
           key={`${url}-${i}`}
           url={url}

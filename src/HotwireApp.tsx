@@ -1,10 +1,10 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, type NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
+import { HotwireProvider, type HotwireProviderProps } from './HotwireProvider';
 import { HotwireScreen, type HotwireScreenProps } from './HotwireScreen';
 import { hotwireLinking } from './navigation/hotwireLinking';
-import { loadPathConfiguration, type PathConfigurationDocument } from './pathConfiguration';
 
 /** A native screen next to the web ones: a route, its component, and the path that opens it. */
 export interface HotwireNativeScreen {
@@ -15,13 +15,11 @@ export interface HotwireNativeScreen {
   options?: NativeStackNavigationOptions;
 }
 
-export interface HotwireAppProps extends Omit<HotwireScreenProps, 'baseURL' | 'routes'> {
+export interface HotwireAppProps
+  extends Omit<HotwireScreenProps, 'baseURL' | 'routes'>,
+    Omit<HotwireProviderProps, 'children'> {
   /** The page the app starts on; its origin is the base URL. */
   url: string;
-  /** The server's path configuration, loaded after the bundled one and cached for the next launch. */
-  pathConfigurationUrl?: string;
-  /** The bundled path configuration, available before the server's arrives. */
-  pathConfiguration?: PathConfigurationDocument;
   /** Native screens beside the web ones. Reach them from a rule's `screen` or a `path`. */
   screens?: HotwireNativeScreen[];
 }
@@ -38,14 +36,17 @@ const webRouteId = ({ params }: { params?: { url?: string } }) => params?.url;
  * your navigators instead.
  */
 export function HotwireApp(props: HotwireAppProps) {
-  const { url, pathConfigurationUrl, pathConfiguration, screens = [], ...screenProps } = props;
+  const {
+    url,
+    pathConfigurationUrl,
+    pathConfiguration,
+    applicationNameForUserAgent,
+    bridgeComponents,
+    webViewDebuggingEnabled,
+    screens = [],
+    ...screenProps
+  } = props;
   const baseURL = useMemo(() => new URL(url).origin, [url]);
-
-  useEffect(() => {
-    if (pathConfiguration || pathConfigurationUrl) {
-      loadPathConfiguration({ document: pathConfiguration, url: pathConfigurationUrl });
-    }
-  }, [pathConfiguration, pathConfigurationUrl]);
 
   const linking = useMemo(
     () =>
@@ -67,6 +68,12 @@ export function HotwireApp(props: HotwireAppProps) {
   );
 
   return (
+    <HotwireProvider
+      applicationNameForUserAgent={applicationNameForUserAgent}
+      bridgeComponents={bridgeComponents}
+      webViewDebuggingEnabled={webViewDebuggingEnabled}
+      pathConfiguration={pathConfiguration}
+      pathConfigurationUrl={pathConfigurationUrl}>
     <NavigationContainer linking={linking}>
       <Stack.Navigator>
         <Stack.Screen name="web" component={WebScreen} getId={webRouteId} initialParams={{ url }} />
@@ -83,5 +90,6 @@ export function HotwireApp(props: HotwireAppProps) {
         ))}
       </Stack.Navigator>
     </NavigationContainer>
+    </HotwireProvider>
   );
 }

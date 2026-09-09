@@ -1,5 +1,5 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react';
 
 import { useDefaultSessionHandle } from './navigation/useDefaultSessionHandle';
 import { defaultVisitRoutes, useVisitHandler, type VisitHandlerOptions, type VisitParams, type VisitRoutes } from './navigation/useVisitHandler';
@@ -82,6 +82,13 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
 
   const refresh = useCallback(() => visitableRef.current?.refresh(), []);
   const handleVisitProposal = useVisitHandler({ routes, onVisitProposal, refresh });
+
+  // React Navigation shows the route name until the page title arrives; show nothing.
+  useLayoutEffect(() => {
+    if (titleFromPage) {
+      navigation.setOptions({ title: '' });
+    }
+  }, [navigation, titleFromPage]);
 
   const handleLoad = useCallback(
     (event: LoadEvent) => {

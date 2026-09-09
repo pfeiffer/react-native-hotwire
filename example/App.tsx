@@ -2,6 +2,10 @@ import { CommonActions } from '@react-navigation/native';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { HotwireApp } from 'react-native-hotwire';
 
+import { FormComponent } from './bridge/FormComponent';
+import { MenuComponent } from './bridge/MenuComponent';
+import { OverflowMenuComponent } from './bridge/OverflowMenuComponent';
+
 // The official Hotwire Native demo server: pushes, modals, forms, bridge components, and a
 // path configuration whose `/numbers$` rule asks for a native screen.
 const demo = 'https://hotwire-native-demo.dev';
@@ -26,6 +30,8 @@ export default function App() {
     <HotwireApp
       url={demo}
       pathConfigurationUrl={`${demo}/configurations/ios_v1.json`}
+      bridgeComponents={[FormComponent, MenuComponent, OverflowMenuComponent]}
+      webViewDebuggingEnabled
       screens={[{ name: 'numbers', component: NumbersScreen, options: { title: 'Numbers' } }]}
       onVisitProposal={(proposal) => {
         // The demo's rule names an iOS view controller; here that is a route.

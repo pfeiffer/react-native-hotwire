@@ -31,7 +31,8 @@ export default () => (
 );
 ```
 
-That is the whole app: a stack with a web route per presentation, `HotwireScreen` on each,
+That is the whole app: `HotwireProvider` with the app's user agent token and bridge
+components, a stack with a web route per presentation, `HotwireScreen` on each,
 the server's path configuration deciding which URL opens how, and every link under the
 base URL handed to a web screen. It is the model Hotwire Native itself has, one stack and
 one modal layer, and `example/` is exactly this against the official demo server.
@@ -66,16 +67,18 @@ function WebScreen() {
   const url = useCurrentUrl(BASE_URL, linkingConfig);
   const visitTo = useVisitTo();
 
-  return (
-    <VisitableView
-      url={url}
-      sessionHandle="main"
-      bridgeComponents={[NavBarComponent]}
-      onVisitProposal={({ url, action }) => visitTo(url, action)}
-    />
-  );
+  return <VisitableView url={url} sessionHandle="main" onVisitProposal={({ url, action }) => visitTo(url, action)} />;
 }
+
+<HotwireProvider applicationNameForUserAgent="MyApp/1.0" bridgeComponents={[NavBarComponent]}>
+  <NavigationContainer linking={linking}>...</NavigationContainer>
+</HotwireProvider>
 ```
+
+`HotwireProvider` holds what belongs to a session rather than a screen: the user agent token,
+the bridge components it advertises, inspectability, and the path configuration. A session is
+created by the first view on its handle and keeps its user agent for life, which is why these
+are set once, above the navigators, and not per view. One provider per app.
 
 ### `HotwireScreen`
 
@@ -214,6 +217,32 @@ class NavBarComponent extends BridgeComponent {
 
 The injected adapter talks to `@hotwired/hotwire-native-bridge` (`window.HotwireNative`)
 and to the older `@hotwired/strada` (`window.Strada`).
+
+The app's components are given to `HotwireProvider` (or `HotwireApp`) once; the web view's
+user agent advertises their names per session, which is why the list is not per view. A
+component is a function component made with `bridgeComponent`; it renders inside the screen
+showing the page, so `useNavigation` and every other hook work in it. `example/bridge` has
+the demo site's `form`, `menu` and `overflow-menu`:
+
+```tsx
+export const FormComponent = bridgeComponent('form', () => {
+  const navigation = useNavigation();
+  const reply = useBridgeReply();
+  const [title, setTitle] = useState<string>();
+
+  useBridgeMessage<{ submitTitle: string }>('connect', ({ data }) => setTitle(data.submitTitle));
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerRight: title ? () => <Button title={title} onPress={() => reply('connect')} /> : undefined });
+  }, [title, navigation, reply]);
+
+  return null;
+});
+```
+
+`useBridgeMessage(event, handler)` receives, `useBridgeReply()` answers the last message for
+an event as upstream's `reply(to:)` does. The class `BridgeComponent` remains for components
+written in upstream's shape, `onReceive` and `replyTo`.
 
 ### Navigation
 

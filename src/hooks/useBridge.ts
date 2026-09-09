@@ -6,10 +6,10 @@ import type { BridgeComponentType, BridgeMessage } from '../types';
 
 export function useBridge(
   nativeRef: React.RefObject<NativeVisitableViewRef | null>,
-  bridgeComponents?: BridgeComponentType[]
+  bridgeComponents: BridgeComponentType[]
 ) {
   const componentNames = useMemo(
-    () => bridgeComponents?.map(({ componentName }) => componentName) ?? [],
+    () => bridgeComponents.map(({ componentName }) => componentName),
     [bridgeComponents]
   );
 
@@ -19,8 +19,8 @@ export function useBridge(
 
   // Advertised in the user agent so the server can tell which components this build supports.
   const bridgeUserAgent = useMemo(
-    () => (bridgeComponents ? `bridge-components: [${componentNames.join(' ')}]` : ''),
-    [bridgeComponents, componentNames]
+    () => `bridge-components: [${componentNames.join(' ')}]`,
+    [componentNames]
   );
 
   const sendToBridge = useCallback(

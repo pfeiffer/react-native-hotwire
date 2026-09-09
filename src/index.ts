@@ -1,7 +1,9 @@
 export { VisitableView, type VisitableViewProps, type VisitableViewRef } from './VisitableView';
 export { HotwireScreen, type HotwireScreenProps } from './HotwireScreen';
 export { HotwireApp, type HotwireAppProps, type HotwireNativeScreen } from './HotwireApp';
+export { HotwireProvider, type HotwireProviderProps, type HotwireConfig } from './HotwireProvider';
 export { BridgeComponent } from './BridgeComponent';
+export { bridgeComponent, useBridgeMessage, useBridgeReply } from './bridge/bridgeComponent';
 export { getSessionHandles, reloadSession, refreshSession, clearSessionSnapshotCache } from './sessions';
 export {
   loadPathConfiguration,

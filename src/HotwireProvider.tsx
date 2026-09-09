@@ -1,0 +1,61 @@
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
+
+import { loadPathConfiguration, type PathConfigurationDocument } from './pathConfiguration';
+import type { BridgeComponentType } from './types';
+
+export interface HotwireConfig {
+  /** Appended to every web view's user agent, followed by the bridge component list. */
+  applicationNameForUserAgent?: string;
+  /** The app's bridge components; the user agent advertises their names. */
+  bridgeComponents: BridgeComponentType[];
+  /** Makes the web views inspectable (Safari, Chrome). */
+  webViewDebuggingEnabled: boolean;
+}
+
+export interface HotwireProviderProps extends Partial<HotwireConfig> {
+  /** The bundled path configuration, available before the server's arrives. */
+  pathConfiguration?: PathConfigurationDocument;
+  /** The server's path configuration, loaded after the bundled one and cached for the next launch. */
+  pathConfigurationUrl?: string;
+  children: React.ReactNode;
+}
+
+const HotwireContext = createContext<HotwireConfig | null>(null);
+
+/**
+ * Everything that belongs to a session rather than a screen, in one place above the
+ * navigators: the user agent token, the bridge components it advertises, inspectability,
+ * and the path configuration. A session is created by the first view on its handle and
+ * keeps its user agent for life, so these are read from here at mount and no two views
+ * can disagree. One per app, as Hotwire Native's config is.
+ */
+export function HotwireProvider({
+  applicationNameForUserAgent,
+  bridgeComponents = [],
+  webViewDebuggingEnabled = false,
+  pathConfiguration,
+  pathConfigurationUrl,
+  children,
+}: HotwireProviderProps) {
+  useEffect(() => {
+    if (pathConfiguration || pathConfigurationUrl) {
+      loadPathConfiguration({ document: pathConfiguration, url: pathConfigurationUrl });
+    }
+  }, [pathConfiguration, pathConfigurationUrl]);
+
+  const value = useMemo<HotwireConfig>(
+    () => ({ applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled }),
+    [applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled]
+  );
+
+  return <HotwireContext.Provider value={value}>{children}</HotwireContext.Provider>;
+}
+
+/** The provider's configuration. Throws outside a provider: a missing user agent token fails silently otherwise. */
+export function useHotwireConfig(): HotwireConfig {
+  const config = useContext(HotwireContext);
+  if (!config) {
+    throw new Error('react-native-hotwire: wrap the app in <HotwireProvider>');
+  }
+  return config;
+}
