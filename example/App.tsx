@@ -47,7 +47,11 @@ export default function App() {
       webViewDebuggingEnabled
       screens={[{ name: 'numbers', component: NumbersScreen, options: { title: 'Numbers' } }]}
       onVisitProposal={(proposal) => {
-        // The demo's rule names an iOS view controller; here that is a route.
+        // The demo's document is shared with its native iOS app, whose `/numbers$` rule says
+        // `view_controller: numbers`: the identifier of a view controller in that app's binary.
+        // The library reads only `screen` as a route name. It does not treat `view_controller`
+        // as one, because a route that happens to share the name would be a coincidence, not
+        // a contract. A document you own says `screen: numbers`; this one is translated here.
         if (proposal.properties.view_controller === 'numbers') {
           return CommonActions.navigate('numbers');
         }
