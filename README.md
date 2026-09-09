@@ -242,22 +242,24 @@ the demo site's `form`, `menu` and `overflow-menu`:
 ```tsx
 export const FormComponent = bridgeComponent('form', () => {
   const navigation = useNavigation();
-  const reply = useBridgeReply();
-  const [title, setTitle] = useState<string>();
+  const [button, setButton] = useState<{ title: string; submit: () => void }>();
 
-  useBridgeMessage<{ submitTitle: string }>('connect', ({ data }) => setTitle(data.submitTitle));
+  useBridgeMessage<{ submitTitle: string }>('connect', ({ data }, reply) =>
+    setButton({ title: data.submitTitle, submit: () => reply() })
+  );
 
   useLayoutEffect(() => {
-    navigation.setOptions({ headerRight: title ? () => <Button title={title} onPress={() => reply('connect')} /> : undefined });
-  }, [title, navigation, reply]);
+    navigation.setOptions({ headerRight: button ? () => <Button title={button.title} onPress={button.submit} /> : undefined });
+  }, [button, navigation]);
 
   return null;
 });
 ```
 
-`useBridgeMessage(event, handler)` receives, `useBridgeReply()` answers the last message for
-an event as upstream's `reply(to:)` does. The handler may be async; a reply after an await
-still answers the message that asked.
+`useBridgeMessage(event, handler)` calls the handler with each message for `event` and a
+`reply` bound to that message, merging the data given into the message's own. The reply can
+come later, after an await or from a button the handler set up, and still answers the
+message that asked; there is no "last message" to look up.
 
 ### Navigation
 

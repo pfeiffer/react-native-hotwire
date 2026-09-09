@@ -71,8 +71,6 @@ export interface BridgeMessage {
   };
 }
 
-export type BridgeMessages = Record<string, BridgeMessage>;
-
 export type MessageListener = (message: object) => void;
 
 export interface EventSubscription {

@@ -1,14 +1,12 @@
 import { ActionSheetIOS, Alert, Platform } from 'react-native';
-import { bridgeComponent, useBridgeMessage, useBridgeReply } from 'react-native-hotwire';
+import { bridgeComponent, useBridgeMessage } from 'react-native-hotwire';
 
 type Item = { title: string; index: number };
 
 /** A native menu for the page's list of items; the demo's MenuComponent. */
 export const MenuComponent = bridgeComponent('menu', () => {
-  const reply = useBridgeReply();
-
-  useBridgeMessage<{ title: string; items: Item[] }>('display', ({ data: { title, items } }) => {
-    const select = (item: Item) => reply('display', { selectedIndex: item.index });
+  useBridgeMessage<{ title: string; items: Item[] }>('display', ({ data: { title, items } }, reply) => {
+    const select = (item: Item) => reply({ selectedIndex: item.index });
 
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(

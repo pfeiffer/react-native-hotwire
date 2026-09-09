@@ -2,7 +2,7 @@ export { VisitableView, type VisitableViewProps, type VisitableViewRef } from '.
 export { HotwireScreen, type HotwireScreenProps, type HotwireScreenErrorContext } from './HotwireScreen';
 export { HotwireApp, type HotwireAppProps, type HotwireNativeScreen, type HotwireTab } from './HotwireApp';
 export { HotwireProvider, defaultApplicationNameForUserAgent, type HotwireProviderProps } from './HotwireProvider';
-export { bridgeComponent, useBridgeMessage, useBridgeReply } from './bridge/bridgeComponent';
+export { bridgeComponent, useBridgeMessage, type BridgeReply } from './bridge/bridgeComponent';
 export { getSessionHandles, reloadSession, refreshSession, clearSessionSnapshotCache } from './sessions';
 export { openExternalUrl } from './openExternalUrl';
 export {
