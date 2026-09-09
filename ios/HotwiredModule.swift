@@ -19,7 +19,7 @@ final class NoSessionException: GenericException<String> {
 
 public class HotwiredModule: Module {
   public func definition() -> ModuleDefinition {
-    Name("Hotwired")
+    Name("Hotwire")
 
     AsyncFunction("getSessionHandles") { () -> [String] in
       HotwiredSessionManager.shared.handles

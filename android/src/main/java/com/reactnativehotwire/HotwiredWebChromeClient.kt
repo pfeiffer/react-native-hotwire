@@ -1,4 +1,4 @@
-package com.reactnativehotwired
+package com.reactnativehotwire
 
 import android.content.Intent
 import android.net.Uri

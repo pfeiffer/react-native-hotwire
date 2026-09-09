@@ -7,16 +7,16 @@ package = JSON.parse(File.read(File.join(__dir__, '..', 'package.json')))
 # `apple.podspecPath` in expo-module.config.json). Without either, React Native links
 # the pod on its own and the module is never registered.
 Pod::Spec.new do |s|
-  s.name           = 'RNHotwired'
+  s.name           = 'RNHotwire'
   s.version        = package['version']
   s.summary        = package['description']
   s.description    = package['description']
   s.license        = package['license']
   s.author         = 'Mattias Pfeiffer'
-  s.homepage       = 'https://github.com/pfeiffer/react-native-hotwired'
+  s.homepage       = 'https://github.com/pfeiffer/react-native-hotwire'
   s.platforms      = { :ios => '16.4' }
   s.swift_version  = '5.9'
-  s.source         = { git: 'https://github.com/pfeiffer/react-native-hotwired.git' }
+  s.source         = { git: 'https://github.com/pfeiffer/react-native-hotwire.git' }
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
@@ -27,7 +27,7 @@ Pod::Spec.new do |s|
   # Hotwire Native loads turbo.js through `Bundle.module`, which SwiftPM generates.
   # Bundle+Module.swift resolves it to this resource bundle instead.
   s.resource_bundles = {
-    'Hotwired' => ['Vendor/**/*.js']
+    'RNHotwire' => ['Vendor/**/*.js']
   }
 
   s.pod_target_xcconfig = {

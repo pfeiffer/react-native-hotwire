@@ -1,4 +1,4 @@
-package com.reactnativehotwired
+package com.reactnativehotwire
 
 import android.Manifest
 import android.app.Activity

@@ -8,9 +8,9 @@ import dev.hotwire.core.turbo.config.PathConfiguration
 import dev.hotwire.core.turbo.offline.OfflineRequestHandler
 import dev.hotwire.core.turbo.webview.HotwireWebView
 
-// react-native-hotwired: trimmed from upstream, see VENDOR.md. The bridge component
+// react-native-hotwire: trimmed from upstream, see VENDOR.md. The bridge component
 // registry and JSON converter are gone because bridge components are implemented in
-// JavaScript by react-native-hotwired, which also sets the user agent per session.
+// JavaScript by react-native-hotwire, which also sets the user agent per session.
 class HotwireConfig internal constructor() {
     /**
      * The path configuration that defines your navigation rules.
@@ -49,7 +49,7 @@ class HotwireConfig internal constructor() {
     var applicationUserAgentPrefix: String? = null
 
     /**
-     * The user agent HotwireWebView starts with. react-native-hotwired overrides it
+     * The user agent HotwireWebView starts with. react-native-hotwire overrides it
      * per session with one that also lists the JavaScript bridge components.
      */
     val userAgent: String get() {

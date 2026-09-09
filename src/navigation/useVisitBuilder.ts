@@ -131,7 +131,7 @@ export function useVisitBuilder() {
         : getStateFromPath(path, options?.config);
 
       if (!state) {
-        throw new Error(`react-native-hotwired: no navigation state for path "${path}"`);
+        throw new Error(`react-native-hotwire: no navigation state for path "${path}"`);
       }
 
       const action = asNavigateAction(getActionFromState(state, options?.config));

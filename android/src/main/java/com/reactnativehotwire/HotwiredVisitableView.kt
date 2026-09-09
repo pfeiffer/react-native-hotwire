@@ -1,4 +1,4 @@
-package com.reactnativehotwired
+package com.reactnativehotwire
 
 import android.content.Context
 import android.view.MotionEvent

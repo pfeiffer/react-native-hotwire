@@ -41,7 +41,7 @@ open class HotwireWebView @JvmOverloads constructor(
         settings.userAgentString = Hotwire.config.userAgentWithWebViewDefault(context)
         settings.setSupportMultipleWindows(true)
         layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
-        // react-native-hotwired: guarded, see VENDOR.md. Some WebView providers throw
+        // react-native-hotwire: guarded, see VENDOR.md. Some WebView providers throw
         // ClassCastException from WebSettingsCompat on older Android versions.
         try {
             initDayNightTheming()

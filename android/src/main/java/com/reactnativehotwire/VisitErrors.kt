@@ -1,4 +1,4 @@
-package com.reactnativehotwired
+package com.reactnativehotwire
 
 import android.webkit.WebViewClient
 import dev.hotwire.core.turbo.errors.HttpError

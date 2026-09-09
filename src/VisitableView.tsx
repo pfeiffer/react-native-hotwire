@@ -69,7 +69,7 @@ async function openExternalUrl({ url }: OpenExternalUrlEvent) {
   if (await Linking.canOpenURL(url)) {
     await Linking.openURL(url);
   } else {
-    console.error(`react-native-hotwired: don't know how to open ${url}`);
+    console.error(`react-native-hotwire: don't know how to open ${url}`);
   }
 }
 

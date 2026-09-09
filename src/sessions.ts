@@ -7,7 +7,7 @@ interface HotwiredModule {
   clearSessionSnapshotCache(sessionHandle: string): Promise<void>;
 }
 
-const Hotwired = requireNativeModule<HotwiredModule>('Hotwired');
+const Hotwired = requireNativeModule<HotwiredModule>('Hotwire');
 
 /** Handles of every session created so far, one per shared web view. */
 export function getSessionHandles(): Promise<string[]> {

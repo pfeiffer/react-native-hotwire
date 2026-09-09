@@ -1,4 +1,4 @@
-package com.reactnativehotwired
+package com.reactnativehotwire
 
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
@@ -16,7 +16,7 @@ class NoSessionException(handle: String) : CodedException("No session with handl
 
 class HotwiredModule : Module() {
   override fun definition() = ModuleDefinition {
-    Name("Hotwired")
+    Name("Hotwire")
 
     AsyncFunction("getSessionHandles") {
       SessionManager.handles

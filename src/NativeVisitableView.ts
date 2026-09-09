@@ -53,4 +53,4 @@ export interface NativeVisitableViewRef {
 
 export const NativeVisitableView: React.ComponentType<
   NativeVisitableViewProps & { ref?: React.Ref<NativeVisitableViewRef> }
-> = requireNativeViewManager('Hotwired');
+> = requireNativeViewManager('Hotwire');

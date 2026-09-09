@@ -1,4 +1,4 @@
-package com.reactnativehotwired
+package com.reactnativehotwire
 
 import android.content.Intent
 import android.webkit.HttpAuthHandler
@@ -68,7 +68,7 @@ class HotwiredSession(
 
   init {
     val activity = appContext.currentActivity as? AppCompatActivity
-      ?: throw IllegalStateException("react-native-hotwired needs an AppCompatActivity")
+      ?: throw IllegalStateException("react-native-hotwire needs an AppCompatActivity")
 
     webView = HotwireWebView(activity, null)
     turboSession = Session(handle, activity, webView)

@@ -25,7 +25,7 @@ export function useMessageQueue(onMessage: MessageListener | undefined) {
     try {
       message = JSON.parse(e.nativeEvent.message);
     } catch (error) {
-      console.error('react-native-hotwired: failed to parse message from web view', error);
+      console.error('react-native-hotwire: failed to parse message from web view', error);
       return;
     }
 

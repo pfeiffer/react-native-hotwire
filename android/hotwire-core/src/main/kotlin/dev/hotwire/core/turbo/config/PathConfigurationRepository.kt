@@ -55,7 +55,7 @@ internal class PathConfigurationRepository {
     private suspend fun issueRequest(request: Request): String? = try {
         val call = HotwireHttpClient.instance.newCall(request)
 
-        // react-native-hotwired: OkHttp stays on 4.x (React Native pins it), which has no
+        // react-native-hotwire: OkHttp stays on 4.x (React Native pins it), which has no
         // okhttp-coroutines artifact, so the call executes synchronously on the IO dispatcher.
         withContext(dispatcherProvider.io) {
             call.execute().use { response ->

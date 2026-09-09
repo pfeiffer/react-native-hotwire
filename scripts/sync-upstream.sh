@@ -16,9 +16,9 @@ ANDROID_TAG=$(sed -n 's/^android-tag: *//p' "$ROOT/VENDOR.md")
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
-# Files we modified carry a `react-native-hotwired:` marker (see VENDOR.md). Remember
+# Files we modified carry a `react-native-hotwire:` marker (see VENDOR.md). Remember
 # them now; the sync overwrites them and we fail loudly at the end if any lost the marker.
-MODIFIED=$(git -C "$ROOT" grep -l 'react-native-hotwired:' HEAD -- android/hotwire-core/src ios/Vendor | sed 's/^HEAD://')
+MODIFIED=$(git -C "$ROOT" grep -l 'react-native-hotwire:' HEAD -- android/hotwire-core/src ios/Vendor | sed 's/^HEAD://')
 
 echo "hotwire-native-ios @ $IOS_TAG"
 git clone -q --depth 1 --branch "$IOS_TAG" https://github.com/hotwired/hotwire-native-ios.git "$WORK/ios"
@@ -55,7 +55,7 @@ for f in "$WORK/android/core/build.gradle" "$WORK/android/core/build.gradle.kts"
 
 LOST=""
 for f in $MODIFIED; do
-  grep -q 'react-native-hotwired:' "$ROOT/$f" 2>/dev/null || LOST="$LOST $f"
+  grep -q 'react-native-hotwire:' "$ROOT/$f" 2>/dev/null || LOST="$LOST $f"
 done
 if [ -n "$LOST" ]; then
   echo

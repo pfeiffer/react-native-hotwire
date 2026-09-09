@@ -45,10 +45,10 @@ Not copied: `bridge/` (JavaScript bridge components live in this package's JS),
 `assets/js/bridge_components.js`, `assets/json/test-configuration.json`. Dropping
 `bridge/` also drops the kotlinx-serialization dependency.
 
-`navigation-fragments` is not used at all. `android/src/main/java/com/reactnativehotwired/HotwiredView.kt`
+`navigation-fragments` is not used at all. `android/src/main/java/com/reactnativehotwire/HotwiredView.kt`
 and `ScreenshotHolder.kt` are ports of its `HotwireView` and `HotwireViewScreenshotHolder`.
 
-Modified files, each marked with a `react-native-hotwired:` comment:
+Modified files, each marked with a `react-native-hotwire:` comment:
 
 - `config/HotwireConfig.kt`: bridge component registry and JSON converter removed.
 - `turbo/webview/HotwireWebView.kt`: `initDayNightTheming()` wrapped in a
@@ -62,7 +62,7 @@ Modified files, each marked with a `react-native-hotwired:` comment:
 ## Upgrading
 
 1. Bump the tags above, run `yarn sync-upstream`. The script replaces the vendored trees
-   wholesale and then fails if any file that carried a `react-native-hotwired:` marker in
+   wholesale and then fails if any file that carried a `react-native-hotwire:` marker in
    HEAD lost it, listing the files to re-apply.
 2. Re-apply the modifications listed above, then `git diff` the rest to review upstream changes.
 3. Compare the dependency block printed by the script with `android/hotwire-core/build.gradle`.

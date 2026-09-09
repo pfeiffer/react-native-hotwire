@@ -1,4 +1,4 @@
-# react-native-hotwired
+# react-native-hotwire
 
 Hotwire Native for React Native and Expo: a `VisitableView` that renders server-side
 pages through a shared Turbo session per navigator, bridge components implemented in
@@ -10,7 +10,7 @@ Native, see `VENDOR.md`. Not published to npm; consume it from git.
 ## Install
 
 ```sh
-yarn add react-native-hotwired@github:pfeiffer/react-native-hotwired#v1.0.0
+yarn add react-native-hotwire@github:pfeiffer/react-native-hotwire#v1.0.0
 npx expo prebuild
 ```
 
@@ -19,7 +19,7 @@ Requirements: Expo SDK 57+, React Native 0.86+, React Navigation 7, New Architec
 ## Usage
 
 ```tsx
-import { VisitableView, useCurrentUrl, useVisitTo, getLinkingObject } from 'react-native-hotwired';
+import { VisitableView, useCurrentUrl, useVisitTo, getLinkingObject } from 'react-native-hotwire';
 
 const linking = getLinkingObject(BASE_URL, linkingConfig); // pass to NavigationContainer
 
@@ -79,7 +79,7 @@ session to restore it. A handle shared across tabs would show a stale screenshot
 ### Bridge components
 
 ```ts
-import { BridgeComponent } from 'react-native-hotwired';
+import { BridgeComponent } from 'react-native-hotwire';
 
 class NavBarComponent extends BridgeComponent {
   static componentName = 'nav-bar';
@@ -110,9 +110,9 @@ and to the older `@hotwired/strada` (`window.Strada`).
 ## Migrating from react-native-turbo / react-native-web-screen
 
 1. `package.json`: remove `react-native-turbo` and `react-native-web-screen`, add
-   `react-native-hotwired` (git URL above). Remove the `scripts.postinstall` override in the
+   `react-native-hotwire` (git URL above). Remove the `scripts.postinstall` override in the
    old URL; nothing is built at install time any more.
-2. Imports: everything comes from `react-native-hotwired`.
+2. Imports: everything comes from `react-native-hotwire`.
    `useWebviewNavigate` became `useVisitTo` and `useVisitBuilder`; `useCurrentUrl`,
    `getLinkingObject` moved here.
 3. `stradaComponents` → `bridgeComponents`; `StradaComponent` → `BridgeComponentType`;
@@ -121,7 +121,7 @@ and to the older `@hotwired/strada` (`window.Strada`).
 5. Removed: `Session`, `withSession`, `buildWebScreen`, `refreshControlTopAnchor`.
 6. Delete `scripts/link-local-turbo.js`, the `REACT_NATIVE_TURBO_PATH` block in
    `metro.config.js`, and the `postinstall` script entry. For local development use
-   `"react-native-hotwired": "file:../path/to/react-native-hotwired"`, or `yarn link`;
+   `"react-native-hotwire": "file:../path/to/react-native-hotwire"`, or `yarn link`;
    Expo autolinking picks the module up either way.
 7. `npx expo prebuild --clean`, then build both platforms.
 

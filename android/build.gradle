@@ -3,11 +3,11 @@ plugins {
   id 'expo-module-gradle-plugin'
 }
 
-group = 'com.reactnativehotwired'
+group = 'com.reactnativehotwire'
 version = '1.0.0'
 
 android {
-  namespace 'com.reactnativehotwired'
+  namespace 'com.reactnativehotwire'
   defaultConfig {
     versionCode 1
     versionName '1.0.0'

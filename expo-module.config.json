@@ -4,7 +4,7 @@
     "modules": ["HotwiredModule"]
   },
   "android": {
-    "modules": ["com.reactnativehotwired.HotwiredModule"],
+    "modules": ["com.reactnativehotwire.HotwiredModule"],
     "projects": [
       {
         "name": "hotwire-native-core",
