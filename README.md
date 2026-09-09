@@ -76,6 +76,33 @@ session to restore it. A handle shared across tabs would show a stale screenshot
 `getSessionHandles()`, `reloadSession(handle)`, `refreshSession(handle)`,
 `clearSessionSnapshotCache(handle)`.
 
+### Content insets
+
+Translucent chrome, the iOS 26 navigation and tab bars, floats over the page, and a page's
+fixed elements have to clear it. The library tells the page how much, as CSS custom
+properties on `<html>`: `--hotwire-inset-top`, `--hotwire-inset-right`,
+`--hotwire-inset-bottom` and `--hotwire-inset-left`, siblings of `env(safe-area-inset-*)`.
+They are 0 wherever the chrome is opaque and takes layout, so a page needs no platform
+checks, and they are re-applied after every Turbo render.
+
+```tsx
+const screen = useWindowRect();
+const applyContentInsets = useContentInsets(ref, screen.rect);
+
+<View ref={screen.ref} onLayout={screen.onLayout} style={{ flex: 1 }}>
+  <VisitableView ref={ref} onLoad={applyContentInsets} ... />
+</View>
+```
+
+The values come from the chrome itself where a navigator publishes where it stops: wrap a
+tab screen in `PublishContentInsets`, inside a `SafeAreaProvider` mounted in that screen,
+and a nested navigator with its own bar narrows the boundaries it received through
+`ContentInsetsContext`. Without a publisher the web view falls back to its own safe area.
+
+The properties describe floating chrome only. Use them for fixed elements, never for scroll
+padding, and read them live rather than caching them. The keyboard is not chrome: the
+native view gives up what the keyboard covers (Android), or resizes itself (iOS).
+
 ### Bridge components
 
 ```ts

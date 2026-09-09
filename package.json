@@ -22,11 +22,13 @@
   },
   "peerDependencies": {
     "@react-navigation/core": ">=7",
+    "@react-navigation/elements": ">=2",
     "@react-navigation/native": ">=7",
     "expo": "*",
     "expo-modules-core": "*",
     "react": "*",
-    "react-native": ">=0.86"
+    "react-native": ">=0.86",
+    "react-native-safe-area-context": ">=5"
   },
   "devDependencies": {
     "@react-navigation/core": "^7",
