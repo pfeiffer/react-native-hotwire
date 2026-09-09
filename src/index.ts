@@ -13,6 +13,14 @@ export type { RenderError, RenderLoading } from './hooks/useWebViewState';
 
 export { useVisitTo } from './navigation/useVisitTo';
 export { useVisitBuilder, type BuiltVisitAction, type VisitTarget } from './navigation/useVisitBuilder';
+export {
+  useVisitHandler,
+  defaultVisitRoutes,
+  type VisitRoutes,
+  type VisitResolution,
+  type VisitParams,
+  type VisitHandlerOptions,
+} from './navigation/useVisitHandler';
 export { useCurrentUrl, type LinkingConfig } from './navigation/useCurrentUrl';
 export { getLinkingObject } from './navigation/getLinkingObject';
 

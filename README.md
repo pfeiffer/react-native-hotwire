@@ -115,9 +115,26 @@ and on the next launch that cache takes precedence over the bundled copy, so the
 rules survive a restart. `getPathConfigurationSettings()` returns the `settings` of the
 configuration loaded last; `addPathConfigurationListener` reports each load.
 
-React Navigation is not involved in matching. Read `properties` in `onVisitProposal`:
-`context: "modal"` and `presentation` decide the navigation action, and any custom key is
-yours, for instance a route name for a URL that is a native screen.
+React Navigation is not involved in matching. `useVisitHandler` routes the standard
+properties the way upstream's Navigator does: `context` and `modal_style` pick a route from
+a table you declare once in the stack, `presentation` picks push, replace, pop, refresh,
+none, clear_all or replace_root, and a `screen` property names a native route. The app
+keeps the last word through `onVisitProposal(proposal, resolution)`: return nothing to
+accept, your own resolution or action to substitute, `null` to drop.
+
+```tsx
+const handleVisitProposal = useVisitHandler({
+  routes: { default: 'web', modal: 'webModal', full: 'webFullScreen' },
+  onVisitProposal: (proposal, resolution) => {
+    if (proposal.properties.screen === 'settings') return CommonActions.navigate({ name: 'Settings' });
+  },
+});
+
+<VisitableView onVisitProposal={handleVisitProposal} ... />
+```
+
+Routed web screens receive `{ url, fullPath, properties }` as params; `fullPath` is what
+`useCurrentUrl` reads.
 
 ### Bridge components
 
