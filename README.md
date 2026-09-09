@@ -205,7 +205,11 @@ const handleVisitProposal = useVisitHandler({
 ```
 
 Routed web screens receive `{ url, fullPath, properties }` as params; `fullPath` is what
-`useCurrentUrl` reads.
+`useCurrentUrl` reads. A proposal for the page on top replaces it and one for the page
+beneath pops, as upstream does; `query_string_presentation: replace` in a rule makes a
+query change count as the same page. `HotwireApp` also keys its screens by path through
+`getId`, so React Navigation pops back to a page already in the stack instead of pushing it
+again.
 
 ### Bridge components
 

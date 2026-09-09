@@ -87,6 +87,10 @@ function urlOf(route: { params?: object } | undefined): string | undefined {
   return params?.url;
 }
 
+function withoutQuery(url: string | undefined): string | undefined {
+  return url?.split('?')[0].split('#')[0];
+}
+
 function routeFor(properties: PathProperties, routes: VisitRoutes): string {
   if (typeof properties.screen === 'string') {
     return properties.screen;
@@ -141,13 +145,18 @@ export function useVisitHandler(options: VisitHandlerOptions = {}) {
         default: {
           // Upstream's pushOrReplace: the page already on top is replaced rather than
           // stacked twice, the page beneath is popped back to rather than pushed again.
+          // `query_string_presentation: replace` makes a query change the same page.
+          const samePage = (other: string | undefined) =>
+            lower(properties.query_string_presentation, 'default') === 'replace'
+              ? withoutQuery(other) === withoutQuery(url)
+              : other === url;
           const stack = navigation.getState();
           const current = stack?.routes[stack.index ?? -1];
           const previous = stack?.routes[(stack.index ?? 0) - 1];
-          if (urlOf(current) === url) {
+          if (samePage(urlOf(current))) {
             return { kind: 'navigate', action: StackActions.replace(name, params) };
           }
-          if (previous && urlOf(previous) === url) {
+          if (previous && samePage(urlOf(previous))) {
             return { kind: 'pop' };
           }
           const leavingModal = modalRoutes.has(route.name) && lower(properties.context, 'default') !== 'modal';

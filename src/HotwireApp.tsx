@@ -39,7 +39,10 @@ export interface HotwireAppProps
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 
-const webRouteId = ({ params }: { params?: { url?: string } }) => params?.url;
+// Screens are identified by path: a link to a page already in the stack pops back to it
+// and updates its params, and a query change, a filter say, is the same page. React
+// Navigation does this on its own through getId.
+const webRouteId = ({ params }: { params?: { url?: string } }) => params?.url?.split('?')[0].split('#')[0];
 
 /**
  * A whole Hotwire app in one component: a stack with the web routes each presentation
