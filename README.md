@@ -111,13 +111,28 @@ A React Navigation screen that is a Hotwire page, with the defaults upstream's N
 provides: the URL from the route params, the session from the screen's place in the
 navigator tree (one per tab, one for modals, one default), proposals routed by
 `useVisitHandler` with your `onVisitProposal` as the last word, `pull_to_refresh_enabled`
-from the path configuration, and the page title as the screen title. Declare it once per
-presentation your stack supports and name them in `routes`:
+from the path configuration, and the page title as the screen title. `hotwireScreens`
+declares one per presentation; to change one of them, give it options by route name, or
+rename the routes and it and every screen navigate by the same table:
 
 ```tsx
-<Stack.Screen name="web" component={HotwireScreen} initialParams={{ fullPath: '/' }} />
-<Stack.Screen name="webModal" component={HotwireScreen} options={{ presentation: 'modal' }} />
+const routes = { ...defaultVisitRoutes, medium: 'sheet' };
+
+{hotwireScreens({ routes, options: { sheet: { sheetAllowedDetents: [0.5, 1] } } })}
+<HotwireScreen {...props} routes={routes} />
 ```
+
+A screen you write yourself keeps its name in `routes` and `hotwireScreenId`, which pops
+back to a page already in the stack instead of pushing it again:
+
+```tsx
+<Stack.Screen name="sheet" component={SheetScreen} getId={hotwireScreenId} options={{ presentation: 'formSheet' }} />
+```
+
+A route the table names but no navigator in the tree declares falls back, sheet to modal
+and modal to push, with a warning in development, so a presentation the app left out
+degrades instead of dropping the visit. Type the table as `VisitRoutes<keyof RootParamList>`
+and a name that is not a route is a compile error.
 
 A screen placed by hand, a tab root say, gets `initialParams={{ fullPath: '/inbox' }}`, a path
 resolved against the linking prefix; screens reached through proposals or links carry their

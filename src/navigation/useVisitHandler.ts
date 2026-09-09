@@ -4,6 +4,8 @@ import {
   useNavigation,
   useRoute,
   type NavigationAction,
+  type NavigationProp,
+  type ParamListBase,
 } from '@react-navigation/native';
 import { useCallback } from 'react';
 
@@ -12,22 +14,25 @@ import type { PathProperties, VisitProposal } from '../types';
 /**
  * Route names a proposal resolves to, keyed by the path configuration's `context` and
  * `modal_style`. Declare each route once in the stack with the matching `presentation`;
- * the rules pick between them per URL. A style the table does not name falls back to
- * `modal`, so a server typo degrades rather than breaks.
+ * the rules pick between them per URL. A style whose route the navigator tree does not
+ * declare falls back to `modal`, and `modal` to `default`, with a warning in development,
+ * so a route the app left out degrades to a coarser presentation rather than dropping
+ * the visit. Type the table against the app's own route names, `VisitRoutes<keyof
+ * RootParamList>`, and a typo is a compile error.
  */
-export interface VisitRoutes {
+export interface VisitRoutes<Name extends string = string> {
   /** `context: "default"`: a push on the current stack. */
-  default: string;
+  default: Name;
   /** `context: "modal"` with `modal_style: "large"`, the default style. */
-  modal: string;
+  modal: Name;
   /** `modal_style: "full"`, a full-screen modal. */
-  full?: string;
+  full?: Name;
   /** `modal_style: "medium"`, a half sheet. */
-  medium?: string;
+  medium?: Name;
   /** `modal_style: "page_sheet"`. */
-  page_sheet?: string;
+  page_sheet?: Name;
   /** `modal_style: "form_sheet"`. */
-  form_sheet?: string;
+  form_sheet?: Name;
 }
 
 export const defaultVisitRoutes: VisitRoutes = {
@@ -91,16 +96,41 @@ function withoutQuery(url: string | undefined): string | undefined {
   return url?.split('?')[0].split('#')[0];
 }
 
-function routeFor(properties: PathProperties, routes: VisitRoutes): string {
+type AnyNavigation = NavigationProp<ParamListBase>;
+
+/** The route names declared by this navigator and every navigator above it, where `navigate` can reach. */
+function declaredRouteNames(navigation: AnyNavigation): Set<string> {
+  const names = new Set<string>();
+  for (let nav: AnyNavigation | undefined = navigation; nav; nav = nav.getParent()) {
+    nav.getState()?.routeNames?.forEach((name) => names.add(name));
+  }
+  return names;
+}
+
+/**
+ * The route for the proposal's `screen`, `context` and `modal_style`: the most specific
+ * name the table gives that the navigator tree declares.
+ */
+function routeFor(properties: PathProperties, routes: VisitRoutes, declared: Set<string>): string {
+  const candidates: string[] = [];
   if (typeof properties.screen === 'string') {
-    return properties.screen;
+    candidates.push(properties.screen);
   }
-  if (lower(properties.context, 'default') !== 'modal') {
-    return routes.default;
+  if (lower(properties.context, 'default') === 'modal') {
+    const style = lower(properties.modal_style, 'large');
+    const styled = style in routes ? routes[style as keyof VisitRoutes] : undefined;
+    if (styled) candidates.push(styled);
+    candidates.push(routes.modal);
   }
-  const style = lower(properties.modal_style, 'large');
-  const styled = style in routes ? routes[style as keyof VisitRoutes] : undefined;
-  return styled ?? routes.modal;
+  candidates.push(routes.default);
+
+  const name = candidates.find((candidate) => declared.has(candidate)) ?? candidates[0];
+  if (__DEV__ && name !== candidates[0]) {
+    console.warn(
+      `react-native-hotwire: no route named "${candidates[0]}" in this stack or above; showing the page in "${name}". Declare it, or name the route that has it in \`routes\`.`
+    );
+  }
+  return name;
 }
 
 /**
@@ -126,7 +156,7 @@ export function useVisitHandler(options: VisitHandlerOptions = {}) {
     (proposal: VisitProposal): VisitResolution => {
       const { url, properties } = proposal;
       const presentation = lower(properties.presentation, 'default');
-      const name = routeFor(properties, routes);
+      const name = routeFor(properties, routes, declaredRouteNames(navigation as AnyNavigation));
       const params: VisitParams = { url, fullPath: fullPath(url), properties };
 
       switch (presentation) {
