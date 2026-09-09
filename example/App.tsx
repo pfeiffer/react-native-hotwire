@@ -37,6 +37,14 @@ export default function App() {
         { title: 'Resources', url: `${demo}/resources`, icon: ({ color, size }) => <Ionicons name="book" color={color} size={size} /> },
       ]}
       bridgeComponents={[FormComponent, MenuComponent, OverflowMenuComponent]}
+      onError={(error, screen) => {
+        // The upstream demo's handling of a 401: the screen that got it is empty, so drop
+        // it and go to sign-in; the server sends the user back once signed in.
+        if (error.statusCode === 401) {
+          screen.pop();
+          screen.visitTo(`${demo}/session/new`);
+        }
+      }}
       webViewDebuggingEnabled
       screens={[{ name: 'numbers', component: NumbersScreen, options: { title: 'Numbers' } }]}
       onVisitProposal={(proposal) => {

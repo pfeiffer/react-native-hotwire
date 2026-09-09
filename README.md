@@ -53,6 +53,15 @@ A `path` makes the OS open the screen for that URL; a rule with `screen: setting
 path configuration makes a page link do the same, and `onVisitProposal` is the app's last
 word on any proposal (see "Path configuration").
 
+### Errors and authentication
+
+A failed visit shows `renderError` in its screen, a message and a Retry that reloads, as
+upstream's error presenter does. Anything beyond that is the app's, through
+`HotwireScreen`'s `onError(error, screen)`, where `screen` can `retry`, `pop` the screen
+without a transition, or `visitTo` a URL. The upstream demo's answer to a 401 is four lines
+of it, in `example/App.tsx`: pop the empty screen and visit the sign-in page, and the server
+redirects back once signed in.
+
 ### Your own hierarchy
 
 An app whose navigators come from elsewhere, a config document or named modal flows, keeps

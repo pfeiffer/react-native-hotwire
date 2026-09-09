@@ -89,14 +89,30 @@ export function HotwireApp(props: HotwireAppProps) {
       function renderWebRoutes(initialUrl: string) {
         return (
           <>
-            <Stack.Screen name="web" component={WebScreen} getId={webRouteId} initialParams={{ url: initialUrl }} />
-            <Stack.Screen name="webModal" component={WebScreen} getId={webRouteId} options={{ presentation: 'modal' }} />
-            <Stack.Screen name="webSheet" component={WebScreen} getId={webRouteId} options={{ presentation: 'formSheet' }} />
+            <Stack.Screen
+              name="web"
+              component={WebScreen}
+              getId={webRouteId}
+              initialParams={{ url: initialUrl }}
+              options={{ title: '' }}
+            />
+            <Stack.Screen
+              name="webModal"
+              component={WebScreen}
+              getId={webRouteId}
+              options={{ title: '', presentation: 'modal' }}
+            />
+            <Stack.Screen
+              name="webSheet"
+              component={WebScreen}
+              getId={webRouteId}
+              options={{ title: '', presentation: 'formSheet' }}
+            />
             <Stack.Screen
               name="webFullScreen"
               component={WebScreen}
               getId={webRouteId}
-              options={{ presentation: 'fullScreenModal' }}
+              options={{ title: '', presentation: 'fullScreenModal' }}
             />
           </>
         );
