@@ -26,21 +26,71 @@ final class HotwiredSession: NSObject {
   init(handle: String, webViewConfiguration: WKWebViewConfiguration) {
     self.handle = handle
     self.webViewConfiguration = webViewConfiguration
+    super.init()
+    webViewConfiguration.userContentController.add(self, name: "nativeApp")
   }
 
-  lazy var turboSession: Session = {
-    webViewConfiguration.userContentController.add(self, name: "nativeApp")
+  private(set) lazy var turboSession: Session = makeSession()
 
+  var webView: WKWebView {
+    turboSession.webView
+  }
+
+  private func makeSession() -> Session {
     let session = Session(webViewConfiguration: webViewConfiguration)
     session.delegate = self
     session.webView.allowsLinkPreview = false
     session.webView.scrollView.contentInsetAdjustmentBehavior = .never
     session.webView.uiDelegate = self
     return session
-  }()
+  }
 
-  var webView: WKWebView {
-    turboSession.webView
+  // MARK: Web content process termination
+  //
+  // WebKit kills the content process of a backgrounded web view under memory pressure and
+  // leaves a white page behind. Upstream's Navigator handles this in two steps and so does
+  // this: reload right away when the page is on screen, defer to the next foreground when
+  // the app is in the background, and on every foreground probe a session whose process
+  // died without notice and rebuild it.
+
+  private var terminatedInBackground = false
+
+  /// Reloads the page whose process died, if it is still parented. An off-screen page is
+  /// left alone: reloading it fetches for nothing and its next visit would connect bridge
+  /// components twice. In the background the reload waits for `inspect()`.
+  private func reloadIfPermitted() {
+    guard let visitable = turboSession.activeVisitable as? UIViewController, visitable.parent != nil else {
+      return
+    }
+    if UIApplication.shared.applicationState == .background {
+      terminatedInBackground = true
+      return
+    }
+    turboSession.reload()
+  }
+
+  /// Called when the app enters the foreground.
+  func inspect() {
+    if terminatedInBackground {
+      terminatedInBackground = false
+      turboSession.reload()
+      return
+    }
+    guard turboSession.topmostVisitable != nil else { return }
+
+    // A dead process fails every script evaluation; that is the only signal WebKit gives.
+    webView.evaluateJavaScript("1") { [weak self] _, error in
+      guard error != nil else { return }
+      self?.recreateWebView()
+    }
+  }
+
+  /// Replaces the session and its web view, then visits the active page again in place.
+  private func recreateWebView() {
+    guard let visitable = turboSession.activeVisitable else { return }
+    visitable.deactivateVisitableWebView()
+    turboSession = makeSession()
+    turboSession.visit(visitable, options: VisitOptions(action: .replace))
   }
 
   func visitableViewWillAppear(_ view: HotwiredSessionSubscriber) {
@@ -67,6 +117,7 @@ final class HotwiredSession: NSObject {
 extension HotwiredSession: SessionDelegate {
   func sessionWebViewProcessDidTerminate(_ session: Session) {
     subscriber?.processDidTerminate()
+    reloadIfPermitted()
   }
 
   func session(_ session: Session, didProposeVisit proposal: VisitProposal) {
