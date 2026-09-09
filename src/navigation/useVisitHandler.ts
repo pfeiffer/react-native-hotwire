@@ -7,6 +7,7 @@ import {
 } from '@react-navigation/native';
 import { useCallback } from 'react';
 
+import { discardProposedVisit } from '../sessions';
 import type { PathProperties, VisitProposal } from '../types';
 
 /**
@@ -151,6 +152,7 @@ export function useVisitHandler(options: VisitHandlerOptions = {}) {
       const resolved = resolve(proposal);
       const decided = onVisitProposal ? onVisitProposal(proposal, resolved) : undefined;
       if (decided === null) {
+        void discardProposedVisit(proposal.url);
         return;
       }
       const resolution: VisitResolution =

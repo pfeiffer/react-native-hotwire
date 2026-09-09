@@ -26,8 +26,8 @@ final class HotwiredSessionManager {
   // the page is not fetched again and a flash set on the redirect renders. The proposal
   // reaches JS as a URL and the screen it opens may be on another session, a modal's form
   // redirecting into a tab, so the options wait here, across sessions, for the view that
-  // visits that URL. They expire quickly: a proposal the app dropped must not hand its
-  // response to an unrelated visit of the same URL later.
+  // visits that URL. The visit handler discards them when the app drops a proposal, and
+  // they expire regardless, in case an app routing proposals itself drops one silently.
   private var proposedVisitOptions: [URL: (options: VisitOptions, at: Date)] = [:]
 
   func storeProposedVisitOptions(_ options: VisitOptions, for url: URL) {
@@ -36,7 +36,12 @@ final class HotwiredSessionManager {
 
   func takeProposedVisitOptions(for url: URL) -> VisitOptions? {
     guard let entry = proposedVisitOptions.removeValue(forKey: url) else { return nil }
-    return Date().timeIntervalSince(entry.at) < 10 ? entry.options : nil
+    return Date().timeIntervalSince(entry.at) < 3 ? entry.options : nil
+  }
+
+  /// The app dropped the proposal; nothing will visit it.
+  func discardProposedVisitOptions(for url: URL) {
+    proposedVisitOptions.removeValue(forKey: url)
   }
 
   func findOrCreateSession(handle: String, webViewConfiguration: WKWebViewConfiguration) -> HotwiredSession {
