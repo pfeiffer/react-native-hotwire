@@ -102,8 +102,8 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
   const refresh = useCallback(() => visitableRef.current?.refresh(), []);
   const handleVisitProposal = useVisitHandler({ routes, onVisitProposal, refresh });
 
-  // React Navigation shows the route name until the page title arrives. HotwireApp declares
-  // its routes with an empty title; this covers a screen declared without one.
+  // React Navigation shows the route name until the page title arrives. hotwireScreens
+  // declares its routes with an empty title; this covers a screen declared without one.
   useLayoutEffect(() => {
     if (titleFromPage) {
       navigation.setOptions({ title: '' });

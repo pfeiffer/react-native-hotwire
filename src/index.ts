@@ -1,6 +1,6 @@
 export { VisitableView, type VisitableViewProps, type VisitableViewRef } from './VisitableView';
 export { HotwireScreen, type HotwireScreenProps, type HotwireScreenErrorContext } from './HotwireScreen';
-export { HotwireApp, type HotwireAppProps, type HotwireNativeScreen, type HotwireTab } from './HotwireApp';
+export { hotwireScreens, type HotwireScreensOptions } from './navigation/hotwireScreens';
 export { HotwireProvider, defaultApplicationNameForUserAgent, type HotwireProviderProps } from './HotwireProvider';
 export { bridgeComponent, useBridgeMessage, type BridgeReply } from './bridge/bridgeComponent';
 export { getSessionHandles, reloadSession, refreshSession, clearSessionSnapshotCache } from './sessions';

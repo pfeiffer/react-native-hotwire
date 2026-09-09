@@ -1,6 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { HotwireApp } from 'react-native-hotwire';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { FlatList, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { HotwireProvider, HotwireScreen, hotwireLinking, hotwireScreens, type HotwireScreenProps } from 'react-native-hotwire';
 
 import { FormComponent } from './bridge/FormComponent';
 import { MenuComponent } from './bridge/MenuComponent';
@@ -13,6 +16,51 @@ import configuration from './path-configuration.json';
 // controller. A consumer serves such a document from its server (`pathConfigurationUrl`) and
 // bundles a copy, as here.
 const demo = 'https://hotwire-native-demo.dev';
+
+const Stack = createNativeStackNavigator();
+const Tabs = createBottomTabNavigator();
+
+// Every web route is this screen. The upstream demo's handling of a 401: the screen that
+// got it is empty, so it becomes the sign-in page instead; the server sends the user back
+// once signed in.
+function WebScreen(props: HotwireScreenProps) {
+  return (
+    <HotwireScreen
+      {...props}
+      onError={(error, screen) => {
+        if (error.statusCode === 401) {
+          screen.replace(`${demo}/session/new`);
+        }
+      }}
+    />
+  );
+}
+
+// One stack per tab, as upstream has one Navigator per tab: a push stays in its tab, and
+// the tab's screens share the session named after it.
+function tabStack(url: string) {
+  return function TabStack() {
+    return <Stack.Navigator>{hotwireScreens({ url, component: WebScreen })}</Stack.Navigator>;
+  };
+}
+
+const NavigationTab = tabStack(demo);
+const ComponentsTab = tabStack(`${demo}/components`);
+const ResourcesTab = tabStack(`${demo}/resources`);
+
+function TabsScreen() {
+  return (
+    <Tabs.Navigator screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="Navigation" component={NavigationTab} options={{ tabBarIcon: icon('swap-horizontal') }} />
+      <Tabs.Screen name="Bridge Components" component={ComponentsTab} options={{ tabBarIcon: icon('grid') }} />
+      <Tabs.Screen name="Resources" component={ResourcesTab} options={{ tabBarIcon: icon('book') }} />
+    </Tabs.Navigator>
+  );
+}
+
+const icon =
+  (name: React.ComponentProps<typeof Ionicons>['name']) =>
+  ({ color, size }: { color: string; size: number }) => <Ionicons name={name} color={color} size={size} />;
 
 // The counterpart of the demo's NumbersViewController.
 function NumbersScreen() {
@@ -29,27 +77,24 @@ function NumbersScreen() {
   );
 }
 
+const linking = hotwireLinking(demo);
+
 export default function App() {
+  // The web view follows the system appearance on both platforms; the chrome must too.
+  const colorScheme = useColorScheme();
+
   return (
-    <HotwireApp
-      url={demo}
+    <HotwireProvider
       pathConfiguration={configuration}
-      tabs={[
-        { title: 'Navigation', url: demo, icon: ({ color, size }) => <Ionicons name="swap-horizontal" color={color} size={size} /> },
-        { title: 'Bridge Components', url: `${demo}/components`, icon: ({ color, size }) => <Ionicons name="grid" color={color} size={size} /> },
-        { title: 'Resources', url: `${demo}/resources`, icon: ({ color, size }) => <Ionicons name="book" color={color} size={size} /> },
-      ]}
       bridgeComponents={[FormComponent, MenuComponent, OverflowMenuComponent]}
-      onError={(error, screen) => {
-        // The upstream demo's handling of a 401: the screen that got it is empty, so it
-        // becomes the sign-in page instead; the server sends the user back once signed in.
-        if (error.statusCode === 401) {
-          screen.replace(`${demo}/session/new`);
-        }
-      }}
-      webViewDebuggingEnabled
-      screens={[{ name: 'numbers', component: NumbersScreen, options: { title: 'Numbers' } }]}
-    />
+      webViewDebuggingEnabled>
+      <NavigationContainer linking={linking} theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack.Navigator>
+          <Stack.Screen name="tabs" component={TabsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="numbers" component={NumbersScreen} options={{ title: 'Numbers' }} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </HotwireProvider>
   );
 }
 

@@ -18,44 +18,50 @@ Requirements: Expo SDK 57+, React Native 0.86+, React Navigation 7, New Architec
 
 ## Usage
 
-Point it at a Turbo-enabled site:
+Point a stack at a Turbo-enabled site:
 
 ```tsx
-import { HotwireApp } from 'react-native-hotwire';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { HotwireProvider, hotwireLinking, hotwireScreens } from 'react-native-hotwire';
 import configuration from './path-configuration.json';
 
+const baseURL = 'https://example.com';
+const Stack = createNativeStackNavigator();
+
 export default () => (
-  <HotwireApp
-    url="https://example.com"
-    pathConfiguration={configuration}
-    pathConfigurationUrl="https://example.com/configurations/react-native.json"
-  />
+  <HotwireProvider pathConfiguration={configuration} pathConfigurationUrl={`${baseURL}/configurations/app.json`}>
+    <NavigationContainer linking={hotwireLinking(baseURL)}>
+      <Stack.Navigator>{hotwireScreens({ url: baseURL })}</Stack.Navigator>
+    </NavigationContainer>
+  </HotwireProvider>
 );
 ```
 
-That is the whole app: `HotwireProvider` with the app's user agent token and bridge
-components, a stack with a web route per presentation, `HotwireScreen` on each, the path
-configuration deciding which URL opens how, bundled for the first launch and refreshed from
-the server after, and every link under the base URL handed to a web screen. It is the model
-Hotwire Native itself has, one stack and one modal layer, and `example/` is exactly this
-against the official demo server, with the demo's rules written for this library in
-`example/path-configuration.json`.
+`HotwireProvider` carries the app's user agent token, bridge components and path
+configuration. `hotwireScreens` is the web routes a stack needs, one per presentation, each a
+`HotwireScreen`, with the path configuration deciding which URL opens how, bundled for the
+first launch and refreshed from the server after. `hotwireLinking` hands every URL under the
+base URL to a web screen. It is the model Hotwire Native itself has, one stack and one modal
+layer, and the navigators are yours: tabs, theme, header styling and everything else is
+plain React Navigation. `example/` is exactly this against the official demo server, three
+tabs each with a stack and a session of their own, with the demo's rules written for this
+library in `example/path-configuration.json`.
 
 Native screens sit next to the web ones:
 
 ```tsx
-<HotwireApp
-  url={baseURL}
-  screens={[{ name: 'settings', component: SettingsScreen, path: 'settings' }]}
-  onVisitProposal={(proposal) => {
-    if (proposal.properties.screen === 'settings') return CommonActions.navigate('settings');
-  }}
-/>
+<Stack.Navigator>
+  {hotwireScreens({ url: baseURL })}
+  <Stack.Screen name="settings" component={SettingsScreen} />
+</Stack.Navigator>
 ```
 
-A `path` makes the OS open the screen for that URL; a rule with `screen: settings` in the
-path configuration makes a page link do the same, and `onVisitProposal` is the app's last
-word on any proposal (see "Path configuration").
+`hotwireLinking(baseURL, { settings: 'settings' })` makes the OS open the screen for that
+URL; a rule with `screen: settings` in the path configuration makes a page link do the same,
+and `onVisitProposal` is the app's last word on any proposal (see "Path configuration"). To
+set `onError` or `onVisitProposal` once for every web route, give `hotwireScreens` a
+`component` that wraps `HotwireScreen` with them.
 
 ### Errors and authentication
 
@@ -63,9 +69,9 @@ A failed visit shows `renderError` in its screen, a message and a Retry that rel
 upstream's error presenter does. Anything beyond that is the app's, through
 `HotwireScreen`'s `onError(error, screen)`, where `screen` can `retry`, `pop` the screen,
 `replace` it with the page at a URL, or `visitTo` one. `error.statusCode` is the HTTP
-status, or a `SystemStatusCode` for a failure with no response, a network error say. The upstream demo's answer to a 401
-is one line of it, in `example/App.tsx`: replace the empty screen with the sign-in page,
-and the server redirects back once signed in.
+status, or a `SystemStatusCode` for a failure with no response, a network error say. The
+upstream demo's answer to a 401 is one line of it, in `example/App.tsx`: replace the empty
+screen with the sign-in page, and the server redirects back once signed in.
 
 ### Your own hierarchy
 
@@ -224,7 +230,7 @@ const handleVisitProposal = useVisitHandler({
 Routed web screens receive `{ url, fullPath, properties }` as params; `fullPath` is what
 `useCurrentUrl` reads. A proposal for the page on top replaces it and one for the page
 beneath pops, as upstream does; `query_string_presentation: replace` in a rule makes a
-query change count as the same page. `HotwireApp` also keys its screens by path through
+query change count as the same page. `hotwireScreens` also keys its screens by path through
 `getId`, so React Navigation pops back to a page already in the stack instead of pushing it
 again.
 
@@ -233,7 +239,7 @@ again.
 The injected adapter talks to `@hotwired/hotwire-native-bridge` (`window.HotwireNative`)
 and to the older `@hotwired/strada` (`window.Strada`).
 
-The app's components are given to `HotwireProvider` (or `HotwireApp`) once; the web view's
+The app's components are given to `HotwireProvider` once; the web view's
 user agent advertises their names per session, which is why the list is not per view. A
 component is a function component made with `bridgeComponent`; it renders inside the screen
 showing the page, so `useNavigation` and every other hook work in it. `example/bridge` has
@@ -263,9 +269,9 @@ message that asked; there is no "last message" to look up.
 
 ### Navigation
 
-- `hotwireLinking(baseURL, screens?)`: the `linking` prop `HotwireApp` uses, for an app that
-  builds its own container around `HotwireScreen`. Every URL under `baseURL` opens the `web`
-  route with the URL as params unless `screens` maps its path to a native route.
+- `hotwireLinking(baseURL, screens?)`: the `linking` prop for a container whose web screens
+  are the catch-all. Every URL under `baseURL` opens the `web` route with the URL as params
+  unless `screens` maps its path to a native route.
 - `getLinkingObject(baseURL, config)`: the same for a `config` of your own. Linked
   routes receive `baseURL` and `fullPath` params.
 - `useCurrentUrl(baseURL, config)`: the URL the current screen should load.
