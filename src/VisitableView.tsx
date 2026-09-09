@@ -1,10 +1,12 @@
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
-import { Linking, StyleSheet, type NativeSyntheticEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { Linking, StyleSheet, View, type NativeSyntheticEvent, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useBridge } from './hooks/useBridge';
 import { useMessageQueue } from './hooks/useMessageQueue';
 import { useWebViewDialogs, type OnAlert, type OnConfirm } from './hooks/useWebViewDialogs';
 import { useWebViewState, type RenderError, type RenderLoading } from './hooks/useWebViewState';
+import { useContentInsets } from './insets/useContentInsets';
+import { useWindowRect } from './insets/useWindowRect';
 import { NativeVisitableView, type NativeVisitableViewRef } from './NativeVisitableView';
 import type {
   BridgeComponentType,
@@ -36,6 +38,12 @@ export interface VisitableViewProps {
   scrollEnabled?: boolean;
   /** iOS only. */
   contentInset?: ContentInset;
+  /**
+   * Hands the page the space the native chrome takes up, as `--hotwire-inset-top`,
+   * `-right`, `-bottom` and `-left` on `<html>`. See "Content insets" in the README.
+   * Defaults to true.
+   */
+  insetProperties?: boolean;
   /** Android only: position of the pull-to-refresh spinner. */
   progressViewOffset?: ProgressViewOffset;
   webViewDebuggingEnabled?: boolean;
@@ -82,6 +90,7 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
     pullToRefreshEnabled = true,
     scrollEnabled = true,
     contentInset,
+    insetProperties = true,
     progressViewOffset,
     webViewDebuggingEnabled = false,
     renderLoading,
@@ -111,6 +120,10 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
 
   const { webViewStateComponent, handleShowLoading, handleHideLoading, handleRenderError } =
     useWebViewState(reload, renderLoading, renderError);
+
+  // Where this view sits in the window decides how much of the chrome overlaps it.
+  const { ref: layoutRef, onLayout, rect } = useWindowRect();
+  const applyContentInsets = useContentInsets(nativeRef, rect);
 
   // Token order is part of the contract with the server: "<app identity> bridge-components: [...]".
   const userAgent = useMemo(
@@ -143,9 +156,12 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
   const handleLoad = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<LoadEvent>) => {
       initializeBridge();
+      if (insetProperties) {
+        applyContentInsets();
+      }
       onLoad?.(nativeEvent);
     },
-    [initializeBridge, onLoad]
+    [applyContentInsets, initializeBridge, insetProperties, onLoad]
   );
 
   const handleVisitProposal = useCallback(
@@ -178,7 +194,7 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
   );
 
   return (
-    <>
+    <View ref={layoutRef} onLayout={onLayout} style={style}>
       {bridgeComponents?.map((BridgeComponent, i) => (
         <BridgeComponent
           key={`${url}-${i}`}
@@ -211,10 +227,10 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
         onShowLoading={handleShowLoading}
         onHideLoading={handleHideLoading}
         onContentProcessDidTerminate={handleContentProcessDidTerminate}
-        style={style}
+        style={styles.container}
       />
       {webViewStateComponent}
-    </>
+    </View>
   );
 });
 

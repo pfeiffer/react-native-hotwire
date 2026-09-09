@@ -9,7 +9,6 @@ export { useVisitBuilder, type BuiltVisitAction, type VisitTarget } from './navi
 export { useCurrentUrl, type LinkingConfig } from './navigation/useCurrentUrl';
 export { getLinkingObject } from './navigation/getLinkingObject';
 
-export { useContentInsets } from './insets/useContentInsets';
 export { PublishContentInsets } from './insets/PublishContentInsets';
 export { ContentInsetsContext, type ContentBoundaries } from './insets/ContentInsetsContext';
 export { useWindowRect, type WindowRect } from './insets/useWindowRect';

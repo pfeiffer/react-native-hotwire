@@ -83,16 +83,8 @@ fixed elements have to clear it. The library tells the page how much, as CSS cus
 properties on `<html>`: `--hotwire-inset-top`, `--hotwire-inset-right`,
 `--hotwire-inset-bottom` and `--hotwire-inset-left`, siblings of `env(safe-area-inset-*)`.
 They are 0 wherever the chrome is opaque and takes layout, so a page needs no platform
-checks, and they are re-applied after every Turbo render.
-
-```tsx
-const screen = useWindowRect();
-const applyContentInsets = useContentInsets(ref, screen.rect);
-
-<View ref={screen.ref} onLayout={screen.onLayout} style={{ flex: 1 }}>
-  <VisitableView ref={ref} onLoad={applyContentInsets} ... />
-</View>
-```
+checks, and they are re-applied after every Turbo render. `VisitableView` does this by
+itself; `insetProperties={false}` turns it off.
 
 The values come from the chrome itself where a navigator publishes where it stops: wrap a
 tab screen in `PublishContentInsets`, inside a `SafeAreaProvider` mounted in that screen,
