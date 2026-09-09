@@ -57,10 +57,10 @@ word on any proposal (see "Path configuration").
 
 A failed visit shows `renderError` in its screen, a message and a Retry that reloads, as
 upstream's error presenter does. Anything beyond that is the app's, through
-`HotwireScreen`'s `onError(error, screen)`, where `screen` can `retry`, `pop` the screen
-without a transition, or `visitTo` a URL. The upstream demo's answer to a 401 is four lines
-of it, in `example/App.tsx`: pop the empty screen and visit the sign-in page, and the server
-redirects back once signed in.
+`HotwireScreen`'s `onError(error, screen)`, where `screen` can `retry`, `pop` the screen,
+`replace` it with the page at a URL, or `visitTo` one. The upstream demo's answer to a 401
+is one line of it, in `example/App.tsx`: replace the empty screen with the sign-in page,
+and the server redirects back once signed in.
 
 ### Your own hierarchy
 

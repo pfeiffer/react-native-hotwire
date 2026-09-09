@@ -37,8 +37,10 @@ export interface HotwireScreenProps
 export interface HotwireScreenErrorContext {
   /** Reloads the page. */
   retry: () => void;
-  /** Pops this screen, without a transition. */
+  /** Pops this screen, without a transition. Nothing dispatched through it afterwards lands. */
   pop: () => void;
+  /** Replaces this screen with the page at `url`, without a transition: a pop and a visit in one. */
+  replace: (url: string) => void;
   /** Visits a URL as a page link would. */
   visitTo: ReturnType<typeof useVisitTo>;
 }
@@ -119,10 +121,20 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
             navigation.dispatch(StackActions.pop());
           }
         },
+        replace: (url) => {
+          navigation.setOptions({ animation: 'none' });
+          const parsed = new URL(url);
+          const params: VisitParams = {
+            url,
+            fullPath: `${parsed.pathname}${parsed.search}${parsed.hash}`,
+            properties: {},
+          };
+          navigation.dispatch(StackActions.replace(route.name, params));
+        },
         visitTo,
       });
     },
-    [navigation, onError, visitTo]
+    [navigation, onError, route.name, visitTo]
   );
 
   const handleLoad = useCallback(

@@ -38,11 +38,10 @@ export default function App() {
       ]}
       bridgeComponents={[FormComponent, MenuComponent, OverflowMenuComponent]}
       onError={(error, screen) => {
-        // The upstream demo's handling of a 401: the screen that got it is empty, so drop
-        // it and go to sign-in; the server sends the user back once signed in.
+        // The upstream demo's handling of a 401: the screen that got it is empty, so it
+        // becomes the sign-in page instead; the server sends the user back once signed in.
         if (error.statusCode === 401) {
-          screen.pop();
-          screen.visitTo(`${demo}/session/new`);
+          screen.replace(`${demo}/session/new`);
         }
       }}
       webViewDebuggingEnabled

@@ -47,7 +47,7 @@ function toStackAction(action: NavigateAction, visitAction: VisitAction | undefi
     return StackActions.replace(name, params);
   }
 
-  return CommonActions.navigate({ name, params });
+  return CommonActions.navigate(name, params);
 }
 
 const IGNORED_PARAMS: Record<string, undefined> = {
@@ -114,7 +114,7 @@ export function useVisitBuilder() {
     (to: VisitTarget, visitAction?: VisitAction): BuiltVisitAction => {
       if (typeof to !== 'string') {
         return {
-          action: CommonActions.navigate({ name: to.screen, params: to.params }),
+          action: CommonActions.navigate(to.screen, to.params),
           willChangeTopmostNavigator: undefined,
         };
       }

@@ -82,6 +82,11 @@ function lower(value: unknown, fallback: string): string {
   return typeof value === 'string' ? value.toLowerCase() : fallback;
 }
 
+function urlOf(route: { params?: object } | undefined): string | undefined {
+  const params = route?.params as { url?: string } | undefined;
+  return params?.url;
+}
+
 function routeFor(properties: PathProperties, routes: VisitRoutes): string {
   if (typeof properties.screen === 'string') {
     return properties.screen;
@@ -134,16 +139,27 @@ export function useVisitHandler(options: VisitHandlerOptions = {}) {
         case 'replace':
           return { kind: 'navigate', action: StackActions.replace(name, params) };
         default: {
+          // Upstream's pushOrReplace: the page already on top is replaced rather than
+          // stacked twice, the page beneath is popped back to rather than pushed again.
+          const stack = navigation.getState();
+          const current = stack?.routes[stack.index ?? -1];
+          const previous = stack?.routes[(stack.index ?? 0) - 1];
+          if (urlOf(current) === url) {
+            return { kind: 'navigate', action: StackActions.replace(name, params) };
+          }
+          if (previous && urlOf(previous) === url) {
+            return { kind: 'pop' };
+          }
           const leavingModal = modalRoutes.has(route.name) && lower(properties.context, 'default') !== 'modal';
           const action =
             leavingModal || proposal.action === 'replace'
               ? StackActions.replace(name, params)
-              : CommonActions.navigate({ name, params });
+              : CommonActions.navigate(name, params);
           return { kind: 'navigate', action };
         }
       }
     },
-    [route.name, routes.default, routes.modal, routes.full, routes.medium, routes.page_sheet, routes.form_sheet]
+    [navigation, route.name, routes.default, routes.modal, routes.full, routes.medium, routes.page_sheet, routes.form_sheet]
   );
 
   return useCallback(
