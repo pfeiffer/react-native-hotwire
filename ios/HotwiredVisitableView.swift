@@ -41,6 +41,7 @@ final class HotwiredVisitableView: ExpoView {
   let onWebAlert = EventDispatcher()
   let onWebConfirm = EventDispatcher()
   let onOpenExternalUrl = EventDispatcher()
+  let onCrossOriginRedirect = EventDispatcher()
   let onFormSubmissionStarted = EventDispatcher()
   let onFormSubmissionFinished = EventDispatcher()
   let onShowLoading = EventDispatcher()
@@ -233,7 +234,7 @@ extension HotwiredVisitableView: HotwiredSessionSubscriber {
   }
 
   func didProposeVisitToCrossOriginRedirect(_ location: URL) {
-    onOpenExternalUrl(["url": location.absoluteString])
+    onCrossOriginRedirect(["url": location.absoluteString])
   }
 
   func didFailRequest(for visitable: Visitable, error: HotwireNativeError) {

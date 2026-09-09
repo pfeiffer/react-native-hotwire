@@ -32,6 +32,7 @@ export interface NativeVisitableViewProps {
   onWebAlert?: (e: NativeSyntheticEvent<DialogEvent>) => void;
   onWebConfirm?: (e: NativeSyntheticEvent<DialogEvent>) => void;
   onOpenExternalUrl?: (e: NativeSyntheticEvent<OpenExternalUrlEvent>) => void;
+  onCrossOriginRedirect?: (e: NativeSyntheticEvent<OpenExternalUrlEvent>) => void;
   onFormSubmissionStarted?: (e: NativeSyntheticEvent<FormSubmissionEvent>) => void;
   onFormSubmissionFinished?: (e: NativeSyntheticEvent<FormSubmissionEvent>) => void;
   onShowLoading?: () => void;

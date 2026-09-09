@@ -87,6 +87,7 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   private val onWebAlert by EventDispatcher<Map<String, Any?>>()
   private val onWebConfirm by EventDispatcher<Map<String, Any?>>()
   private val onOpenExternalUrl by EventDispatcher<Map<String, Any?>>()
+  private val onCrossOriginRedirect by EventDispatcher<Map<String, Any?>>()
   private val onFormSubmissionStarted by EventDispatcher<Map<String, Any?>>()
   private val onFormSubmissionFinished by EventDispatcher<Map<String, Any?>>()
   private val onShowLoading by EventDispatcher<Map<String, Any?>>()
@@ -411,7 +412,7 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   }
 
   override fun visitProposedToCrossOriginRedirect(location: String) {
-    onOpenExternalUrl(mapOf("url" to location))
+    onCrossOriginRedirect(mapOf("url" to location))
   }
 
   override fun onRenderProcessGone() {

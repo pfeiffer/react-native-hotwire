@@ -4,7 +4,8 @@ import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } 
 import { useDefaultSessionHandle } from './navigation/useDefaultSessionHandle';
 import { defaultVisitRoutes, useVisitHandler, type VisitHandlerOptions, type VisitParams, type VisitRoutes } from './navigation/useVisitHandler';
 import { VisitableView, type VisitableViewProps, type VisitableViewRef } from './VisitableView';
-import type { LoadEvent } from './types';
+import { openExternalUrl } from './openExternalUrl';
+import type { LoadEvent, OpenExternalUrlEvent } from './types';
 
 export interface HotwireScreenProps
   extends Omit<VisitableViewProps, 'url' | 'sessionHandle' | 'onVisitProposal' | 'pullToRefreshEnabled'> {
@@ -50,6 +51,8 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
     titleFromPage = true,
     pullToRefreshEnabled,
     onLoad,
+    onOpenExternalUrl = openExternalUrl,
+    onCrossOriginRedirect,
     ...visitableProps
   } = props;
 
@@ -90,6 +93,21 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
     [navigation, onLoad, titleFromPage]
   );
 
+  // Upstream pops the screen the redirected visit was pushed for, then routes the URL.
+  const handleCrossOriginRedirect = useCallback(
+    (event: OpenExternalUrlEvent) => {
+      if (onCrossOriginRedirect) {
+        onCrossOriginRedirect(event);
+        return;
+      }
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      }
+      onOpenExternalUrl(event);
+    },
+    [navigation, onCrossOriginRedirect, onOpenExternalUrl]
+  );
+
   const pullToRefresh =
     pullToRefreshEnabled ?? (params.properties?.pull_to_refresh_enabled as boolean | undefined) ?? true;
 
@@ -102,6 +120,8 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
       pullToRefreshEnabled={pullToRefresh}
       onVisitProposal={handleVisitProposal}
       onLoad={handleLoad}
+      onOpenExternalUrl={onOpenExternalUrl}
+      onCrossOriginRedirect={handleCrossOriginRedirect}
     />
   );
 });

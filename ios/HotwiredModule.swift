@@ -83,6 +83,7 @@ public class HotwiredModule: Module, PathConfigurationDelegate {
         "onWebAlert",
         "onWebConfirm",
         "onOpenExternalUrl",
+        "onCrossOriginRedirect",
         "onFormSubmissionStarted",
         "onFormSubmissionFinished",
         "onShowLoading",

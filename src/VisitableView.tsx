@@ -49,6 +49,12 @@ export interface VisitableViewProps {
   onLoad?: (event: LoadEvent) => void;
   /** Defaults to opening the URL with `Linking`. */
   onOpenExternalUrl?: (event: OpenExternalUrlEvent) => void;
+  /**
+   * A visit followed a redirect to another origin, so the page this view was pushed for
+   * never loaded. Upstream pops the screen and opens the URL; this defaults to
+   * `onOpenExternalUrl` alone, and `HotwireScreen` adds the pop.
+   */
+  onCrossOriginRedirect?: (event: OpenExternalUrlEvent) => void;
   onFormSubmissionStarted?: (event: FormSubmissionEvent) => void;
   onFormSubmissionFinished?: (event: FormSubmissionEvent) => void;
   /** Defaults to reloading the view. */
@@ -121,6 +127,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     onVisitProposal,
     onLoad,
     onOpenExternalUrl = openExternalUrl,
+    onCrossOriginRedirect,
     onFormSubmissionStarted,
     onFormSubmissionFinished,
     onContentProcessDidTerminate,
@@ -201,6 +208,12 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     [onOpenExternalUrl]
   );
 
+  const handleCrossOriginRedirect = useCallback(
+    ({ nativeEvent }: NativeSyntheticEvent<OpenExternalUrlEvent>) =>
+      onCrossOriginRedirect ? onCrossOriginRedirect(nativeEvent) : onOpenExternalUrl(nativeEvent),
+    [onCrossOriginRedirect, onOpenExternalUrl]
+  );
+
   const handleFormSubmissionStarted = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<FormSubmissionEvent>) => onFormSubmissionStarted?.(nativeEvent),
     [onFormSubmissionStarted]
@@ -243,6 +256,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
         onVisitProposal={handleVisitProposal}
         onMessage={handleOnMessage}
         onOpenExternalUrl={handleOpenExternalUrl}
+        onCrossOriginRedirect={handleCrossOriginRedirect}
         onLoad={handleLoad}
         onWebAlert={handleAlert}
         onWebConfirm={handleConfirm}

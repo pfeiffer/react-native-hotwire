@@ -94,6 +94,7 @@ class HotwiredModule : Module() {
         "onWebAlert",
         "onWebConfirm",
         "onOpenExternalUrl",
+        "onCrossOriginRedirect",
         "onFormSubmissionStarted",
         "onFormSubmissionFinished",
         "onShowLoading",
