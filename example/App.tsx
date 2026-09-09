@@ -29,7 +29,7 @@ function WebScreen(props: HotwireScreenProps) {
       {...props}
       onError={(error, screen) => {
         if (error.statusCode === 401) {
-          screen.replace(`${demo}/session/new`);
+          screen.replace('/session/new');
         }
       }}
     />
@@ -38,15 +38,15 @@ function WebScreen(props: HotwireScreenProps) {
 
 // One stack per tab, as upstream has one Navigator per tab: a push stays in its tab, and
 // the tab's screens share the session named after it.
-function tabStack(url: string) {
+function tabStack(path: string) {
   return function TabStack() {
-    return <Stack.Navigator>{hotwireScreens({ url, component: WebScreen })}</Stack.Navigator>;
+    return <Stack.Navigator>{hotwireScreens({ path, component: WebScreen })}</Stack.Navigator>;
   };
 }
 
-const NavigationTab = tabStack(demo);
-const ComponentsTab = tabStack(`${demo}/components`);
-const ResourcesTab = tabStack(`${demo}/resources`);
+const NavigationTab = tabStack('/');
+const ComponentsTab = tabStack('/components');
+const ResourcesTab = tabStack('/resources');
 
 function TabsScreen() {
   return (

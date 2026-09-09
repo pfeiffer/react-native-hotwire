@@ -32,7 +32,7 @@ const Stack = createNativeStackNavigator();
 export default () => (
   <HotwireProvider pathConfiguration={configuration} pathConfigurationUrl={`${baseURL}/configurations/app.json`}>
     <NavigationContainer linking={hotwireLinking(baseURL)}>
-      <Stack.Navigator>{hotwireScreens({ url: baseURL })}</Stack.Navigator>
+      <Stack.Navigator>{hotwireScreens()}</Stack.Navigator>
     </NavigationContainer>
   </HotwireProvider>
 );
@@ -42,7 +42,9 @@ export default () => (
 configuration. `hotwireScreens` is the web routes a stack needs, one per presentation, each a
 `HotwireScreen`, with the path configuration deciding which URL opens how, bundled for the
 first launch and refreshed from the server after. `hotwireLinking` hands every URL under the
-base URL to a web screen. It is the model Hotwire Native itself has, one stack and one modal
+base URL to a web screen, and its prefix is the one place the origin is stated: everything
+under the container resolves paths against it, so `hotwireScreens({ path: '/inbox' })`,
+`visitTo('/inbox')` and `screen.replace('/session/new')` all work (`useBaseURL()` reads it). It is the model Hotwire Native itself has, one stack and one modal
 layer, and the navigators are yours: tabs, theme, header styling and everything else is
 plain React Navigation. `example/` is exactly this against the official demo server, three
 tabs each with a stack and a session of their own, with the demo's rules written for this
@@ -52,7 +54,7 @@ Native screens sit next to the web ones:
 
 ```tsx
 <Stack.Navigator>
-  {hotwireScreens({ url: baseURL })}
+  {hotwireScreens()}
   <Stack.Screen name="settings" component={SettingsScreen} />
 </Stack.Navigator>
 ```
@@ -84,7 +86,7 @@ import { VisitableView, useCurrentUrl, useVisitTo, getLinkingObject } from 'reac
 const linking = getLinkingObject(BASE_URL, linkingConfig); // pass to NavigationContainer
 
 function WebScreen() {
-  const url = useCurrentUrl(BASE_URL, linkingConfig);
+  const url = useCurrentUrl();
   const visitTo = useVisitTo();
 
   return <VisitableView url={url} sessionHandle="main" onVisitProposal={({ url, action }) => visitTo(url, action)} />;
@@ -113,12 +115,13 @@ from the path configuration, and the page title as the screen title. Declare it 
 presentation your stack supports and name them in `routes`:
 
 ```tsx
-<Stack.Screen name="web" component={HotwireScreen} initialParams={{ url: baseURL }} />
+<Stack.Screen name="web" component={HotwireScreen} initialParams={{ fullPath: '/' }} />
 <Stack.Screen name="webModal" component={HotwireScreen} options={{ presentation: 'modal' }} />
 ```
 
-A screen placed by hand, a tab root say, gets `initialParams={{ url }}`; screens reached
-through proposals or links carry their URL already. Everything `VisitableView` takes,
+A screen placed by hand, a tab root say, gets `initialParams={{ fullPath: '/inbox' }}`, a path
+resolved against the linking prefix; screens reached through proposals or links carry their
+URL already. Everything `VisitableView` takes,
 `renderError` say, passes through. A URL on another host goes to `onOpenExternalUrl`, whose
 default `openExternalUrl` is exported so a handler that takes one scheme for itself, `sms:`
 say, can hand the rest back to it. For a
@@ -274,7 +277,10 @@ message that asked; there is no "last message" to look up.
   unless `screens` maps its path to a native route.
 - `getLinkingObject(baseURL, config)`: the same for a `config` of your own. Linked
   routes receive `baseURL` and `fullPath` params.
-- `useCurrentUrl(baseURL, config)`: the URL the current screen should load.
+- `useBaseURL()`: the linking prefix, what paths resolve against.
+- `useCurrentUrl(config?)`: the URL the current screen should load, its `fullPath` param or
+  its configured path resolved against the base URL. Both come from the container's
+  linking; `config` is for a path config other than the one linking uses.
 - `useVisitTo()`: `visitTo(urlOrTarget, visitAction)`, the counterpart of React Navigation's
   `useLinkTo`. Unmatched URLs resolve to the innermost screen named `Fallback`, so define one
   in each navigator that should catch visits.

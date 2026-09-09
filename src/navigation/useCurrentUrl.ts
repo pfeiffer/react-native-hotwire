@@ -1,4 +1,7 @@
-import { useRoute, type LinkingOptions } from '@react-navigation/native';
+import { LinkingContext, useRoute, type LinkingOptions } from '@react-navigation/native';
+import { useContext } from 'react';
+
+import { useResolveURL } from './useBaseURL';
 
 export type LinkingConfig = LinkingOptions<object>['config'];
 
@@ -25,11 +28,15 @@ function pathFromParams(params: unknown): string | undefined {
 
 /**
  * The URL the current screen should load: the `fullPath` param set by `getLinkingObject`
- * when the screen was reached through a link, otherwise the screen's configured path.
+ * when the screen was reached through a link, otherwise the screen's configured path,
+ * resolved against the base URL. Both come from the container's `linking`; pass `config`
+ * only when the screen's path lives in a config other than the one linking uses.
  */
-export function useCurrentUrl(baseUrl: string, config: LinkingConfig): string {
+export function useCurrentUrl(config?: LinkingConfig): string {
   const route = useRoute();
-  const path = pathFromParams(route.params) ?? findPath(route.name, config) ?? '';
+  const linking = useContext(LinkingContext);
+  const resolve = useResolveURL();
+  const path = pathFromParams(route.params) ?? findPath(route.name, config ?? (linking.options?.config as LinkingConfig)) ?? '';
 
-  return new URL(path, baseUrl).toString();
+  return resolve(path);
 }

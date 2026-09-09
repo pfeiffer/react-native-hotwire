@@ -26,6 +26,7 @@ export {
   type VisitHandlerOptions,
 } from './navigation/useVisitHandler';
 export { useCurrentUrl, type LinkingConfig } from './navigation/useCurrentUrl';
+export { useBaseURL } from './navigation/useBaseURL';
 export { getLinkingObject } from './navigation/getLinkingObject';
 export { hotwireLinking } from './navigation/hotwireLinking';
 

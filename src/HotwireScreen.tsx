@@ -6,16 +6,11 @@ import { defaultVisitRoutes, useVisitHandler, type VisitHandlerOptions, type Vis
 import { VisitableView, type VisitableViewProps, type VisitableViewRef } from './VisitableView';
 import { openExternalUrl } from './openExternalUrl';
 import { useVisitTo } from './navigation/useVisitTo';
+import { useResolveURL } from './navigation/useBaseURL';
 import type { ErrorEvent, LoadEvent, OpenExternalUrlEvent } from './types';
 
 export interface HotwireScreenProps
   extends Omit<VisitableViewProps, 'url' | 'sessionHandle' | 'onVisitProposal' | 'pullToRefreshEnabled' | 'onError'> {
-  /**
-   * Origin the page paths resolve against. A screen reached through `useVisitHandler`
-   * or a link carries its URL in params and needs none; a screen placed in a navigator
-   * by hand, a tab root say, gets `initialParams={{ url }}` or `fullPath` plus this.
-   */
-  baseURL?: string;
   /** Overrides the default: the chain of tab routes above, `modal`, or `default`. */
   sessionHandle?: string;
   /** Route names per presentation; see `VisitRoutes`. */
@@ -39,7 +34,7 @@ export interface HotwireScreenErrorContext {
   retry: () => void;
   /** Pops this screen, without a transition. Nothing dispatched through it afterwards lands. */
   pop: () => void;
-  /** Replaces this screen with the page at `url`, without a transition: a pop and a visit in one. */
+  /** Replaces this screen with the page at `url`, a path or a URL, without a transition: a pop and a visit in one. */
   replace: (url: string) => void;
   /** Visits a URL as a page link would. */
   visitTo: ReturnType<typeof useVisitTo>;
@@ -49,12 +44,19 @@ function readParams(params: unknown): Partial<VisitParams> & { baseURL?: string 
   return params && typeof params === 'object' ? (params as Partial<VisitParams> & { baseURL?: string }) : {};
 }
 
+function pathOf(url: string): string {
+  const parsed = new URL(url);
+  return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+}
+
 /**
  * A React Navigation screen that is a Hotwire page: `VisitableView` plus the defaults
- * upstream's Navigator provides. The URL comes from the route params, the session from
- * the screen's place in the navigator tree, proposals go through `useVisitHandler` with
- * the app's `onVisitProposal` as the last word, `pull_to_refresh_enabled` comes from the
- * path configuration, and the page title becomes the screen title.
+ * upstream's Navigator provides. The URL comes from the route params, `url` or a
+ * `fullPath` resolved against the base URL (see useBaseURL), the session from the
+ * screen's place in the navigator tree, proposals go through `useVisitHandler` with the
+ * app's `onVisitProposal` as the last word, `pull_to_refresh_enabled` comes from the path
+ * configuration, and the page title becomes the screen title. A screen placed by hand, a
+ * tab root say, gets `initialParams={{ fullPath: '/' }}`; `hotwireScreens` does this.
  *
  * For a hierarchy the flat model cannot express, named modal flows or screens placed by
  * a config, compose `VisitableView` with your own router instead; this screen is the
@@ -62,7 +64,6 @@ function readParams(params: unknown): Partial<VisitParams> & { baseURL?: string 
  */
 export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((props, ref) => {
   const {
-    baseURL,
     sessionHandle,
     routes,
     onVisitProposal,
@@ -81,16 +82,16 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
   const visitableRef = useRef<VisitableViewRef>(null);
   useImperativeHandle(ref, () => visitableRef.current as VisitableViewRef, []);
 
+  const resolve = useResolveURL();
   const url = useMemo(() => {
     if (params.url) {
       return params.url;
     }
-    const origin = params.baseURL ?? baseURL;
-    if (!origin) {
-      throw new Error('react-native-hotwire: HotwireScreen needs a url param or a baseURL prop');
-    }
-    return new URL(params.fullPath ?? '/', origin).toString();
-  }, [params.url, params.fullPath, params.baseURL, baseURL]);
+    // Linking stamps `baseURL` on the routes it opens; everything else resolves against
+    // the container's prefix.
+    const path = params.fullPath ?? '/';
+    return params.baseURL ? new URL(path, params.baseURL).toString() : resolve(path);
+  }, [params.url, params.fullPath, params.baseURL, resolve]);
 
   const resolvedRoutes: VisitRoutes = { ...defaultVisitRoutes, ...routes };
   const defaultSessionHandle = useDefaultSessionHandle(
@@ -121,20 +122,16 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
             navigation.dispatch(StackActions.pop());
           }
         },
-        replace: (url) => {
+        replace: (urlOrPath) => {
           navigation.setOptions({ animation: 'none' });
-          const parsed = new URL(url);
-          const params: VisitParams = {
-            url,
-            fullPath: `${parsed.pathname}${parsed.search}${parsed.hash}`,
-            properties: {},
-          };
+          const url = resolve(urlOrPath);
+          const params: VisitParams = { url, fullPath: pathOf(url), properties: {} };
           navigation.dispatch(StackActions.replace(route.name, params));
         },
         visitTo,
       });
     },
-    [navigation, onError, route.name, visitTo]
+    [navigation, onError, resolve, route.name, visitTo]
   );
 
   const handleLoad = useCallback(
