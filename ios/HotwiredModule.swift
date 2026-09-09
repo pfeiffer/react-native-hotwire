@@ -56,6 +56,13 @@ public class HotwiredModule: Module, PathConfigurationDelegate {
 
     AsyncFunction("getPathConfigurationSettings") { () -> [String: Any] in
       Hotwire.config.pathConfiguration.settings
+    }
+
+    AsyncFunction("getPathProperties") { (url: String) throws -> [String: Any] in
+      guard let parsed = URL(string: url) else {
+        throw InvalidPathConfigurationException("bad url \(url)")
+      }
+      return Hotwire.config.pathConfiguration.properties(for: parsed) as [String: Any]
     }.runOnQueue(.main)
 
     AsyncFunction("getSessionHandles") { () -> [String] in

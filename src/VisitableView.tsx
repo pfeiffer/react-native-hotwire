@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
-import { Linking, StyleSheet, View, type NativeSyntheticEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type NativeSyntheticEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useBridge } from './hooks/useBridge';
@@ -10,6 +10,8 @@ import { useContentInsets } from './insets/useContentInsets';
 import { useWindowRect } from './insets/useWindowRect';
 import { useHotwireConfig } from './HotwireProvider';
 import { NativeVisitableView, type NativeVisitableViewRef } from './NativeVisitableView';
+import { openExternalUrl } from './openExternalUrl';
+import { normalizeProperties } from './pathConfiguration';
 import type {
   ContentInset,
   ContentProcessDidTerminateEvent,
@@ -19,7 +21,6 @@ import type {
   MessageListener,
   OnErrorCallback,
   OpenExternalUrlEvent,
-  PathProperties,
   VisitProposal,
 } from './types';
 
@@ -39,7 +40,7 @@ export interface VisitableViewProps {
   renderError?: RenderError;
   onVisitProposal: (proposal: VisitProposal) => void;
   onLoad?: (event: LoadEvent) => void;
-  /** Defaults to opening the URL with `Linking`. */
+  /** Defaults to `openExternalUrl`: an in-app browser if expo-web-browser is installed, else the system. */
   onOpenExternalUrl?: (event: OpenExternalUrlEvent) => void;
   /**
    * A visit followed a redirect to another origin, so the page this view was pushed for
@@ -65,29 +66,6 @@ export interface VisitableViewRef {
   reload: () => void;
   /** Refreshes the current page through Turbo. */
   refresh: () => void;
-}
-
-// The Android core reports its enum-valued properties upper case (`POP`, `DEFAULT`), iOS
-// lower case as written in the document. Apps read one spelling.
-const ENUM_PROPERTIES = ['context', 'presentation', 'modal_style', 'query_string_presentation'];
-
-function normalizeProperties(properties: PathProperties | undefined): PathProperties {
-  const normalized: PathProperties = { ...properties };
-  for (const key of ENUM_PROPERTIES) {
-    const value = normalized[key];
-    if (typeof value === 'string') {
-      normalized[key] = value.toLowerCase();
-    }
-  }
-  return normalized;
-}
-
-async function openExternalUrl({ url }: OpenExternalUrlEvent) {
-  if (await Linking.canOpenURL(url)) {
-    await Linking.openURL(url);
-  } else {
-    console.error(`react-native-hotwire: don't know how to open ${url}`);
-  }
 }
 
 /**

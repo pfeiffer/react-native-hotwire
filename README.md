@@ -62,7 +62,8 @@ word on any proposal (see "Path configuration").
 A failed visit shows `renderError` in its screen, a message and a Retry that reloads, as
 upstream's error presenter does. Anything beyond that is the app's, through
 `HotwireScreen`'s `onError(error, screen)`, where `screen` can `retry`, `pop` the screen,
-`replace` it with the page at a URL, or `visitTo` one. The upstream demo's answer to a 401
+`replace` it with the page at a URL, or `visitTo` one. `error.statusCode` is the HTTP
+status, or a `SystemStatusCode` for a failure with no response, a network error say. The upstream demo's answer to a 401
 is one line of it, in `example/App.tsx`: replace the empty screen with the sign-in page,
 and the server redirects back once signed in.
 
@@ -89,10 +90,12 @@ function WebScreen() {
 ```
 
 `HotwireProvider` holds what belongs to a session rather than a screen: the user agent token,
-the bridge components it advertises, inspectability, inline media playback on iOS, and the
-path configuration. A session is
+the bridge components it advertises, inspectability, and the path configuration. A session is
 created by the first view on its handle and keeps its user agent for life, which is why these
-are set once, above the navigators, and not per view. One provider per app.
+are set once, above the navigators, and not per view. One provider per app. The token
+defaults to `defaultApplicationNameForUserAgent`, the `Hotwire Native` and `Turbo Native`
+tokens a server keys on; an app that adds its own keeps them:
+`applicationNameForUserAgent={`${defaultApplicationNameForUserAgent} MyApp/1.0`}`.
 
 ### `HotwireScreen`
 
@@ -110,7 +113,9 @@ presentation your stack supports and name them in `routes`:
 
 A screen placed by hand, a tab root say, gets `initialParams={{ url }}`; screens reached
 through proposals or links carry their URL already. Everything `VisitableView` takes,
-`bridgeComponents`, `applicationNameForUserAgent`, `renderError`, passes through. For a
+`renderError` say, passes through. A URL on another host goes to `onOpenExternalUrl`, whose
+default `openExternalUrl` is exported so a handler that takes one scheme for itself, `sms:`
+say, can hand the rest back to it. For a
 hierarchy the flat model cannot express, named modal flows or screens placed by a config,
 compose `VisitableView` with your own router instead.
 
@@ -120,8 +125,6 @@ compose `VisitableView` with your own router instead.
 |---|---|
 | `url` | Page to visit. Changing it visits the new URL in the same session. |
 | `sessionHandle` | Screens sharing a handle share one web view and Turbo session. Default `"Default"`. |
-| `bridgeComponents` | `BridgeComponent` subclasses. Their names are advertised in the user agent as `bridge-components: [...]`. |
-| `applicationNameForUserAgent` | Appended to the user agent. |
 | `onVisitProposal` | Required. Turbo proposed a visit; navigate with `useVisitTo`. |
 | `onLoad`, `onError`, `onOpenExternalUrl`, `onFormSubmissionStarted/Finished`, `onContentProcessDidTerminate`, `onMessage` | Session events. |
 | `onAlert`, `onConfirm` | Replace the default `Alert` dialogs for `window.alert` / `window.confirm`. |
@@ -196,7 +199,9 @@ loadPathConfiguration({ document: configuration, url: `${baseURL}/configurations
 The bundled document is available at once. The URL loads afterwards and is cached on disk,
 and on the next launch that cache takes precedence over the bundled copy, so the server's
 rules survive a restart. `getPathConfigurationSettings()` returns the `settings` of the
-configuration loaded last; `addPathConfigurationListener` reports each load.
+configuration loaded last; `addPathConfigurationListener` reports each load;
+`getPathProperties(url)` returns what a proposal for `url` would carry, for the URLs that
+never become one, a screen placed by hand or a deep link.
 
 React Navigation is not involved in matching. `useVisitHandler` routes the standard
 properties the way upstream's Navigator does: `context` and `modal_style` pick a route from
@@ -225,21 +230,6 @@ again.
 
 ### Bridge components
 
-```ts
-import { BridgeComponent } from 'react-native-hotwire';
-
-class NavBarComponent extends BridgeComponent {
-  static componentName = 'nav-bar';
-
-  onReceive(message) {
-    if (message.event === 'setHeaderRightActions') {
-      // ...
-      this.replyTo(message.event, { selectedIndex: 0 });
-    }
-  }
-}
-```
-
 The injected adapter talks to `@hotwired/hotwire-native-bridge` (`window.HotwireNative`)
 and to the older `@hotwired/strada` (`window.Strada`).
 
@@ -266,12 +256,15 @@ export const FormComponent = bridgeComponent('form', () => {
 ```
 
 `useBridgeMessage(event, handler)` receives, `useBridgeReply()` answers the last message for
-an event as upstream's `reply(to:)` does. The class `BridgeComponent` remains for components
-written in upstream's shape, `onReceive` and `replyTo`.
+an event as upstream's `reply(to:)` does. The handler may be async; a reply after an await
+still answers the message that asked.
 
 ### Navigation
 
-- `getLinkingObject(baseURL, config)`: the `linking` prop for `NavigationContainer`. Linked
+- `hotwireLinking(baseURL, screens?)`: the `linking` prop `HotwireApp` uses, for an app that
+  builds its own container around `HotwireScreen`. Every URL under `baseURL` opens the `web`
+  route with the URL as params unless `screens` maps its path to a native route.
+- `getLinkingObject(baseURL, config)`: the same for a `config` of your own. Linked
   routes receive `baseURL` and `fullPath` params.
 - `useCurrentUrl(baseURL, config)`: the URL the current screen should load.
 - `useVisitTo()`: `visitTo(urlOrTarget, visitAction)`, the counterpart of React Navigation's

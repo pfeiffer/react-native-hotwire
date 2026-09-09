@@ -56,6 +56,10 @@ class HotwiredModule : Module() {
       Hotwire.config.pathConfiguration.settings
     }
 
+    AsyncFunction("getPathProperties") { url: String ->
+      Hotwire.config.pathConfiguration.properties(url)
+    }
+
     AsyncFunction("getSessionHandles") {
       SessionManager.handles
     }

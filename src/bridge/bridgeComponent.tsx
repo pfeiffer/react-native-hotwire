@@ -26,7 +26,7 @@ function useBridgeContext(): BridgeContextValue {
  * Makes a bridge component out of a function component. It renders inside the screen
  * showing the page, so every hook works in it: useNavigation for a header button,
  * useState for what the page last sent, any context. Receive with useBridgeMessage,
- * answer with useBridgeReply. The class BridgeComponent remains for upstream's shape.
+ * answer with useBridgeReply.
  */
 export function bridgeComponent(name: string, Component: React.ComponentType<{}>): BridgeComponentType {
   function Bridged(props: BridgeComponentProps) {

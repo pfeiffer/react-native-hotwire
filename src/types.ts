@@ -36,8 +36,6 @@ export interface DialogEvent {
   message: string;
 }
 
-export type HTTPStatusCode = number;
-
 export enum SystemStatusCode {
   NETWORK_FAILURE = 0,
   TIMEOUT_FAILURE = -1,
@@ -48,7 +46,8 @@ export enum SystemStatusCode {
 
 export interface ErrorEvent {
   url: string;
-  statusCode: SystemStatusCode | HTTPStatusCode;
+  /** A `SystemStatusCode`, or the HTTP status of the response. */
+  statusCode: SystemStatusCode | number;
   description?: string;
 }
 

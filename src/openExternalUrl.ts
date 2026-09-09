@@ -19,7 +19,11 @@ function inAppBrowser(): WebBrowser | null {
   return webBrowser;
 }
 
-/** HotwireScreen's default for a URL that is not the app's: in-app browser if available, else the system. */
+/**
+ * The default `onOpenExternalUrl`: an in-app browser for http(s) when expo-web-browser is
+ * installed, the system for everything else. A handler that takes one scheme for itself
+ * hands the rest back here.
+ */
 export async function openExternalUrl({ url }: OpenExternalUrlEvent) {
   const browser = inAppBrowser();
   if (browser && /^https?:/.test(url)) {
