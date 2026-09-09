@@ -111,7 +111,45 @@ final class HotwiredVisitableViewController: UIViewController, Visitable {
     delegate?.hideVisitableActivityIndicator()
   }
 
+  func visitableDidActivateWebView(_ webView: WKWebView) {
+    registerContentScrollView()
+    dragObservation = webView.scrollView.panGestureRecognizer.observe(\.state) { [weak self] recognizer, _ in
+      if recognizer.state == .began {
+        self?.registerContentScrollView()
+      }
+    }
+  }
+
   func visitableWillDeactivateWebView() {
+    dragObservation = nil
     locationState = .deactivated(visitableView.webView?.url ?? initialVisitableURL)
+  }
+
+  // MARK: Content scroll view
+
+  private var dragObservation: NSKeyValueObservation?
+
+  /// UIKit drives bar behavior from content scroll views: the navigation bar's large title
+  /// and scroll-edge effect from the stack's top controller (the react-native-screens screen
+  /// above this one), the tab bar's scroll-edge effect and minimize behavior from the
+  /// controller directly under the UITabBarController. Neither finds the web view by itself:
+  /// Hotwire registers it on `visitableViewController` only, and UIKit's `subviews[0]`
+  /// heuristic stops at whatever the React Native tree puts first (a sibling view, a pager's
+  /// own scroll view). So register it on every ancestor below the tab bar controller.
+  ///
+  /// Registered when this visitable takes the web view, and again whenever the user starts
+  /// dragging it. Attach and appearance callbacks cannot stand in for the drag: a SwiftUI
+  /// pager keeps neighboring pages in the window, so arriving on a page fires nothing for it
+  /// while the neighbor it prepares attaches and would take the registration. The drag is
+  /// the one signal that always names the page the user is on. Before the controller is
+  /// parented there is nothing to register on.
+  private func registerContentScrollView() {
+    guard let scrollView = visitableView.webView?.scrollView else { return }
+
+    var ancestor = parent
+    while let current = ancestor, !(current is UITabBarController) {
+      current.setContentScrollView(scrollView, for: .all)
+      ancestor = current.parent
+    }
   }
 }

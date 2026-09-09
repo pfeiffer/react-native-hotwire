@@ -120,11 +120,14 @@ final class HotwiredVisitableView: ExpoView {
       return
     }
 
-    host.addChild(controller)
-    addSubview(controller.view)
-    controller.view.frame = bounds
-    controller.didMove(toParent: host)
-    registerContentScrollView()
+    // A native tab bar detaches an unselected tab's views from the window and re-attaches
+    // them on return, so this runs more than once per view.
+    if controller.parent !== host {
+      host.addChild(controller)
+      addSubview(controller.view)
+      controller.view.frame = bounds
+      controller.didMove(toParent: host)
+    }
 
     if host.parent is UIPageViewController {
       controller.endAppearanceTransition()
@@ -143,26 +146,6 @@ final class HotwiredVisitableView: ExpoView {
     controller?.removeFromParent()
     session = nil
     controller = nil
-  }
-
-  /// react-native-screens finds a screen's content scroll view by walking `subviews[0]`
-  /// down from the screen, which never reaches the web view because Hotwire's
-  /// VisitableView adds its activity indicator first. Register the scroll view
-  /// explicitly so the tab bar gets its scroll-edge appearance and minimize behavior.
-  private func registerContentScrollView() {
-    guard let scrollView = webView?.scrollView else { return }
-
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
-      var candidate = self.hostViewController
-      while let current = candidate {
-        if current.parent is UITabBarController {
-          current.setContentScrollView(scrollView, for: .all)
-          return
-        }
-        candidate = current.parent
-      }
-    }
   }
 
   // MARK: Visiting
@@ -299,9 +282,6 @@ extension HotwiredVisitableView: HotwiredVisitableViewControllerDelegate {
 
   func visitableDidAppear() {
     configureWebView()
-    // The web view is shared, so whichever visitable is on screen claims the scroll
-    // view registration; in a pager the last mounted page would otherwise keep it.
-    registerContentScrollView()
   }
 
   func visitableWillDisappear() {
