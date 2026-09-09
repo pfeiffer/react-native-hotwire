@@ -42,9 +42,6 @@ export function useBridge(
     [nativeRef]
   );
 
-  // Nothing is buffered: a message can only arrive after the adapter is injected on load,
-  // by which time the components have mounted and subscribed, and on a URL change React
-  // flushes their new subscriptions before it processes the next native event.
   const listeners = useRef<MessageListener[]>([]);
   const latestOnMessage = useRef(onMessage);
   latestOnMessage.current = onMessage;
