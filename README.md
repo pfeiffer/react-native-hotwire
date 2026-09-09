@@ -189,7 +189,8 @@ configuration loaded last; `addPathConfigurationListener` reports each load.
 React Navigation is not involved in matching. `useVisitHandler` routes the standard
 properties the way upstream's Navigator does: `context` and `modal_style` pick a route from
 a table you declare once in the stack, `presentation` picks push, replace, pop, refresh,
-none, clear_all or replace_root, and a `screen` property names a native route. The app
+none, clear_all or replace_root, and a `screen` property names a native route, as does
+upstream's iOS `view_controller`, so a configuration shared with a native app routes as is. The app
 keeps the last word through `onVisitProposal(proposal, resolution)`: return nothing to
 accept, your own resolution or action to substitute, `null` to drop.
 

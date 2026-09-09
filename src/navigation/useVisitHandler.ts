@@ -92,8 +92,12 @@ function withoutQuery(url: string | undefined): string | undefined {
 }
 
 function routeFor(properties: PathProperties, routes: VisitRoutes): string {
-  if (typeof properties.screen === 'string') {
-    return properties.screen;
+  // `screen` names a route. `view_controller` is upstream's iOS key for the same thing, a
+  // plain identifier, so a configuration shared with a native iOS app routes here as is.
+  // Android's `uri` is a full URI and is not a route name.
+  const native = properties.screen ?? properties.view_controller;
+  if (typeof native === 'string') {
+    return native;
   }
   if (lower(properties.context, 'default') !== 'modal') {
     return routes.default;

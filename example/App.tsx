@@ -1,5 +1,4 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { CommonActions } from '@react-navigation/native';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { HotwireApp } from 'react-native-hotwire';
 
@@ -45,13 +44,8 @@ export default function App() {
         }
       }}
       webViewDebuggingEnabled
+      // The demo's `/numbers$` rule says `view_controller: numbers`; that is this route.
       screens={[{ name: 'numbers', component: NumbersScreen, options: { title: 'Numbers' } }]}
-      onVisitProposal={(proposal) => {
-        // The demo's rule names an iOS view controller; here that is a route.
-        if (proposal.properties.view_controller === 'numbers') {
-          return CommonActions.navigate('numbers');
-        }
-      }}
     />
   );
 }
