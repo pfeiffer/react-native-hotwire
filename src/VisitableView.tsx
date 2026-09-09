@@ -19,6 +19,7 @@ import type {
   MessageListener,
   OnErrorCallback,
   OpenExternalUrlEvent,
+  PathProperties,
   ProgressViewOffset,
   VisitProposal,
 } from './types';
@@ -66,6 +67,21 @@ export interface VisitableViewRef {
   reload: () => void;
   /** Refreshes the current page through Turbo. */
   refresh: () => void;
+}
+
+// The Android core reports its enum-valued properties upper case (`POP`, `DEFAULT`), iOS
+// lower case as written in the document. Apps read one spelling.
+const ENUM_PROPERTIES = ['context', 'presentation', 'modal_style', 'query_string_presentation'];
+
+function normalizeProperties(properties: PathProperties | undefined): PathProperties {
+  const normalized: PathProperties = { ...properties };
+  for (const key of ENUM_PROPERTIES) {
+    const value = normalized[key];
+    if (typeof value === 'string') {
+      normalized[key] = value.toLowerCase();
+    }
+  }
+  return normalized;
 }
 
 async function openExternalUrl({ url }: OpenExternalUrlEvent) {
@@ -173,8 +189,9 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
 
   const handleVisitProposal = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<VisitProposal>) => {
+      const proposal = { ...nativeEvent, properties: normalizeProperties(nativeEvent.properties) };
       // Let a pending onFormSubmissionFinished handler run before navigating.
-      setTimeout(() => onVisitProposal(nativeEvent), 0);
+      setTimeout(() => onVisitProposal(proposal), 0);
     },
     [onVisitProposal]
   );

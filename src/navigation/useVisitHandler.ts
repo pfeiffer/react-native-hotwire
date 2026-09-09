@@ -77,7 +77,7 @@ function fullPath(url: string): string {
   }
 }
 
-// The Android core reports its enums upper case (`POP`, `DEFAULT`), iOS lower case.
+// VisitableView normalizes enum-valued properties to lower case; this only fills the default.
 function lower(value: unknown, fallback: string): string {
   return typeof value === 'string' ? value.toLowerCase() : fallback;
 }
