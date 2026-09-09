@@ -55,6 +55,12 @@ function WebScreen() {
 Ref (`VisitableViewRef`): `reload()` cold-boots the page, `refresh()` refreshes through
 Turbo, `injectJavaScript(script)`.
 
+On Android the view gives up whatever the software keyboard covers of it, measured from its
+own bottom edge and updated on every frame of the keyboard animation, so a page reflows to the
+visible area and scrolls its focused field into view. Edge-to-edge apps get no window resize
+for the keyboard; this replaces it, the way Hotwire Native's `applyDefaultImeWindowInsets`
+does. iOS resizes the web view itself.
+
 ### Sessions
 
 Every `sessionHandle` owns one web view and one Turbo session, created by the first

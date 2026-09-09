@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.WebView
 import androidx.core.net.toUri
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -19,6 +21,7 @@ import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.max
 
 // Turbo 8 exposes session.refresh; older Turbo falls back to a replace visit.
 private const val REFRESH_SCRIPT = """
@@ -128,7 +131,41 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     hotwiredView.webViewRefresh.setOnRefreshListener { reload(displayProgress = true) }
     hotwiredView.errorRefresh.setOnRefreshListener { reload(displayProgress = true) }
     screenshotHolder.reset()
+    observeKeyboard()
   }
+
+  // region Keyboard
+  // Edge-to-edge Android no longer resizes the window for the keyboard (adjustResize is
+  // ignored from target SDK 35), so a page stays as tall as the screen with the keyboard
+  // drawn over it: nothing to scroll, and the focused field stays hidden. Give up the covered
+  // part instead, as upstream's applyDefaultImeWindowInsets does on its root view. The
+  // overlap is measured from this view's own bottom rather than taken as the keyboard's
+  // height: a pager page or a view above a padded bottom edge stops short of the window,
+  // and only what the keyboard covers of this view is this view's to give up. Applied once
+  // per keyboard change, from the final insets Android dispatches as the animation starts:
+  // relaying out a WebView on every animation frame makes the page flash.
+
+  private var keyboardInset = 0
+
+  private fun observeKeyboard() {
+    ViewCompat.setOnApplyWindowInsetsListener(this) { _, insets ->
+      applyKeyboardInset(insets)
+      insets
+    }
+  }
+
+  private fun applyKeyboardInset(insets: WindowInsetsCompat) {
+    val keyboard = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+    val location = IntArray(2).also { getLocationInWindow(it) }
+    val gapBelow = max(0, rootView.height - (location[1] + height))
+    val inset = max(0, keyboard - gapBelow)
+    if (inset != keyboardInset) {
+      keyboardInset = inset
+      requestLayout()
+    }
+  }
+
+  // endregion
 
   // region Layout
   // React Native lays out only the views it created; this native child needs a manual
@@ -152,7 +189,8 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
     super.onLayout(changed, left, top, right, bottom)
     val width = right - left
-    val height = bottom - top
+    // The content ends where the keyboard begins; see `keyboardInset`.
+    val height = max(0, bottom - top - keyboardInset)
     hotwiredView.measure(
       MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
       MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY),
