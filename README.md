@@ -18,6 +18,45 @@ Requirements: Expo SDK 57+, React Native 0.86+, React Navigation 7, New Architec
 
 ## Usage
 
+Point it at a Turbo-enabled site:
+
+```tsx
+import { HotwireApp } from 'react-native-hotwire';
+
+export default () => (
+  <HotwireApp
+    url="https://hotwire-native-demo.dev"
+    pathConfigurationUrl="https://hotwire-native-demo.dev/configurations/ios_v1.json"
+  />
+);
+```
+
+That is the whole app: a stack with a web route per presentation, `HotwireScreen` on each,
+the server's path configuration deciding which URL opens how, and every link under the
+base URL handed to a web screen. It is the model Hotwire Native itself has, one stack and
+one modal layer, and `example/` is exactly this against the official demo server.
+
+Native screens sit next to the web ones:
+
+```tsx
+<HotwireApp
+  url={baseURL}
+  screens={[{ name: 'settings', component: SettingsScreen, path: 'settings' }]}
+  onVisitProposal={(proposal) => {
+    if (proposal.properties.screen === 'settings') return CommonActions.navigate({ name: 'settings' });
+  }}
+/>
+```
+
+A `path` makes the OS open the screen for that URL; a rule with `screen: settings` in the
+path configuration makes a page link do the same, and `onVisitProposal` is the app's last
+word on any proposal (see "Path configuration").
+
+### Your own hierarchy
+
+An app whose navigators come from elsewhere, a config document or named modal flows, keeps
+them and places `HotwireScreen` in them, or composes `VisitableView` with its own router:
+
 ```tsx
 import { VisitableView, useCurrentUrl, useVisitTo, getLinkingObject } from 'react-native-hotwire';
 

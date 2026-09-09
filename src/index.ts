@@ -1,5 +1,6 @@
 export { VisitableView, type VisitableViewProps, type VisitableViewRef } from './VisitableView';
 export { HotwireScreen, type HotwireScreenProps } from './HotwireScreen';
+export { HotwireApp, type HotwireAppProps, type HotwireNativeScreen } from './HotwireApp';
 export { BridgeComponent } from './BridgeComponent';
 export { getSessionHandles, reloadSession, refreshSession, clearSessionSnapshotCache } from './sessions';
 export {
@@ -25,6 +26,7 @@ export {
 export { useCurrentUrl, type LinkingConfig } from './navigation/useCurrentUrl';
 export { useDefaultSessionHandle } from './navigation/useDefaultSessionHandle';
 export { getLinkingObject } from './navigation/getLinkingObject';
+export { hotwireLinking } from './navigation/hotwireLinking';
 
 export { PublishContentInsets } from './insets/PublishContentInsets';
 export { ContentInsetsContext, type ContentBoundaries } from './insets/ContentInsetsContext';

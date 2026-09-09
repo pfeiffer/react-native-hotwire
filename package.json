@@ -28,7 +28,9 @@
     "expo-modules-core": "*",
     "react": "*",
     "react-native": ">=0.86",
-    "react-native-safe-area-context": ">=5"
+    "react-native-safe-area-context": ">=5",
+    "@react-navigation/native-stack": ">=7",
+    "react-native-screens": ">=4"
   },
   "devDependencies": {
     "@react-navigation/core": "^7",

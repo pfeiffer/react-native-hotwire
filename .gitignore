@@ -10,3 +10,8 @@ ios/build/
 ios/Pods/
 xcuserdata/
 *.xcuserstate
+
+# The example app generates its native projects with `expo prebuild`.
+example/ios/
+example/android/
+example/.expo/
