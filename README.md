@@ -19,20 +19,20 @@ Requirements: Expo SDK 57+, React Native 0.86+, React Navigation 7, New Architec
 ## Usage
 
 ```tsx
-import { VisitableView, useCurrentUrl, useWebviewNavigate, getLinkingObject } from 'react-native-hotwired';
+import { VisitableView, useCurrentUrl, useVisitTo, getLinkingObject } from 'react-native-hotwired';
 
 const linking = getLinkingObject(BASE_URL, linkingConfig); // pass to NavigationContainer
 
 function WebScreen() {
   const url = useCurrentUrl(BASE_URL, linkingConfig);
-  const { navigateTo } = useWebviewNavigate();
+  const visitTo = useVisitTo();
 
   return (
     <VisitableView
       url={url}
       sessionHandle="main"
       bridgeComponents={[NavBarComponent]}
-      onVisitProposal={({ url, action }) => navigateTo(url, action)}
+      onVisitProposal={({ url, action }) => visitTo(url, action)}
     />
   );
 }
@@ -46,7 +46,7 @@ function WebScreen() {
 | `sessionHandle` | Screens sharing a handle share one web view and Turbo session. Default `"Default"`. |
 | `bridgeComponents` | `BridgeComponent` subclasses. Their names are advertised in the user agent as `bridge-components: [...]`. |
 | `applicationNameForUserAgent` | Appended to the user agent. |
-| `onVisitProposal` | Required. Turbo proposed a visit; navigate with `useWebviewNavigate`. |
+| `onVisitProposal` | Required. Turbo proposed a visit; navigate with `useVisitTo`. |
 | `onLoad`, `onError`, `onOpenExternalUrl`, `onFormSubmissionStarted/Finished`, `onContentProcessDidTerminate`, `onMessage` | Session events. |
 | `onAlert`, `onConfirm` | Replace the default `Alert` dialogs for `window.alert` / `window.confirm`. |
 | `renderLoading`, `renderError` | Overlays. |
@@ -95,9 +95,11 @@ and to the older `@hotwired/strada` (`window.Strada`).
 - `getLinkingObject(baseURL, config)`: the `linking` prop for `NavigationContainer`. Linked
   routes receive `baseURL` and `fullPath` params.
 - `useCurrentUrl(baseURL, config)`: the URL the current screen should load.
-- `useWebviewNavigate()`: `navigateTo(urlOrTarget, visitAction)` and
-  `getDispatchUtilities(...)` for custom handling. Unmatched URLs resolve to the innermost
-  screen named `Fallback`, so define one in each navigator that should catch visits.
+- `useVisitTo()`: `visitTo(urlOrTarget, visitAction)`, the counterpart of React Navigation's
+  `useLinkTo`. Unmatched URLs resolve to the innermost screen named `Fallback`, so define one
+  in each navigator that should catch visits.
+- `useVisitBuilder()`: `buildAction(urlOrTarget, visitAction)` returns the navigation action
+  and `willChangeTopmostNavigator` without dispatching, for a handler that adjusts it first.
 
 ## Migrating from react-native-turbo / react-native-web-screen
 
@@ -105,7 +107,8 @@ and to the older `@hotwired/strada` (`window.Strada`).
    `react-native-hotwired` (git URL above). Remove the `scripts.postinstall` override in the
    old URL; nothing is built at install time any more.
 2. Imports: everything comes from `react-native-hotwired`.
-   `useWebviewNavigate`, `useCurrentUrl`, `getLinkingObject` moved here.
+   `useWebviewNavigate` became `useVisitTo` and `useVisitBuilder`; `useCurrentUrl`,
+   `getLinkingObject` moved here.
 3. `stradaComponents` → `bridgeComponents`; `StradaComponent` → `BridgeComponentType`;
    `StradaMessage` → `BridgeMessage`.
 4. `useRef<typeof VisitableView>` → `useRef<VisitableViewRef>`.

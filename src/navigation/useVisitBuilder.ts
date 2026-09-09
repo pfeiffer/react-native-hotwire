@@ -24,10 +24,10 @@ type NavigateAction = { type: 'NAVIGATE'; payload: NavigatePayload };
 
 type StateAction = ReturnType<typeof getActionFromState>;
 
-export type NavigateTarget = string | { screen: string; params?: object };
+export type VisitTarget = string | { screen: string; params?: object };
 
-export interface DispatchUtilities {
-  actionToDispatch: NavigationAction;
+export interface BuiltVisitAction {
+  action: NavigationAction;
   /** True when the action lands in a different top-level navigator than the current one. */
   willChangeTopmostNavigator: boolean | undefined;
 }
@@ -100,17 +100,21 @@ function getMinimalAction(
   return current;
 }
 
-/** Like `useLinkTo`, but turns a Turbo visit proposal into the right stack action. */
-export function useWebviewNavigate() {
+/**
+ * Like React Navigation's `useLinkBuilder`, for Turbo visits: turns a URL (or a screen) and a
+ * visit action into the navigation action that gets there, without dispatching it. For a
+ * handler that adjusts the action first; `useVisitTo` covers the common case.
+ */
+export function useVisitBuilder() {
   const navigation = useNavigation();
   const linking = useContext(LinkingContext);
   const route = useRoute();
 
-  const getDispatchUtilities = useCallback(
-    (to: NavigateTarget, visitAction?: VisitAction): DispatchUtilities => {
+  const buildAction = useCallback(
+    (to: VisitTarget, visitAction?: VisitAction): BuiltVisitAction => {
       if (typeof to !== 'string') {
         return {
-          actionToDispatch: CommonActions.navigate({ name: to.screen, params: to.params }),
+          action: CommonActions.navigate({ name: to.screen, params: to.params }),
           willChangeTopmostNavigator: undefined,
         };
       }
@@ -133,7 +137,7 @@ export function useWebviewNavigate() {
       const action = asNavigateAction(getActionFromState(state, options?.config));
 
       if (!action) {
-        return { actionToDispatch: CommonActions.reset(state), willChangeTopmostNavigator: undefined };
+        return { action: CommonActions.reset(state), willChangeTopmostNavigator: undefined };
       }
 
       let root = navigation;
@@ -149,19 +153,12 @@ export function useWebviewNavigate() {
       const minimalAction = rootState ? getMinimalAction(action, rootState, visitAction) : action;
 
       return {
-        actionToDispatch: toStackAction(minimalAction, visitAction, route.name),
+        action: toStackAction(minimalAction, visitAction, route.name),
         willChangeTopmostNavigator,
       };
     },
     [linking, navigation, route.name]
   );
 
-  const navigateTo = useCallback(
-    (to: NavigateTarget, visitAction?: VisitAction) => {
-      navigation.dispatch(getDispatchUtilities(to, visitAction).actionToDispatch);
-    },
-    [getDispatchUtilities, navigation]
-  );
-
-  return { navigateTo, getDispatchUtilities };
+  return { buildAction };
 }

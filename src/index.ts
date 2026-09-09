@@ -4,7 +4,8 @@ export { getSessionHandles, reloadSession, refreshSession, clearSessionSnapshotC
 export type { OnAlert, OnConfirm } from './hooks/useWebViewDialogs';
 export type { RenderError, RenderLoading } from './hooks/useWebViewState';
 
-export { useWebviewNavigate, type DispatchUtilities, type NavigateTarget } from './navigation/useWebviewNavigate';
+export { useVisitTo } from './navigation/useVisitTo';
+export { useVisitBuilder, type BuiltVisitAction, type VisitTarget } from './navigation/useVisitBuilder';
 export { useCurrentUrl, type LinkingConfig } from './navigation/useCurrentUrl';
 export { getLinkingObject } from './navigation/getLinkingObject';
 
