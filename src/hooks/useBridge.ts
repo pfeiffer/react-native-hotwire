@@ -15,20 +15,19 @@ export function useBridge(
   bridgeComponents: BridgeComponentType[],
   onMessage: MessageListener | undefined
 ) {
-  const componentNames = useMemo(
-    () => bridgeComponents.map(({ componentName }) => componentName),
-    [bridgeComponents]
-  );
+  // The adapter script and the user agent token both derive from the component names;
+  // the token tells the server which components this build supports.
+  const { script, bridgeUserAgent } = useMemo(() => {
+    const componentNames = bridgeComponents.map(({ componentName }) => componentName);
+    return {
+      script: bridgeScript(componentNames),
+      bridgeUserAgent: `bridge-components: [${componentNames.join(' ')}]`,
+    };
+  }, [bridgeComponents]);
 
   const initializeBridge = useCallback(() => {
-    nativeRef.current?.injectJavaScript(bridgeScript(componentNames));
-  }, [componentNames, nativeRef]);
-
-  // Advertised in the user agent so the server can tell which components this build supports.
-  const bridgeUserAgent = useMemo(
-    () => `bridge-components: [${componentNames.join(' ')}]`,
-    [componentNames]
-  );
+    nativeRef.current?.injectJavaScript(script);
+  }, [nativeRef, script]);
 
   // Injected into whichever page the session shows at that moment. A reply that comes
   // after the user has navigated on reaches the new page, whose web bridge drops it
