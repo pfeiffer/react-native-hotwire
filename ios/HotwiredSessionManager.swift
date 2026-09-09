@@ -7,6 +7,8 @@ final class HotwiredSessionManager {
   static let shared = HotwiredSessionManager()
 
   private var sessions: [String: HotwiredSession] = [:]
+  /// Shared by every web view, as upstream's configuration does.
+  let processPool = WKProcessPool()
   private var lifecycleObserver: AppLifecycleObserver?
 
   private init() {

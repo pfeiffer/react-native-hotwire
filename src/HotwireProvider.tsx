@@ -21,6 +21,11 @@ export interface HotwireConfig {
   bridgeComponents: BridgeComponentType[];
   /** Makes the web views inspectable (Safari, Chrome). */
   webViewDebuggingEnabled: boolean;
+  /**
+   * iOS: lets a `<video playsinline>` play inline, as Safari does. WKWebView's own default
+   * sends every video fullscreen. Defaults to true. Android plays inline regardless.
+   */
+  allowsInlineMediaPlayback: boolean;
 }
 
 export interface HotwireProviderProps extends Partial<HotwireConfig> {
@@ -44,6 +49,7 @@ export function HotwireProvider({
   applicationNameForUserAgent = defaultApplicationNameForUserAgent,
   bridgeComponents = [],
   webViewDebuggingEnabled = false,
+  allowsInlineMediaPlayback = true,
   pathConfiguration,
   pathConfigurationUrl,
   children,
@@ -55,8 +61,8 @@ export function HotwireProvider({
   }, [pathConfiguration, pathConfigurationUrl]);
 
   const value = useMemo<HotwireConfig>(
-    () => ({ applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled }),
-    [applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled]
+    () => ({ applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled, allowsInlineMediaPlayback }),
+    [applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled, allowsInlineMediaPlayback]
   );
 
   return <HotwireContext.Provider value={value}>{children}</HotwireContext.Provider>;

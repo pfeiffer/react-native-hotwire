@@ -89,7 +89,8 @@ function WebScreen() {
 ```
 
 `HotwireProvider` holds what belongs to a session rather than a screen: the user agent token,
-the bridge components it advertises, inspectability, and the path configuration. A session is
+the bridge components it advertises, inspectability, inline media playback on iOS, and the
+path configuration. A session is
 created by the first view on its handle and keeps its user agent for life, which is why these
 are set once, above the navigators, and not per view. One provider per app.
 

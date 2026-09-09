@@ -129,7 +129,8 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     style = styles.container,
   } = props;
 
-  const { applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled } = useHotwireConfig();
+  const { applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled, allowsInlineMediaPlayback } =
+    useHotwireConfig();
   const nativeRef = useRef<NativeVisitableViewRef>(null);
 
   const { registerMessageListener, handleOnMessage } = useMessageQueue(onMessage);
@@ -239,6 +240,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
         url={url}
         sessionHandle={sessionHandle}
         applicationNameForUserAgent={userAgent}
+        allowsInlineMediaPlayback={allowsInlineMediaPlayback}
         pullToRefreshEnabled={pullToRefreshEnabled}
         scrollEnabled={scrollEnabled}
         contentInset={contentInset}

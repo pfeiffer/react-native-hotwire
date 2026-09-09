@@ -19,6 +19,10 @@ final class HotwiredVisitableView: ExpoView {
   var applicationNameForUserAgent: String? {
     didSet { webViewConfiguration.applicationNameForUserAgent = applicationNameForUserAgent }
   }
+  /// Lets a `<video playsinline>` play inline; WKWebView's own default sends it fullscreen.
+  var allowsInlineMediaPlayback = true {
+    didSet { webViewConfiguration.allowsInlineMediaPlayback = allowsInlineMediaPlayback }
+  }
   var pullToRefreshEnabled = true {
     didSet { controller?.visitableView.allowsPullToRefresh = pullToRefreshEnabled }
   }
@@ -50,7 +54,15 @@ final class HotwiredVisitableView: ExpoView {
 
   // MARK: State
 
-  private let webViewConfiguration = WKWebViewConfiguration()
+  private let webViewConfiguration: WKWebViewConfiguration = {
+    // Upstream's makeWebViewConfiguration: mobile pages even on iPad, one process pool for
+    // every session, and inline media unless the app says otherwise.
+    let configuration = WKWebViewConfiguration()
+    configuration.defaultWebpagePreferences.preferredContentMode = .mobile
+    configuration.processPool = HotwiredSessionManager.shared.processPool
+    configuration.allowsInlineMediaPlayback = true
+    return configuration
+  }()
 
   /// nil until the first visit or appearance; also nil after removeFromSuperview, which
   /// is how the view knows it is no longer attached. Prop setters must never create it.

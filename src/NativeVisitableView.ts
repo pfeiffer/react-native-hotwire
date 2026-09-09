@@ -20,6 +20,8 @@ export interface NativeVisitableViewProps {
   url: string;
   sessionHandle: string;
   applicationNameForUserAgent?: string;
+  /** iOS only; see HotwireConfig. */
+  allowsInlineMediaPlayback?: boolean;
   pullToRefreshEnabled: boolean;
   scrollEnabled: boolean;
   contentInset?: ContentInset;
