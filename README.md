@@ -38,6 +38,26 @@ function WebScreen() {
 }
 ```
 
+### `HotwireScreen`
+
+A React Navigation screen that is a Hotwire page, with the defaults upstream's Navigator
+provides: the URL from the route params, the session from the screen's place in the
+navigator tree (one per tab, one for modals, one default), proposals routed by
+`useVisitHandler` with your `onVisitProposal` as the last word, `pull_to_refresh_enabled`
+from the path configuration, and the page title as the screen title. Declare it once per
+presentation your stack supports and name them in `routes`:
+
+```tsx
+<Stack.Screen name="web" component={HotwireScreen} initialParams={{ url: baseURL }} />
+<Stack.Screen name="webModal" component={HotwireScreen} options={{ presentation: 'modal' }} />
+```
+
+A screen placed by hand, a tab root say, gets `initialParams={{ url }}`; screens reached
+through proposals or links carry their URL already. Everything `VisitableView` takes,
+`bridgeComponents`, `applicationNameForUserAgent`, `renderError`, passes through. For a
+hierarchy the flat model cannot express, named modal flows or screens placed by a config,
+compose `VisitableView` with your own router instead.
+
 ### `VisitableView`
 
 | Prop | Description |
