@@ -1,6 +1,6 @@
 export { VisitableView, type VisitableViewProps, type VisitableViewRef } from './VisitableView';
 export { HotwireScreen, type HotwireScreenProps } from './HotwireScreen';
-export { HotwireApp, type HotwireAppProps, type HotwireNativeScreen } from './HotwireApp';
+export { HotwireApp, type HotwireAppProps, type HotwireNativeScreen, type HotwireTab } from './HotwireApp';
 export {
   HotwireProvider,
   defaultApplicationNameForUserAgent,

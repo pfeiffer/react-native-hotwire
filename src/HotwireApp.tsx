@@ -1,3 +1,4 @@
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, type NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import React, { useMemo } from 'react';
@@ -15,6 +16,15 @@ export interface HotwireNativeScreen {
   options?: NativeStackNavigationOptions;
 }
 
+/** A tab: its own stack and session rooted at `url`, as upstream's Navigator per tab. */
+export interface HotwireTab {
+  title: string;
+  url: string;
+  /** Route name; defaults to the title. */
+  name?: string;
+  icon?: (props: { focused: boolean; color: string; size: number }) => React.ReactNode;
+}
+
 export interface HotwireAppProps
   extends Omit<HotwireScreenProps, 'baseURL' | 'routes'>,
     Omit<HotwireProviderProps, 'children'> {
@@ -22,9 +32,12 @@ export interface HotwireAppProps
   url: string;
   /** Native screens beside the web ones. Reach them from a rule's `screen` or a `path`. */
   screens?: HotwireNativeScreen[];
+  /** Bottom tabs, each a stack rooted at its URL; `url` is then the first tab's fallback. */
+  tabs?: HotwireTab[];
 }
 
 const Stack = createNativeStackNavigator();
+const Tabs = createBottomTabNavigator();
 
 const webRouteId = ({ params }: { params?: { url?: string } }) => params?.url;
 
@@ -44,6 +57,7 @@ export function HotwireApp(props: HotwireAppProps) {
     bridgeComponents,
     webViewDebuggingEnabled,
     screens = [],
+    tabs,
     ...screenProps
   } = props;
   const baseURL = useMemo(() => new URL(url).origin, [url]);
@@ -67,6 +81,50 @@ export function HotwireApp(props: HotwireAppProps) {
     [baseURL]
   );
 
+  // The web routes, one per presentation. Every tab's stack has the full set, modals
+  // included, as every upstream Navigator has its own modal layer: a modal opened from a
+  // tab lives in that tab's stack, so a proposal made from it finds `web` right there.
+  const webRoutes = useMemo(
+    () =>
+      function renderWebRoutes(initialUrl: string) {
+        return (
+          <>
+            <Stack.Screen name="web" component={WebScreen} getId={webRouteId} initialParams={{ url: initialUrl }} />
+            <Stack.Screen name="webModal" component={WebScreen} getId={webRouteId} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="webSheet" component={WebScreen} getId={webRouteId} options={{ presentation: 'formSheet' }} />
+            <Stack.Screen
+              name="webFullScreen"
+              component={WebScreen}
+              getId={webRouteId}
+              options={{ presentation: 'fullScreenModal' }}
+            />
+          </>
+        );
+      },
+    [WebScreen]
+  );
+
+  // One stack per tab: a push from a tab stays in it, and the tab's screens share the
+  // session named after it.
+  const TabsScreen = useMemo(() => {
+    if (!tabs?.length) return null;
+    const stacks = tabs.map((tab) => {
+      const name = tab.name ?? tab.title;
+      const TabStack = () => <Stack.Navigator>{webRoutes(tab.url)}</Stack.Navigator>;
+      TabStack.displayName = `HotwireTab(${name})`;
+      return { name, tab, TabStack };
+    });
+    return function HotwireTabs() {
+      return (
+        <Tabs.Navigator screenOptions={{ headerShown: false }}>
+          {stacks.map(({ name, tab, TabStack }) => (
+            <Tabs.Screen key={name} name={name} component={TabStack} options={{ title: tab.title, tabBarIcon: tab.icon }} />
+          ))}
+        </Tabs.Navigator>
+      );
+    };
+  }, [tabs, webRoutes]);
+
   return (
     <HotwireProvider
       applicationNameForUserAgent={applicationNameForUserAgent}
@@ -76,15 +134,11 @@ export function HotwireApp(props: HotwireAppProps) {
       pathConfigurationUrl={pathConfigurationUrl}>
     <NavigationContainer linking={linking}>
       <Stack.Navigator>
-        <Stack.Screen name="web" component={WebScreen} getId={webRouteId} initialParams={{ url }} />
-        <Stack.Screen name="webModal" component={WebScreen} getId={webRouteId} options={{ presentation: 'modal' }} />
-        <Stack.Screen name="webSheet" component={WebScreen} getId={webRouteId} options={{ presentation: 'formSheet' }} />
-        <Stack.Screen
-          name="webFullScreen"
-          component={WebScreen}
-          getId={webRouteId}
-          options={{ presentation: 'fullScreenModal' }}
-        />
+        {TabsScreen ? (
+          <Stack.Screen name="tabs" component={TabsScreen} options={{ headerShown: false }} />
+        ) : (
+          webRoutes(url)
+        )}
         {screens.map((screen) => (
           <Stack.Screen key={screen.name} name={screen.name} component={screen.component} options={screen.options} />
         ))}

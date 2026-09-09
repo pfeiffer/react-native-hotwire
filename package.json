@@ -30,7 +30,8 @@
     "react-native": ">=0.86",
     "react-native-safe-area-context": ">=5",
     "@react-navigation/native-stack": ">=7",
-    "react-native-screens": ">=4"
+    "react-native-screens": ">=4",
+    "@react-navigation/bottom-tabs": ">=7"
   },
   "devDependencies": {
     "@react-navigation/core": "^7",

@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { CommonActions } from '@react-navigation/native';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { HotwireApp } from 'react-native-hotwire';
@@ -30,6 +31,11 @@ export default function App() {
     <HotwireApp
       url={demo}
       pathConfigurationUrl={`${demo}/configurations/ios_v1.json`}
+      tabs={[
+        { title: 'Navigation', url: demo, icon: ({ color, size }) => <Ionicons name="swap-horizontal" color={color} size={size} /> },
+        { title: 'Bridge Components', url: `${demo}/components`, icon: ({ color, size }) => <Ionicons name="grid" color={color} size={size} /> },
+        { title: 'Resources', url: `${demo}/resources`, icon: ({ color, size }) => <Ionicons name="book" color={color} size={size} /> },
+      ]}
       bridgeComponents={[FormComponent, MenuComponent, OverflowMenuComponent]}
       webViewDebuggingEnabled
       screens={[{ name: 'numbers', component: NumbersScreen, options: { title: 'Numbers' } }]}
