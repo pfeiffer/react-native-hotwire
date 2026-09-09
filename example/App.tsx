@@ -15,7 +15,7 @@ import configuration from './path-configuration.json';
 // the same rules written for this one, `screen: numbers` where the iOS document names a view
 // controller. A consumer serves such a document from its server (`pathConfigurationUrl`) and
 // bundles a copy, as here.
-const demo = 'https://hotwire-native-demo.dev';
+const demoUrl = 'https://hotwire-native-demo.dev';
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -77,7 +77,7 @@ function NumbersScreen() {
   );
 }
 
-const linking = hotwireLinking(demo);
+const linking = hotwireLinking(demoUrl);
 
 export default function App() {
   // The web view follows the system appearance on both platforms; the chrome must too.
