@@ -86,10 +86,10 @@ They are 0 wherever the chrome is opaque and takes layout, so a page needs no pl
 checks, and they are re-applied after every Turbo render. `VisitableView` does this by
 itself; `insetProperties={false}` turns it off.
 
-The values come from the chrome itself where a navigator publishes where it stops: wrap a
-tab screen in `PublishContentInsets`, inside a `SafeAreaProvider` mounted in that screen,
-and a nested navigator with its own bar narrows the boundaries it received through
-`ContentInsetsContext`. Without a publisher the web view falls back to its own safe area.
+The values come from the web view's own safe area, read from a provider that is the view
+itself, so they are already 0 for any edge a parent padded for. A navigator nested in a
+screen with a bar of its own, top tabs say, narrows what the screen publishes instead: wrap
+the tab screen in `PublishContentInsets` and read `ContentInsetsContext` in the navigator.
 
 The properties describe floating chrome only. Use them for fixed elements, never for scroll
 padding, and read them live rather than caching them. The keyboard is not chrome: the

@@ -1,5 +1,6 @@
 import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
 import { Linking, StyleSheet, View, type NativeSyntheticEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useBridge } from './hooks/useBridge';
 import { useMessageQueue } from './hooks/useMessageQueue';
@@ -121,7 +122,9 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
   const { webViewStateComponent, handleShowLoading, handleHideLoading, handleRenderError } =
     useWebViewState(reload, renderLoading, renderError);
 
-  // Where this view sits in the window decides how much of the chrome overlaps it.
+  // Where this view sits in the window decides how much of the chrome overlaps it. The
+  // safe area is read from a provider that is this view, so it already knows: a view that
+  // stops short of a bar, because a parent padded for it, reports nothing for that edge.
   const { ref: layoutRef, onLayout, rect } = useWindowRect();
   const applyContentInsets = useContentInsets(nativeRef, rect);
 
@@ -194,7 +197,8 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
   );
 
   return (
-    <View ref={layoutRef} onLayout={onLayout} style={style}>
+    <SafeAreaProvider style={style}>
+      <View ref={layoutRef} onLayout={onLayout} style={styles.container}>
       {bridgeComponents?.map((BridgeComponent, i) => (
         <BridgeComponent
           key={`${url}-${i}`}
@@ -230,7 +234,8 @@ export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((p
         style={styles.container}
       />
       {webViewStateComponent}
-    </View>
+      </View>
+    </SafeAreaProvider>
   );
 });
 
