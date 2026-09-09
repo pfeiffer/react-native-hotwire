@@ -1,7 +1,8 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, type NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import React, { useMemo } from 'react';
+import { useColorScheme } from 'react-native';
 
 import { HotwireProvider, type HotwireProviderProps } from './HotwireProvider';
 import { HotwireScreen, type HotwireScreenProps } from './HotwireScreen';
@@ -64,6 +65,8 @@ export function HotwireApp(props: HotwireAppProps) {
     ...screenProps
   } = props;
   const baseURL = useMemo(() => new URL(url).origin, [url]);
+  // The web view follows the system appearance on both platforms; the chrome must too.
+  const colorScheme = useColorScheme();
 
   const linking = useMemo(
     () =>
@@ -151,7 +154,7 @@ export function HotwireApp(props: HotwireAppProps) {
       webViewDebuggingEnabled={webViewDebuggingEnabled}
       pathConfiguration={pathConfiguration}
       pathConfigurationUrl={pathConfigurationUrl}>
-    <NavigationContainer linking={linking}>
+    <NavigationContainer linking={linking} theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack.Navigator>
         {TabsScreen ? (
           <Stack.Screen name="tabs" component={TabsScreen} options={{ headerShown: false }} />
