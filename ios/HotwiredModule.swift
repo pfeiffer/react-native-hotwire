@@ -17,9 +17,46 @@ final class NoSessionException: GenericException<String> {
   }
 }
 
-public class HotwiredModule: Module {
+final class InvalidPathConfigurationException: GenericException<String> {
+  override var reason: String {
+    "Invalid path configuration: \(param)"
+  }
+}
+
+public class HotwiredModule: Module, PathConfigurationDelegate {
   public func definition() -> ModuleDefinition {
     Name("Hotwire")
+
+    Events("onPathConfigurationUpdate")
+
+    OnCreate {
+      Hotwire.config.pathConfiguration.delegate = self
+    }
+
+    // Hotwire's path configuration: `{ settings, rules }`, see README "Path configuration".
+    // The bundled document loads at once; the URL, if any, loads after it and on later
+    // launches the copy cached from it, as upstream's loader does. Sessions share the one
+    // PathConfiguration instance, so proposals pick the new rules up immediately.
+    AsyncFunction("loadPathConfiguration") { (document: [String: Any]?, url: String?) throws in
+      var sources: [PathConfiguration.Source] = []
+      if let document {
+        guard JSONSerialization.isValidJSONObject(document) else {
+          throw InvalidPathConfigurationException("document is not JSON")
+        }
+        sources.append(.data(try JSONSerialization.data(withJSONObject: document)))
+      }
+      if let url {
+        guard let remote = URL(string: url) else {
+          throw InvalidPathConfigurationException("bad url \(url)")
+        }
+        sources.append(.server(remote))
+      }
+      Hotwire.config.pathConfiguration.sources = sources
+    }.runOnQueue(.main)
+
+    AsyncFunction("getPathConfigurationSettings") { () -> [String: Any] in
+      Hotwire.config.pathConfiguration.settings
+    }.runOnQueue(.main)
 
     AsyncFunction("getSessionHandles") { () -> [String] in
       HotwiredSessionManager.shared.handles
@@ -106,6 +143,10 @@ public class HotwiredModule: Module {
         view.sendConfirmResult(result)
       }
     }
+  }
+
+  public func pathConfigurationDidUpdate() {
+    sendEvent("onPathConfigurationUpdate", ["settings": Hotwire.config.pathConfiguration.settings])
   }
 
   private func session(_ handle: String) throws -> HotwiredSession {

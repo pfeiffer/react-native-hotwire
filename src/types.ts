@@ -2,9 +2,13 @@ import type React from 'react';
 
 export type VisitAction = 'advance' | 'replace' | 'restore';
 
+/** The merged properties of every path configuration rule matching a URL; `{}` when none. */
+export type PathProperties = Record<string, unknown>;
+
 export interface VisitProposal {
   url: string;
   action: VisitAction;
+  properties: PathProperties;
 }
 
 export interface LoadEvent {

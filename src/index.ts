@@ -1,6 +1,13 @@
 export { VisitableView, type VisitableViewProps, type VisitableViewRef } from './VisitableView';
 export { BridgeComponent } from './BridgeComponent';
 export { getSessionHandles, reloadSession, refreshSession, clearSessionSnapshotCache } from './sessions';
+export {
+  loadPathConfiguration,
+  getPathConfigurationSettings,
+  addPathConfigurationListener,
+  type PathConfigurationDocument,
+  type PathRule,
+} from './pathConfiguration';
 export type { OnAlert, OnConfirm } from './hooks/useWebViewDialogs';
 export type { RenderError, RenderLoading } from './hooks/useWebViewState';
 
@@ -29,6 +36,7 @@ export type {
   MessageListener,
   OnErrorCallback,
   OpenExternalUrlEvent,
+  PathProperties,
   ProgressViewOffset,
   VisitAction,
   VisitProposal,

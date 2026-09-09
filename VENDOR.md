@@ -54,6 +54,9 @@ Modified files, each marked with a `react-native-hotwire:` comment:
 - `turbo/webview/HotwireWebView.kt`: `initDayNightTheming()` wrapped in a
   `ClassCastException` guard. Some WebView providers on older Android versions throw from
   `WebSettingsCompat`; this crashed in production. Upstream still lacks the guard.
+- `turbo/config/PathConfiguration.kt` and `turbo/config/PathConfigurationLoader.kt`:
+  `Location.bundledJson`, a bundled configuration passed as a JSON string, for a document that
+  ships in the JavaScript bundle rather than in the APK's assets.
 - `turbo/config/PathConfigurationRepository.kt`: the remote path configuration request runs
   `call.execute()` on the IO dispatcher instead of `executeAsync()`. React Native pins OkHttp 4
   and its cookie jar crashes against OkHttp 5, so `android/hotwire-core/build.gradle` keeps

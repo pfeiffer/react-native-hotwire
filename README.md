@@ -95,6 +95,30 @@ The properties describe floating chrome only. Use them for fixed elements, never
 padding, and read them live rather than caching them. The keyboard is not chrome: the
 native view gives up what the keyboard covers (Android), or resizes itself (iOS).
 
+### Path configuration
+
+Hotwire's [path configuration](https://native.hotwired.dev/reference/path-configuration)
+decides how a URL is presented, from the server. It is a JSON document of `rules`, each
+regex `patterns` plus `properties`, applied in order with later rules overwriting earlier
+ones, and a `settings` sandbox for the app's own data. The vendored core matches every
+visit against it natively; `loadPathConfiguration` feeds it and every `VisitProposal`
+carries the matched `properties`.
+
+```ts
+import configuration from './path-configuration.json';
+
+loadPathConfiguration({ document: configuration, url: `${baseURL}/configurations/app.json` });
+```
+
+The bundled document is available at once. The URL loads afterwards and is cached on disk,
+and on the next launch that cache takes precedence over the bundled copy, so the server's
+rules survive a restart. `getPathConfigurationSettings()` returns the `settings` of the
+configuration loaded last; `addPathConfigurationListener` reports each load.
+
+React Navigation is not involved in matching. Read `properties` in `onVisitProposal`:
+`context: "modal"` and `presentation` decide the navigation action, and any custom key is
+yours, for instance a route name for a URL that is a native screen.
+
 ### Bridge components
 
 ```ts

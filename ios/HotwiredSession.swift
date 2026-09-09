@@ -39,6 +39,7 @@ final class HotwiredSession: NSObject {
   private func makeSession() -> Session {
     let session = Session(webViewConfiguration: webViewConfiguration)
     session.delegate = self
+    session.pathConfiguration = Hotwire.config.pathConfiguration
     session.webView.allowsLinkPreview = false
     session.webView.scrollView.contentInsetAdjustmentBehavior = .never
     session.webView.uiDelegate = self
