@@ -56,7 +56,6 @@ export type {
   OnErrorCallback,
   OpenExternalUrlEvent,
   PathProperties,
-  ProgressViewOffset,
   VisitAction,
   VisitProposal,
 } from './types';

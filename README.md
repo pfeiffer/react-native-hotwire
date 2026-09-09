@@ -126,10 +126,17 @@ compose `VisitableView` with your own router instead.
 | `onLoad`, `onError`, `onOpenExternalUrl`, `onFormSubmissionStarted/Finished`, `onContentProcessDidTerminate`, `onMessage` | Session events. |
 | `onAlert`, `onConfirm` | Replace the default `Alert` dialogs for `window.alert` / `window.confirm`. |
 | `renderLoading`, `renderError` | Overlays. |
-| `pullToRefreshEnabled`, `scrollEnabled`, `contentInset` (iOS), `progressViewOffset` (Android), `webViewDebuggingEnabled` | Web view configuration. |
+| `pullToRefreshEnabled`, `scrollEnabled`, `contentInset` (iOS) | Web view configuration. |
 
 Ref (`VisitableViewRef`): `reload()` cold-boots the page, `refresh()` refreshes through
 Turbo, `injectJavaScript(script)`.
+
+The web view is configured the way Hotwire Native configures it, and these are not props:
+mobile pages even on iPad, one process pool for every session, link previews off, media
+inline and autoplaying as in Safari and Chrome so the page decides with its markup, and the
+pull-to-refresh spinner resting below whatever chrome floats over the top of the page. An
+app that needs a web view setting beyond that composes its own `VisitableView` request
+rather than a prop.
 
 On Android the view gives up whatever the software keyboard covers of it, measured from its
 own bottom edge and updated on every frame of the keyboard animation, so a page reflows to the

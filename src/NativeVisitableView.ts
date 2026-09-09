@@ -11,7 +11,6 @@ import type {
   LoadEvent,
   MessageEvent,
   OpenExternalUrlEvent,
-  ProgressViewOffset,
   VisitProposal,
 } from './types';
 
@@ -20,12 +19,15 @@ export interface NativeVisitableViewProps {
   url: string;
   sessionHandle: string;
   applicationNameForUserAgent?: string;
-  /** iOS only; see HotwireConfig. */
-  allowsInlineMediaPlayback?: boolean;
   pullToRefreshEnabled: boolean;
   scrollEnabled: boolean;
   contentInset?: ContentInset;
-  progressViewOffset?: ProgressViewOffset;
+  /**
+   * How much chrome overlaps the top of the view, in dp; what `--hotwire-inset-top`
+   * tells the page. Android places the pull-to-refresh spinner below it, as iOS does
+   * by pinning its refresh control to the safe area.
+   */
+  topInset: number;
   webViewDebuggingEnabled: boolean;
   onLoad?: (e: NativeSyntheticEvent<LoadEvent>) => void;
   onMessage?: (e: NativeSyntheticEvent<MessageEvent>) => void;

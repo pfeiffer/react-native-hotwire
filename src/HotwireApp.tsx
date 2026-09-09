@@ -60,7 +60,6 @@ export function HotwireApp(props: HotwireAppProps) {
     applicationNameForUserAgent,
     bridgeComponents,
     webViewDebuggingEnabled,
-    allowsInlineMediaPlayback,
     screens = [],
     tabs,
     ...screenProps
@@ -153,7 +152,6 @@ export function HotwireApp(props: HotwireAppProps) {
       applicationNameForUserAgent={applicationNameForUserAgent}
       bridgeComponents={bridgeComponents}
       webViewDebuggingEnabled={webViewDebuggingEnabled}
-      allowsInlineMediaPlayback={allowsInlineMediaPlayback}
       pathConfiguration={pathConfiguration}
       pathConfigurationUrl={pathConfigurationUrl}>
     <NavigationContainer linking={linking} theme={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

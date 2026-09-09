@@ -20,7 +20,6 @@ import type {
   OnErrorCallback,
   OpenExternalUrlEvent,
   PathProperties,
-  ProgressViewOffset,
   VisitProposal,
 } from './types';
 
@@ -36,7 +35,6 @@ export interface VisitableViewProps {
   /** iOS only. */
   contentInset?: ContentInset;
   /** Android only: position of the pull-to-refresh spinner. */
-  progressViewOffset?: ProgressViewOffset;
   renderLoading?: RenderLoading;
   renderError?: RenderError;
   onVisitProposal: (proposal: VisitProposal) => void;
@@ -112,7 +110,6 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     pullToRefreshEnabled = true,
     scrollEnabled = true,
     contentInset,
-    progressViewOffset,
     renderLoading,
     renderError,
     onVisitProposal,
@@ -129,8 +126,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     style = styles.container,
   } = props;
 
-  const { applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled, allowsInlineMediaPlayback } =
-    useHotwireConfig();
+  const { applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled } = useHotwireConfig();
   const nativeRef = useRef<NativeVisitableViewRef>(null);
 
   const { registerMessageListener, handleOnMessage } = useMessageQueue(onMessage);
@@ -148,7 +144,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
   // safe area is read from a provider that is this view, so it already knows: a view that
   // stops short of a bar, because a parent padded for it, reports nothing for that edge.
   const { ref: layoutRef, onLayout, rect } = useWindowRect();
-  const applyContentInsets = useContentInsets(nativeRef, rect);
+  const { applyContentInsets, topInset } = useContentInsets(nativeRef, rect);
 
   // Token order is part of the contract with the server: "<app identity> bridge-components: [...]".
   const userAgent = useMemo(
@@ -240,11 +236,10 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
         url={url}
         sessionHandle={sessionHandle}
         applicationNameForUserAgent={userAgent}
-        allowsInlineMediaPlayback={allowsInlineMediaPlayback}
         pullToRefreshEnabled={pullToRefreshEnabled}
         scrollEnabled={scrollEnabled}
         contentInset={contentInset}
-        progressViewOffset={progressViewOffset}
+        topInset={topInset}
         webViewDebuggingEnabled={webViewDebuggingEnabled}
         onError={handleError}
         onVisitProposal={handleVisitProposal}

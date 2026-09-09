@@ -75,6 +75,8 @@ class HotwiredSession(
     chromeClient = HotwiredWebChromeClient(appContext, this)
 
     webView.settings.javaScriptEnabled = true
+    // As in Chrome, muted media autoplays; the page decides with its markup, not the app.
+    webView.settings.mediaPlaybackRequiresUserGesture = false
     webView.addJavascriptInterface(JavaScriptInterface(), "AndroidInterface")
     webView.settings.userAgentString = listOfNotNull(
       WebSettings.getDefaultUserAgent(webView.context),

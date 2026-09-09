@@ -25,6 +25,9 @@ import kotlin.math.abs
 import kotlin.math.max
 
 // Turbo 8 exposes session.refresh; older Turbo falls back to a replace visit.
+// SwipeRefreshLayout's DEFAULT_CIRCLE_TARGET, which it keeps private.
+private const val SPINNER_REST_DP = 64
+
 private const val REFRESH_SCRIPT = """
 typeof Turbo.session.refresh === 'function'
   ? Turbo.session.refresh(document.baseURI)
@@ -64,10 +67,19 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
       setPullToRefresh(value)
     }
 
-  var progressViewOffset: ProgressViewOffsetRecord? = null
+  /**
+   * Chrome over the top of the view, in dp; see NativeVisitableViewProps. The refresh
+   * spinners rest at SwipeRefreshLayout's default distance below it instead of below the
+   * view's own edge, where a floating header would cover them.
+   */
+  var topInset: Double = 0.0
     set(value) {
       field = value
-      value?.let { hotwiredView.webViewRefresh.setProgressViewOffset(it.scale, it.start, it.end) }
+      val top = (value * resources.displayMetrics.density).toInt()
+      val end = (SPINNER_REST_DP * resources.displayMetrics.density).toInt()
+      listOf(hotwiredView.webViewRefresh, hotwiredView.errorRefresh).forEach {
+        it.setProgressViewOffset(false, top - it.progressCircleDiameter, top + end)
+      }
     }
 
   var webViewDebuggingEnabled: Boolean = false

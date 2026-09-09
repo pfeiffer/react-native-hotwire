@@ -103,10 +103,6 @@ public class HotwiredModule: Module, PathConfigurationDelegate {
         view.applicationNameForUserAgent = name
       }
 
-      Prop("allowsInlineMediaPlayback") { (view: HotwiredVisitableView, allows: Bool) in
-        view.allowsInlineMediaPlayback = allows
-      }
-
       Prop("pullToRefreshEnabled") { (view: HotwiredVisitableView, enabled: Bool) in
         view.pullToRefreshEnabled = enabled
       }

@@ -6,20 +6,12 @@ import dev.hotwire.core.turbo.config.PathConfigurationLoadState
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import expo.modules.kotlin.records.Field
-import expo.modules.kotlin.records.Record
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-
-class ProgressViewOffsetRecord : Record {
-  @Field val scale: Boolean = false
-  @Field val start: Int = 0
-  @Field val end: Int = 0
-}
 
 class NoSessionException(handle: String) : CodedException("No session with handle \"$handle\"")
 
@@ -122,8 +114,8 @@ class HotwiredModule : Module() {
         view.scrollEnabled = enabled
       }
 
-      Prop("progressViewOffset") { view: HotwiredVisitableView, offset: ProgressViewOffsetRecord? ->
-        view.progressViewOffset = offset
+      Prop("topInset") { view: HotwiredVisitableView, inset: Double ->
+        view.topInset = inset
       }
 
       Prop("webViewDebuggingEnabled") { view: HotwiredVisitableView, enabled: Boolean ->

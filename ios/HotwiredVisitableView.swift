@@ -19,10 +19,6 @@ final class HotwiredVisitableView: ExpoView {
   var applicationNameForUserAgent: String? {
     didSet { webViewConfiguration.applicationNameForUserAgent = applicationNameForUserAgent }
   }
-  /// Lets a `<video playsinline>` play inline; WKWebView's own default sends it fullscreen.
-  var allowsInlineMediaPlayback = true {
-    didSet { webViewConfiguration.allowsInlineMediaPlayback = allowsInlineMediaPlayback }
-  }
   var pullToRefreshEnabled = true {
     didSet { controller?.visitableView.allowsPullToRefresh = pullToRefreshEnabled }
   }
@@ -56,11 +52,14 @@ final class HotwiredVisitableView: ExpoView {
 
   private let webViewConfiguration: WKWebViewConfiguration = {
     // Upstream's makeWebViewConfiguration: mobile pages even on iPad, one process pool for
-    // every session, and inline media unless the app says otherwise.
+    // every session. Media plays as it does in Safari, inline and with muted autoplay;
+    // WKWebView's own defaults send every video fullscreen and block all autoplay, and
+    // the page decides such things with its markup, not the app.
     let configuration = WKWebViewConfiguration()
     configuration.defaultWebpagePreferences.preferredContentMode = .mobile
     configuration.processPool = HotwiredSessionManager.shared.processPool
     configuration.allowsInlineMediaPlayback = true
+    configuration.mediaTypesRequiringUserActionForPlayback = []
     return configuration
   }()
 

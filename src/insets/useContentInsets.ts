@@ -29,7 +29,9 @@ import type { WindowRect } from './useWindowRect';
  *
  * Returns the function to pass as `onLoad` (or call from it): a cold load starts
  * a new document, so the properties have to be written again, and it is the
- * first moment a script can reach the web view at all.
+ * first moment a script can reach the web view at all. Also returns the top
+ * inset itself, for the one piece of native chrome that has to agree with the
+ * page about it: the pull-to-refresh spinner.
  */
 export function useContentInsets(ref: { current: { injectJavaScript(script: string): void } | null }, rect: WindowRect | null) {
   // Chrome publishes where it stops, in window coordinates; what this web view
@@ -104,5 +106,5 @@ export function useContentInsets(ref: { current: { injectJavaScript(script: stri
     }
   }, [applyContentInsets]);
 
-  return applyContentInsetsOnLoad;
+  return { applyContentInsets: applyContentInsetsOnLoad, topInset: top };
 }

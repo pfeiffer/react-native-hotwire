@@ -61,12 +61,6 @@ export interface ContentInset {
   right?: number;
 }
 
-export interface ProgressViewOffset {
-  scale: boolean;
-  start: number;
-  end: number;
-}
-
 export interface BridgeMessage {
   component: string;
   event: string;
