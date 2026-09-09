@@ -227,6 +227,7 @@ extension HotwiredVisitableView: HotwiredSessionSubscriber {
       onVisitProposal([
         "url": proposal.url.absoluteString,
         "action": proposal.options.action.rawValue,
+        "properties": proposal.properties,
       ])
     }
   }

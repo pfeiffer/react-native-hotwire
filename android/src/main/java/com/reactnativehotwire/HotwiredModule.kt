@@ -1,10 +1,19 @@
 package com.reactnativehotwire
 
+import dev.hotwire.core.config.Hotwire
+import dev.hotwire.core.turbo.config.PathConfiguration
+import dev.hotwire.core.turbo.config.PathConfigurationLoadState
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import expo.modules.kotlin.records.Field
 import expo.modules.kotlin.records.Record
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 class ProgressViewOffsetRecord : Record {
   @Field val scale: Boolean = false
@@ -15,8 +24,45 @@ class ProgressViewOffsetRecord : Record {
 class NoSessionException(handle: String) : CodedException("No session with handle \"$handle\"")
 
 class HotwiredModule : Module() {
+  private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
   override fun definition() = ModuleDefinition {
     Name("Hotwire")
+
+    Events("onPathConfigurationUpdate")
+
+    OnCreate {
+      // Every load, bundled, cached or remote, reaches JS with the settings it carries.
+      scope.launch {
+        Hotwire.config.pathConfiguration.loadState.collect { state ->
+          if (state is PathConfigurationLoadState.Loaded) {
+            sendEvent("onPathConfigurationUpdate", mapOf("settings" to Hotwire.config.pathConfiguration.settings))
+          }
+        }
+      }
+    }
+
+    OnDestroy {
+      scope.cancel()
+    }
+
+    // Hotwire's path configuration: `{ settings, rules }`, see README "Path configuration".
+    // The bundled document loads at once unless a copy cached from the URL exists; the URL,
+    // if any, loads after and refreshes that cache, as upstream's loader does.
+    AsyncFunction("loadPathConfiguration") { document: Map<String, Any?>?, url: String? ->
+      val context = appContext.reactContext ?: throw CodedException("No React context")
+      Hotwire.loadPathConfiguration(
+        context,
+        PathConfiguration.Location(
+          remoteFileUrl = url,
+          bundledJson = document?.let { JSONObject(it).toString() },
+        ),
+      )
+    }
+
+    AsyncFunction("getPathConfigurationSettings") {
+      Hotwire.config.pathConfiguration.settings
+    }
 
     AsyncFunction("getSessionHandles") {
       SessionManager.handles

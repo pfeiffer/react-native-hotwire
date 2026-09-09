@@ -66,7 +66,12 @@ class PathConfiguration internal constructor() {
          * must be the full url of the JSON file, for example:
          * `"https://turbo.hotwired.dev/demo/json/configuration.json"`
          */
-        val remoteFileUrl: String? = null
+        val remoteFileUrl: String? = null,
+
+        // react-native-hotwire: the bundled configuration as a JSON string, for a document
+        // that ships in the JavaScript bundle rather than in the APK's assets. Used when no
+        // cached remote copy exists, exactly where `assetFilePath` would be.
+        val bundledJson: String? = null
     )
 
     /**

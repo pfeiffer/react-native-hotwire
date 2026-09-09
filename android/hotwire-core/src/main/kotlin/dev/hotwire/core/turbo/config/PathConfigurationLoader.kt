@@ -20,7 +20,12 @@ internal class PathConfigurationLoader {
         }
 
         // Fall back to the bundled config when a cached config is not available
-        return location.assetFilePath?.let { loadBundledAssetConfiguration(context, it) }
+        location.assetFilePath?.let { return loadBundledAssetConfiguration(context, it) }
+
+        // react-native-hotwire: a bundled document handed over as JSON (see Location).
+        return location.bundledJson?.let { json ->
+            load(json)?.let { PathConfigurationLoadState.Loaded.BundledAssetLoaded(it) }
+        }
     }
 
     private fun loadBundledAssetConfiguration(

@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import dev.hotwire.core.config.Hotwire
 import dev.hotwire.core.turbo.errors.VisitError
 import dev.hotwire.core.turbo.visit.VisitOptions
 import dev.hotwire.core.turbo.webview.HotwireWebView
@@ -400,7 +401,13 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
       didOpenExternalUrl(location)
       return
     }
-    onVisitProposal(mapOf("url" to location, "action" to options.action.name.lowercase()))
+    onVisitProposal(
+      mapOf(
+        "url" to location,
+        "action" to options.action.name.lowercase(),
+        "properties" to Hotwire.config.pathConfiguration.properties(location),
+      )
+    )
   }
 
   override fun visitProposedToCrossOriginRedirect(location: String) {

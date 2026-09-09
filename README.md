@@ -95,6 +95,47 @@ The properties describe floating chrome only. Use them for fixed elements, never
 padding, and read them live rather than caching them. The keyboard is not chrome: the
 native view gives up what the keyboard covers (Android), or resizes itself (iOS).
 
+### Path configuration
+
+Hotwire's [path configuration](https://native.hotwired.dev/reference/path-configuration)
+decides how a URL is presented, from the server. It is a JSON document of `rules`, each
+regex `patterns` plus `properties`, applied in order with later rules overwriting earlier
+ones, and a `settings` sandbox for the app's own data. The vendored core matches every
+visit against it natively; `loadPathConfiguration` feeds it and every `VisitProposal`
+carries the matched `properties`.
+
+```ts
+import configuration from './path-configuration.json';
+
+loadPathConfiguration({ document: configuration, url: `${baseURL}/configurations/app.json` });
+```
+
+The bundled document is available at once. The URL loads afterwards and is cached on disk,
+and on the next launch that cache takes precedence over the bundled copy, so the server's
+rules survive a restart. `getPathConfigurationSettings()` returns the `settings` of the
+configuration loaded last; `addPathConfigurationListener` reports each load.
+
+React Navigation is not involved in matching. `useVisitHandler` routes the standard
+properties the way upstream's Navigator does: `context` and `modal_style` pick a route from
+a table you declare once in the stack, `presentation` picks push, replace, pop, refresh,
+none, clear_all or replace_root, and a `screen` property names a native route. The app
+keeps the last word through `onVisitProposal(proposal, resolution)`: return nothing to
+accept, your own resolution or action to substitute, `null` to drop.
+
+```tsx
+const handleVisitProposal = useVisitHandler({
+  routes: { default: 'web', modal: 'webModal', full: 'webFullScreen' },
+  onVisitProposal: (proposal, resolution) => {
+    if (proposal.properties.screen === 'settings') return CommonActions.navigate({ name: 'Settings' });
+  },
+});
+
+<VisitableView onVisitProposal={handleVisitProposal} ... />
+```
+
+Routed web screens receive `{ url, fullPath, properties }` as params; `fullPath` is what
+`useCurrentUrl` reads.
+
 ### Bridge components
 
 ```ts
