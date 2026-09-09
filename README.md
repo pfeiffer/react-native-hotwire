@@ -44,7 +44,7 @@ Native screens sit next to the web ones:
   url={baseURL}
   screens={[{ name: 'settings', component: SettingsScreen, path: 'settings' }]}
   onVisitProposal={(proposal) => {
-    if (proposal.properties.screen === 'settings') return CommonActions.navigate({ name: 'settings' });
+    if (proposal.properties.screen === 'settings') return CommonActions.navigate('settings');
   }}
 />
 ```
@@ -197,7 +197,7 @@ accept, your own resolution or action to substitute, `null` to drop.
 const handleVisitProposal = useVisitHandler({
   routes: { default: 'web', modal: 'webModal', full: 'webFullScreen' },
   onVisitProposal: (proposal, resolution) => {
-    if (proposal.properties.screen === 'settings') return CommonActions.navigate({ name: 'Settings' });
+    if (proposal.properties.screen === 'settings') return CommonActions.navigate('Settings');
   },
 });
 

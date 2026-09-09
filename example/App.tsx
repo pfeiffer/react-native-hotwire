@@ -49,7 +49,7 @@ export default function App() {
       onVisitProposal={(proposal) => {
         // The demo's rule names an iOS view controller; here that is a route.
         if (proposal.properties.view_controller === 'numbers') {
-          return CommonActions.navigate({ name: 'numbers' });
+          return CommonActions.navigate('numbers');
         }
       }}
     />
