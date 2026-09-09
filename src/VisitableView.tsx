@@ -39,12 +39,6 @@ export interface VisitableViewProps {
   scrollEnabled?: boolean;
   /** iOS only. */
   contentInset?: ContentInset;
-  /**
-   * Hands the page the space the native chrome takes up, as `--hotwire-inset-top`,
-   * `-right`, `-bottom` and `-left` on `<html>`. See "Content insets" in the README.
-   * Defaults to true.
-   */
-  insetProperties?: boolean;
   /** Android only: position of the pull-to-refresh spinner. */
   progressViewOffset?: ProgressViewOffset;
   webViewDebuggingEnabled?: boolean;
@@ -104,7 +98,6 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     pullToRefreshEnabled = true,
     scrollEnabled = true,
     contentInset,
-    insetProperties = true,
     progressViewOffset,
     webViewDebuggingEnabled = false,
     renderLoading,
@@ -172,12 +165,10 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
   const handleLoad = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<LoadEvent>) => {
       initializeBridge();
-      if (insetProperties) {
-        applyContentInsets();
-      }
+      applyContentInsets();
       onLoad?.(nativeEvent);
     },
-    [applyContentInsets, initializeBridge, insetProperties, onLoad]
+    [applyContentInsets, initializeBridge, onLoad]
   );
 
   const handleVisitProposal = useCallback(

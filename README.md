@@ -84,7 +84,7 @@ properties on `<html>`: `--hotwire-inset-top`, `--hotwire-inset-right`,
 `--hotwire-inset-bottom` and `--hotwire-inset-left`, siblings of `env(safe-area-inset-*)`.
 They are 0 wherever the chrome is opaque and takes layout, so a page needs no platform
 checks, and they are re-applied after every Turbo render. `VisitableView` does this by
-itself; `insetProperties={false}` turns it off.
+itself.
 
 The values come from the web view's own safe area, read from a provider that is the view
 itself, so they are already 0 for any edge a parent padded for. A navigator nested in a
