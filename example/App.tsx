@@ -1,14 +1,17 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { CommonActions } from '@react-navigation/native';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { HotwireApp } from 'react-native-hotwire';
 
 import { FormComponent } from './bridge/FormComponent';
 import { MenuComponent } from './bridge/MenuComponent';
 import { OverflowMenuComponent } from './bridge/OverflowMenuComponent';
+import configuration from './path-configuration.json';
 
-// The official Hotwire Native demo server: pushes, modals, forms, bridge components, and a
-// path configuration whose `/numbers$` rule asks for a native screen.
+// The official Hotwire Native demo server: pushes, modals, forms, bridge components. Its own
+// path configurations are written for its iOS and Android apps; path-configuration.json is
+// the same rules written for this one, `screen: numbers` where the iOS document names a view
+// controller. A consumer serves such a document from its server (`pathConfigurationUrl`) and
+// bundles a copy, as here.
 const demo = 'https://hotwire-native-demo.dev';
 
 // The counterpart of the demo's NumbersViewController.
@@ -30,7 +33,7 @@ export default function App() {
   return (
     <HotwireApp
       url={demo}
-      pathConfigurationUrl={`${demo}/configurations/ios_v1.json`}
+      pathConfiguration={configuration}
       tabs={[
         { title: 'Navigation', url: demo, icon: ({ color, size }) => <Ionicons name="swap-horizontal" color={color} size={size} /> },
         { title: 'Bridge Components', url: `${demo}/components`, icon: ({ color, size }) => <Ionicons name="grid" color={color} size={size} /> },
@@ -46,16 +49,6 @@ export default function App() {
       }}
       webViewDebuggingEnabled
       screens={[{ name: 'numbers', component: NumbersScreen, options: { title: 'Numbers' } }]}
-      onVisitProposal={(proposal) => {
-        // The demo's document is shared with its native iOS app, whose `/numbers$` rule says
-        // `view_controller: numbers`: the identifier of a view controller in that app's binary.
-        // The library reads only `screen` as a route name. It does not treat `view_controller`
-        // as one, because a route that happens to share the name would be a coincidence, not
-        // a contract. A document you own says `screen: numbers`; this one is translated here.
-        if (proposal.properties.view_controller === 'numbers') {
-          return CommonActions.navigate('numbers');
-        }
-      }}
     />
   );
 }

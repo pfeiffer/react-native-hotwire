@@ -22,20 +22,24 @@ Point it at a Turbo-enabled site:
 
 ```tsx
 import { HotwireApp } from 'react-native-hotwire';
+import configuration from './path-configuration.json';
 
 export default () => (
   <HotwireApp
-    url="https://hotwire-native-demo.dev"
-    pathConfigurationUrl="https://hotwire-native-demo.dev/configurations/ios_v1.json"
+    url="https://example.com"
+    pathConfiguration={configuration}
+    pathConfigurationUrl="https://example.com/configurations/react-native.json"
   />
 );
 ```
 
 That is the whole app: `HotwireProvider` with the app's user agent token and bridge
-components, a stack with a web route per presentation, `HotwireScreen` on each,
-the server's path configuration deciding which URL opens how, and every link under the
-base URL handed to a web screen. It is the model Hotwire Native itself has, one stack and
-one modal layer, and `example/` is exactly this against the official demo server.
+components, a stack with a web route per presentation, `HotwireScreen` on each, the path
+configuration deciding which URL opens how, bundled for the first launch and refreshed from
+the server after, and every link under the base URL handed to a web screen. It is the model
+Hotwire Native itself has, one stack and one modal layer, and `example/` is exactly this
+against the official demo server, with the demo's rules written for this library in
+`example/path-configuration.json`.
 
 Native screens sit next to the web ones:
 
