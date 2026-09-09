@@ -21,6 +21,24 @@ final class HotwiredSessionManager {
     sessions[handle]
   }
 
+  // A proposal carries the visit's options, and after a form submission that includes the
+  // redirect's response, status and HTML. Upstream visits the new screen with those, so
+  // the page is not fetched again and a flash set on the redirect renders. The proposal
+  // reaches JS as a URL and the screen it opens may be on another session, a modal's form
+  // redirecting into a tab, so the options wait here, across sessions, for the view that
+  // visits that URL. They expire quickly: a proposal the app dropped must not hand its
+  // response to an unrelated visit of the same URL later.
+  private var proposedVisitOptions: [URL: (options: VisitOptions, at: Date)] = [:]
+
+  func storeProposedVisitOptions(_ options: VisitOptions, for url: URL) {
+    proposedVisitOptions[url] = (options, Date())
+  }
+
+  func takeProposedVisitOptions(for url: URL) -> VisitOptions? {
+    guard let entry = proposedVisitOptions.removeValue(forKey: url) else { return nil }
+    return Date().timeIntervalSince(entry.at) < 10 ? entry.options : nil
+  }
+
   func findOrCreateSession(handle: String, webViewConfiguration: WKWebViewConfiguration) -> HotwiredSession {
     if let session = sessions[handle] {
       return session

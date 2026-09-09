@@ -113,11 +113,17 @@ class HotwiredSession(
     lifecycleOwner: LifecycleOwner?,
   ) {
     val restore = restoreWithCachedSnapshot && !reload
-    val options = if (restore) VisitOptions(action = VisitAction.RESTORE) else VisitOptions()
+    val proposed = SessionManager.takeProposedVisitOptions(url)
+    val options = when {
+      restore -> VisitOptions(action = VisitAction.RESTORE)
+      reload -> VisitOptions()
+      else -> proposed ?: VisitOptions()
+    }
 
     lifecycleOwner?.lifecycleScope?.launch {
-      val snapshot = when (options.action) {
-        VisitAction.ADVANCE -> fetchCachedSnapshot(url)
+      val snapshot = when {
+        options.snapshotHTML != null -> options.snapshotHTML
+        options.action == VisitAction.ADVANCE -> fetchCachedSnapshot(url)
         else -> null
       }
 
@@ -184,7 +190,10 @@ class HotwiredSession(
   override fun visitCompleted(completedOffline: Boolean) { subscriber?.visitCompleted(completedOffline) }
   override fun visitLocationStarted(location: String) { subscriber?.visitLocationStarted(location) }
   override fun visitProposedToCrossOriginRedirect(location: String) { subscriber?.visitProposedToCrossOriginRedirect(location) }
-  override fun visitProposedToLocation(location: String, options: VisitOptions) { subscriber?.visitProposedToLocation(location, options) }
+  override fun visitProposedToLocation(location: String, options: VisitOptions) {
+    SessionManager.storeProposedVisitOptions(location, options)
+    subscriber?.visitProposedToLocation(location, options)
+  }
   override fun visitRendered() { subscriber?.visitRendered() }
   override fun visitRequestFinished() {}
   override fun formSubmissionStarted(location: String) { subscriber?.didStartFormSubmission(location) }

@@ -99,7 +99,8 @@ final class HotwiredSession: NSObject {
   }
 
   func visit(_ visitable: Visitable) {
-    turboSession.visit(visitable)
+    let options = HotwiredSessionManager.shared.takeProposedVisitOptions(for: visitable.initialVisitableURL)
+    turboSession.visit(visitable, options: options)
   }
 
   func reload() {
@@ -122,6 +123,7 @@ extension HotwiredSession: SessionDelegate {
   }
 
   func session(_ session: Session, didProposeVisit proposal: VisitProposal) {
+    HotwiredSessionManager.shared.storeProposedVisitOptions(proposal.options, for: proposal.url)
     subscriber?.didProposeVisit(proposal)
   }
 
