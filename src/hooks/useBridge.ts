@@ -23,6 +23,9 @@ export function useBridge(
     [componentNames]
   );
 
+  // Injected into whichever page the session shows at that moment. A reply that comes
+  // after the user has navigated on reaches the new page, whose web bridge drops it
+  // for lack of a matching component; upstream behaves the same.
   const sendToBridge = useCallback(
     (message: BridgeMessage) => {
       nativeRef.current?.injectJavaScript(

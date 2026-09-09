@@ -3,7 +3,7 @@ import { StyleSheet, View, type NativeSyntheticEvent, type StyleProp, type ViewS
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useBridge } from './hooks/useBridge';
-import { useMessageQueue } from './hooks/useMessageQueue';
+import { useMessageListeners } from './hooks/useMessageListeners';
 import { useWebViewDialogs, type OnAlert, type OnConfirm } from './hooks/useWebViewDialogs';
 import { useWebViewState, type RenderError, type RenderLoading } from './hooks/useWebViewState';
 import { useContentInsets } from './insets/useContentInsets';
@@ -107,7 +107,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
   const { applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled } = useHotwireConfig();
   const nativeRef = useRef<NativeVisitableViewRef>(null);
 
-  const { registerMessageListener, handleOnMessage } = useMessageQueue(onMessage);
+  const { registerMessageListener, handleOnMessage } = useMessageListeners(onMessage);
   const { initializeBridge, bridgeUserAgent, sendToBridge } = useBridge(nativeRef, bridgeComponents);
   const { handleAlert, handleConfirm } = useWebViewDialogs(nativeRef, onAlert, onConfirm);
 
@@ -199,6 +199,8 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
 
   return (
     <View ref={layoutRef} onLayout={onLayout} style={style}>
+      {/* Keyed by URL: a component belongs to a page, so a replace visit starts it over.
+          Upstream scopes components to the screen instead; this is the stricter reading. */}
       {bridgeComponents.map((BridgeComponent, i) => (
         <BridgeComponent
           key={`${url}-${i}`}
