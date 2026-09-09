@@ -1,11 +1,22 @@
 import React, { createContext, useContext, useEffect, useMemo } from 'react';
+import { Platform } from 'react-native';
 
 import { loadPathConfiguration, type PathConfigurationDocument } from './pathConfiguration';
 import type { BridgeComponentType } from './types';
 
+/**
+ * Upstream's default token. Servers recognize a native app by it (Rails' `hotwire_native_app?`),
+ * and serve the native stylesheet that hides what a bridge component replaces.
+ */
+export const defaultApplicationNameForUserAgent =
+  Platform.OS === 'ios' ? 'Hotwire Native iOS; Turbo Native iOS;' : 'Hotwire Native Android; Turbo Native Android;';
+
 export interface HotwireConfig {
-  /** Appended to every web view's user agent, followed by the bridge component list. */
-  applicationNameForUserAgent?: string;
+  /**
+   * Appended to every web view's user agent, followed by the bridge component list.
+   * Defaults to upstream's token; an app with a server contract of its own puts it here.
+   */
+  applicationNameForUserAgent: string;
   /** The app's bridge components; the user agent advertises their names. */
   bridgeComponents: BridgeComponentType[];
   /** Makes the web views inspectable (Safari, Chrome). */
@@ -30,7 +41,7 @@ const HotwireContext = createContext<HotwireConfig | null>(null);
  * can disagree. One per app, as Hotwire Native's config is.
  */
 export function HotwireProvider({
-  applicationNameForUserAgent,
+  applicationNameForUserAgent = defaultApplicationNameForUserAgent,
   bridgeComponents = [],
   webViewDebuggingEnabled = false,
   pathConfiguration,
