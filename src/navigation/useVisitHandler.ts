@@ -11,16 +11,22 @@ import { useCallback } from 'react';
 
 import type { PathProperties, VisitProposal } from '../types';
 
+/** Hotwire Native's presentations: `context` `default` or `modal`, and the `modal_style`s. */
+export type VisitPresentation = 'default' | 'modal' | 'full' | 'medium' | 'page_sheet' | 'form_sheet';
+
 /**
  * Route names a proposal resolves to, keyed by the path configuration's `context` and
  * `modal_style`. Declare each route once in the stack with the matching `presentation`;
  * the rules pick between them per URL. A style whose route the navigator tree does not
  * declare falls back to `modal`, and `modal` to `default`, with a warning in development,
  * so a route the app left out degrades to a coarser presentation rather than dropping
- * the visit. Type the table against the app's own route names, `VisitRoutes<keyof
- * RootParamList>`, and a typo is a compile error.
+ * the visit.
+ *
+ * Type the table against the app's own route names, `VisitRoutes<keyof RootParamList>`,
+ * and a typo is a compile error. `Style` adds `modal_style` values of the app's own,
+ * `VisitRoutes<Name, 'inline'>`, which the server then uses under `context: "modal"`.
  */
-export interface VisitRoutes<Name extends string = string> {
+export type VisitRoutes<Name extends string = string, Style extends string = never> = {
   /** `context: "default"`: a push on the current stack. */
   default: Name;
   /** `context: "modal"` with `modal_style: "large"`, the default style. */
@@ -33,7 +39,7 @@ export interface VisitRoutes<Name extends string = string> {
   page_sheet?: Name;
   /** `modal_style: "form_sheet"`. */
   form_sheet?: Name;
-}
+} & Partial<Record<Style, Name>>;
 
 export const defaultVisitRoutes: VisitRoutes = {
   default: 'web',
@@ -118,7 +124,7 @@ function routeFor(properties: PathProperties, routes: VisitRoutes, declared: Set
   }
   if (lower(properties.context, 'default') === 'modal') {
     const style = lower(properties.modal_style, 'large');
-    const styled = style in routes ? routes[style as keyof VisitRoutes] : undefined;
+    const styled = (routes as Record<string, string | undefined>)[style];
     if (styled) candidates.push(styled);
     candidates.push(routes.modal);
   }

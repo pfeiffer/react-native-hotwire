@@ -112,13 +112,20 @@ provides: the URL from the route params, the session from the screen's place in 
 navigator tree (one per tab, one for modals, one default), proposals routed by
 `useVisitHandler` with your `onVisitProposal` as the last word, `pull_to_refresh_enabled`
 from the path configuration, and the page title as the screen title. `hotwireScreens`
-declares one per presentation; to change one of them, give it options by route name, or
-rename the routes and it and every screen navigate by the same table:
+declares one per presentation; to change one, give it options by presentation, the
+path configuration's `context` and `modal_style` words:
 
 ```tsx
-const routes = { ...defaultVisitRoutes, medium: 'sheet' };
+{hotwireScreens({ options: { medium: { sheetAllowedDetents: [0.5, 1] } } })}
+```
 
-{hotwireScreens({ routes, options: { sheet: { sheetAllowedDetents: [0.5, 1] } } })}
+The route names behind them are the app's. Rename them, or add a `modal_style` of your
+own for the server to use, and `hotwireScreens` and every screen navigate by the same table:
+
+```tsx
+const routes: VisitRoutes<RootRoute, 'inline'> = { ...defaultVisitRoutes, medium: 'sheet', inline: 'inlineWeb' };
+
+{hotwireScreens({ routes, options: { inline: { presentation: 'containedModal' } } })}
 <HotwireScreen {...props} routes={routes} />
 ```
 
@@ -131,8 +138,10 @@ back to a page already in the stack instead of pushing it again:
 
 A route the table names but no navigator in the tree declares falls back, sheet to modal
 and modal to push, with a warning in development, so a presentation the app left out
-degrades instead of dropping the visit. Type the table as `VisitRoutes<keyof RootParamList>`
-and a name that is not a route is a compile error.
+degrades instead of dropping the visit. Typed against the app's route names, a name that is
+not a route is a compile error. `modal_style` is read under `context: "modal"` only; a
+presentation that is not a modal at all is a property of the server's own, handled in
+`onVisitProposal`.
 
 A screen placed by hand, a tab root say, gets `initialParams={{ fullPath: '/inbox' }}`, a path
 resolved against the linking prefix; screens reached through proposals or links carry their

@@ -22,6 +22,7 @@ export {
   useVisitHandler,
   defaultVisitRoutes,
   type VisitRoutes,
+  type VisitPresentation,
   type VisitResolution,
   type VisitParams,
   type VisitHandlerOptions,

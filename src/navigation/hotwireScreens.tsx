@@ -2,7 +2,7 @@ import { createNativeStackNavigator, type NativeStackNavigationOptions } from '@
 import React from 'react';
 
 import { HotwireScreen } from '../HotwireScreen';
-import { defaultVisitRoutes, type VisitRoutes } from './useVisitHandler';
+import { defaultVisitRoutes, type VisitPresentation, type VisitRoutes } from './useVisitHandler';
 
 // The Screen component is React Navigation's own, the same for every navigator, so
 // these elements belong to whichever native stack they are rendered in.
@@ -16,7 +16,7 @@ export const hotwireScreenId = ({ params }: { params?: { url?: string; fullPath?
   return path?.replace(/\/+$/, '') || '/';
 };
 
-export interface HotwireScreensOptions {
+export interface HotwireScreensOptions<Style extends string = never> {
   /** The page the stack starts on, a path under the base URL. Defaults to `/`. */
   path?: string;
   /**
@@ -28,12 +28,22 @@ export interface HotwireScreensOptions {
    * The app's route names per presentation, the same table its screens navigate by.
    * Styles that share a name share a screen, as the three sheet styles do by default.
    */
-  routes?: Partial<VisitRoutes>;
-  /** Navigation options per route name, merged over the presentation each route gets. */
-  options?: Record<string, NativeStackNavigationOptions>;
+  routes?: Partial<VisitRoutes<string, Style>>;
+  /**
+   * Navigation options per presentation, merged over the native presentation each gets.
+   * A style of the app's own gets `modal` unless its options say otherwise.
+   */
+  options?: Partial<Record<VisitPresentation | Style, NativeStackNavigationOptions>>;
 }
 
-type Presentation = NativeStackNavigationOptions['presentation'];
+const nativePresentations: Record<VisitPresentation, NativeStackNavigationOptions['presentation']> = {
+  default: undefined,
+  modal: 'modal',
+  full: 'fullScreenModal',
+  medium: 'formSheet',
+  page_sheet: 'pageSheet',
+  form_sheet: 'formSheet',
+};
 
 /**
  * The web routes a stack needs, one per presentation, named from `routes` so that
@@ -43,38 +53,38 @@ type Presentation = NativeStackNavigationOptions['presentation'];
  * never shows before the page title does. A screen the app writes itself instead keeps
  * `hotwireScreenId` and its name in `routes`.
  */
-export function hotwireScreens({
+export function hotwireScreens<Style extends string = never>({
   path = '/',
   component = HotwireScreen,
   routes: routeOverrides,
   options = {},
-}: HotwireScreensOptions = {}) {
-  const routes: VisitRoutes = { ...defaultVisitRoutes, ...routeOverrides };
-  const presentations: [string | undefined, Presentation][] = [
-    [routes.default, undefined],
-    [routes.modal, 'modal'],
-    [routes.full, 'fullScreenModal'],
-    [routes.medium, 'formSheet'],
-    [routes.page_sheet, 'pageSheet'],
-    [routes.form_sheet, 'formSheet'],
-  ];
-  const seen = new Set<string>();
+}: HotwireScreensOptions<Style> = {}) {
+  const routes = { ...defaultVisitRoutes, ...routeOverrides } as Record<string, string | undefined>;
+  const styleOptions = options as Partial<Record<string, NativeStackNavigationOptions>>;
+
+  // One screen per route name; the options of every style that maps to it, known
+  // presentations first and in table order, merge over its native presentation.
+  const screens = new Map<string, NativeStackNavigationOptions>();
+  for (const style of [...Object.keys(nativePresentations), ...Object.keys(routes)]) {
+    const name = routes[style];
+    if (!name) continue;
+    const known = style in nativePresentations ? nativePresentations[style as VisitPresentation] : 'modal';
+    const current = screens.get(name) ?? { title: '', presentation: known };
+    screens.set(name, { ...current, ...styleOptions[style] });
+  }
+
   return (
     <>
-      {presentations.map(([name, presentation]) => {
-        if (!name || seen.has(name)) return null;
-        seen.add(name);
-        return (
-          <Stack.Screen
-            key={name}
-            name={name}
-            component={component}
-            getId={hotwireScreenId}
-            initialParams={name === routes.default ? { fullPath: path } : undefined}
-            options={{ title: '', presentation, ...options[name] }}
-          />
-        );
-      })}
+      {[...screens].map(([name, screenOptions]) => (
+        <Stack.Screen
+          key={name}
+          name={name}
+          component={component}
+          getId={hotwireScreenId}
+          initialParams={name === routes.default ? { fullPath: path } : undefined}
+          options={screenOptions}
+        />
+      ))}
     </>
   );
 }
