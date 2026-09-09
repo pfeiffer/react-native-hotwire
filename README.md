@@ -62,6 +62,11 @@ Every `sessionHandle` owns one web view and one Turbo session, created by the fi
 including `applicationNameForUserAgent` and the `bridgeComponents` list, is fixed at
 creation, so give every screen on a handle the same values.
 
+Give every tab its own handle, as Hotwire Native does. A page keeps its web view while it
+is off screen and the session leaves it alone when it comes back, so a tab return is instant;
+only a page popped off a stack gives its web view up, and only a page that lacks one asks the
+session to restore it. A handle shared across tabs would show a stale screenshot on return.
+
 `getSessionHandles()`, `reloadSession(handle)`, `refreshSession(handle)`,
 `clearSessionSnapshotCache(handle)`.
 

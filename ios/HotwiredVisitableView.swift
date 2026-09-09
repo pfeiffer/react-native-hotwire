@@ -141,6 +141,7 @@ final class HotwiredVisitableView: ExpoView {
 
   override func removeFromSuperview() {
     super.removeFromSuperview()
+    controller?.prepareForRemoval()
     controller?.willMove(toParent: nil)
     controller?.view.removeFromSuperview()
     controller?.removeFromParent()

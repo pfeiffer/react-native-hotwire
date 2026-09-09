@@ -71,19 +71,51 @@ final class HotwiredVisitableViewController: UIViewController, Visitable {
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    visitableDelegate?.visitableViewWillAppear(self)
+    sessionNeedsAppearance = visitableView.webView == nil || session?.topmostVisitable !== self
+    if sessionNeedsAppearance {
+      visitableDelegate?.visitableViewWillAppear(self)
+    }
     delegate?.visitableWillAppear()
   }
 
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
-    visitableDelegate?.visitableViewDidAppear(self)
+    if sessionNeedsAppearance {
+      visitableDelegate?.visitableViewDidAppear(self)
+    }
     delegate?.visitableDidAppear()
   }
 
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
     delegate?.visitableWillDisappear()
+  }
+
+  /// Called by the view right before React unmounts it, while the web view is still in
+  /// place: this is the pop. The session caches the page's snapshot and takes the web view
+  /// back, exactly what upstream does in `viewDidDisappear` of a popped controller.
+  func prepareForRemoval() {
+    guard visitableView.webView != nil else { return }
+    visitableDelegate?.visitableViewWillDisappear(self)
+    visitableDelegate?.visitableViewDidDisappear(self)
+  }
+
+  // MARK: Session appearance
+
+  /// Upstream forwards every appearance and disappearance to the session and relies on
+  /// HotwireNavigationController to hide tab switches. Here the containers are React
+  /// Navigation's, and a push can happen on a navigator above the tabs, in another session,
+  /// so structure says nothing about whether the session is involved. What does: the session
+  /// needs to hear about an appearance only when this visitable lacks the web view (a pop
+  /// back to it after another page took the web view) or has a visit whose navigation is not
+  /// complete (its first appearance). A page that holds its web view and is its session's
+  /// topmost visitable, a tab return, a pager swipe, a native or cross-session screen popped
+  /// off it, is left alone: no snapshot, no deactivation, no restore visit. Disappearance
+  /// reaches the session only through `prepareForRemoval`.
+  private var sessionNeedsAppearance = false
+
+  private var session: Session? {
+    visitableDelegate as? Session
   }
 
   // MARK: Visitable
