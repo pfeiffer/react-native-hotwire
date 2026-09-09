@@ -1,12 +1,19 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+import type { NativeSyntheticEvent } from 'react-native';
 
 import { bridgeScript } from '../bridge/bridgeScript';
 import type { NativeVisitableViewRef } from '../NativeVisitableView';
-import type { BridgeComponentType, BridgeMessage } from '../types';
+import type { BridgeComponentType, BridgeMessage, EventSubscription, MessageEvent, MessageListener } from '../types';
 
+/**
+ * The native side of the web bridge for one view: installs the adapter script, advertises
+ * the components in the user agent, sends replies, and fans every message from the page
+ * out to the components' listeners and the view's `onMessage`.
+ */
 export function useBridge(
   nativeRef: React.RefObject<NativeVisitableViewRef | null>,
-  bridgeComponents: BridgeComponentType[]
+  bridgeComponents: BridgeComponentType[],
+  onMessage: MessageListener | undefined
 ) {
   const componentNames = useMemo(
     () => bridgeComponents.map(({ componentName }) => componentName),
@@ -35,5 +42,41 @@ export function useBridge(
     [nativeRef]
   );
 
-  return { initializeBridge, bridgeUserAgent, sendToBridge };
+  // Nothing is buffered: a message can only arrive after the adapter is injected on load,
+  // by which time the components have mounted and subscribed, and on a URL change React
+  // flushes their new subscriptions before it processes the next native event.
+  const listeners = useRef<MessageListener[]>([]);
+  const latestOnMessage = useRef(onMessage);
+  latestOnMessage.current = onMessage;
+
+  const registerMessageListener = useCallback((listener: MessageListener): EventSubscription => {
+    listeners.current.push(listener);
+
+    return {
+      remove: () => {
+        listeners.current = listeners.current.filter((l) => l !== listener);
+      },
+    };
+  }, []);
+
+  const handleMessage = useCallback((e: NativeSyntheticEvent<MessageEvent>) => {
+    let message: object;
+    try {
+      message = JSON.parse(e.nativeEvent.message);
+    } catch (error) {
+      console.error('react-native-hotwire: failed to parse message from web view', error);
+      return;
+    }
+
+    // One component's handler failing must not cost the others the message.
+    for (const listener of [latestOnMessage.current, ...listeners.current]) {
+      try {
+        listener?.(message);
+      } catch (error) {
+        console.error('react-native-hotwire: a message listener threw', error);
+      }
+    }
+  }, []);
+
+  return { initializeBridge, bridgeUserAgent, sendToBridge, registerMessageListener, handleMessage };
 }

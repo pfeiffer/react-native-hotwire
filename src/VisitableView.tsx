@@ -3,7 +3,6 @@ import { StyleSheet, View, type NativeSyntheticEvent, type StyleProp, type ViewS
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useBridge } from './hooks/useBridge';
-import { useMessageListeners } from './hooks/useMessageListeners';
 import { useWebViewDialogs, type OnAlert, type OnConfirm } from './hooks/useWebViewDialogs';
 import { useWebViewState, type RenderError, type RenderLoading } from './hooks/useWebViewState';
 import { useContentInsets } from './insets/useContentInsets';
@@ -107,8 +106,11 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
   const { applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled } = useHotwireConfig();
   const nativeRef = useRef<NativeVisitableViewRef>(null);
 
-  const { registerMessageListener, handleOnMessage } = useMessageListeners(onMessage);
-  const { initializeBridge, bridgeUserAgent, sendToBridge } = useBridge(nativeRef, bridgeComponents);
+  const { initializeBridge, bridgeUserAgent, sendToBridge, registerMessageListener, handleMessage } = useBridge(
+    nativeRef,
+    bridgeComponents,
+    onMessage
+  );
   const { handleAlert, handleConfirm } = useWebViewDialogs(nativeRef, onAlert, onConfirm);
 
   const reload = useCallback(() => {
@@ -223,7 +225,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
         webViewDebuggingEnabled={webViewDebuggingEnabled}
         onError={handleError}
         onVisitProposal={handleVisitProposal}
-        onMessage={handleOnMessage}
+        onMessage={handleMessage}
         onOpenExternalUrl={handleOpenExternalUrl}
         onCrossOriginRedirect={handleCrossOriginRedirect}
         onLoad={handleLoad}
