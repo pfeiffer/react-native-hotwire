@@ -34,9 +34,10 @@ export interface HotwireScreenErrorContext {
   retry: () => void;
   /** Pops this screen, without a transition. Nothing dispatched through it afterwards lands. */
   pop: () => void;
-  /** Replaces this screen with the page at `url`, a path or a URL, without a transition: a pop and a visit in one. */
-  replace: (url: string) => void;
-  /** Visits a URL or a path as a page link would. */
+  /**
+   * Visits a URL or a path as a page link would. With the `replace` action from this
+   * screen it swaps the page in place, what a 401 wants: the empty screen becomes sign-in.
+   */
   visit: ReturnType<typeof useVisit>;
 }
 
@@ -44,10 +45,6 @@ function readParams(params: unknown): Partial<VisitParams> & { baseURL?: string 
   return params && typeof params === 'object' ? (params as Partial<VisitParams> & { baseURL?: string }) : {};
 }
 
-function pathOf(url: string): string {
-  const parsed = new URL(url);
-  return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-}
 
 /**
  * A React Navigation screen that is a Hotwire page: `VisitableView` plus the defaults
@@ -122,16 +119,10 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
             navigation.dispatch(StackActions.pop());
           }
         },
-        replace: (urlOrPath) => {
-          navigation.setOptions({ animation: 'none' });
-          const url = resolve(urlOrPath);
-          const params: VisitParams = { url, fullPath: pathOf(url), properties: {} };
-          navigation.dispatch(StackActions.replace(route.name, params));
-        },
         visit,
       });
     },
-    [navigation, onError, resolve, route.name, visit]
+    [navigation, onError, visit]
   );
 
   const handleLoad = useCallback(

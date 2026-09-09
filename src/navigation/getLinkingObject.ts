@@ -4,7 +4,7 @@ import type { LinkingConfig } from './useCurrentUrl';
 import { unpackState, type AnyState } from './utils';
 
 type Options = Parameters<typeof getStateFromPath>[1];
-type LinkedParams = { baseURL?: string; fullPath?: string };
+type LinkedParams = { url?: string; baseURL?: string; fullPath?: string };
 
 function paramsOfActiveRoute(state: AnyState): LinkedParams | undefined {
   const activeRoute = state.routes[state.index ?? 0];
@@ -18,8 +18,9 @@ function paramsOfActiveRoute(state: AnyState): LinkedParams | undefined {
 }
 
 /**
- * Builds the `linking` object for NavigationContainer. Every linked route receives
- * `baseURL` and `fullPath` params so `useCurrentUrl` can load exactly the linked URL.
+ * Builds the `linking` object for NavigationContainer. Every linked route receives `url`,
+ * `baseURL` and `fullPath` params so `useCurrentUrl` can load exactly the linked URL, and
+ * so a replace visit merging into a route a proposal opened overrides every one of them.
  */
 export function getLinkingObject(baseURL: string, config: LinkingConfig) {
   return {
@@ -30,6 +31,7 @@ export function getLinkingObject(baseURL: string, config: LinkingConfig) {
       if (state) {
         const params = paramsOfActiveRoute(unpackState(state));
         if (params) {
+          params.url = new URL(path, baseURL).toString();
           params.baseURL = baseURL;
           params.fullPath = path;
         }

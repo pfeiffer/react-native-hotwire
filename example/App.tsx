@@ -29,7 +29,7 @@ function WebScreen(props: HotwireScreenProps) {
       {...props}
       onError={(error, screen) => {
         if (error.statusCode === 401) {
-          screen.replace('/session/new');
+          screen.visit('/session/new', 'replace');
         }
       }}
     />

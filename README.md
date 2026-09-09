@@ -44,7 +44,7 @@ configuration. `hotwireScreens` is the web routes a stack needs, one per present
 first launch and refreshed from the server after. `hotwireLinking` hands every URL under the
 base URL to a web screen, and its prefix is the one place the origin is stated: everything
 under the container resolves paths against it, so `hotwireScreens({ path: '/inbox' })`,
-`visit('/inbox')` and `screen.replace('/session/new')` all work (`useBaseURL()` reads it). It is the model Hotwire Native itself has, one stack and one modal
+`visit('/inbox')` and `screen.visit('/session/new', 'replace')` all work (`useBaseURL()` reads it). It is the model Hotwire Native itself has, one stack and one modal
 layer, and the navigators are yours: tabs, theme, header styling and everything else is
 plain React Navigation. `example/` is exactly this against the official demo server, three
 tabs each with a stack and a session of their own, with the demo's rules written for this
@@ -69,11 +69,11 @@ set `onError` or `onVisitProposal` once for every web route, give `hotwireScreen
 
 A failed visit shows `renderError` in its screen, a message and a Retry that reloads, as
 upstream's error presenter does. Anything beyond that is the app's, through
-`HotwireScreen`'s `onError(error, screen)`, where `screen` can `retry`, `pop` the screen,
-`replace` it with the page at a URL, or `visit` one. `error.statusCode` is the HTTP
+`HotwireScreen`'s `onError(error, screen)`, where `screen` can `retry`, `pop` the screen, or
+`visit` a page, with the `replace` action to swap the failed page for it in place. `error.statusCode` is the HTTP
 status, or a `SystemStatusCode` for a failure with no response, a network error say. The
-upstream demo's answer to a 401 is one line of it, in `example/App.tsx`: replace the empty
-screen with the sign-in page, and the server redirects back once signed in.
+upstream demo's answer to a 401 is one line of it, in `example/App.tsx`:
+`screen.visit('/session/new', 'replace')`, and the server redirects back once signed in.
 
 ### Your own hierarchy
 
