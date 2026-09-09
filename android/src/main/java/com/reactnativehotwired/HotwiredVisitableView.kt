@@ -95,8 +95,13 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
 
   private var _session: HotwiredSession? = null
   private val session: HotwiredSession
-    get() = _session ?: SessionManager.findOrCreateSession(appContext, sessionHandle, applicationNameForUserAgent)
-      .also { _session = it }
+    get() = _session?.takeUnless { it.isRenderProcessGone }
+      ?: SessionManager.findOrCreateSession(appContext, sessionHandle, applicationNameForUserAgent)
+        .also { _session = it }
+
+  /** Whether the session's WebView currently sits in this view. */
+  private val holdsWebView: Boolean
+    get() = _session?.webView?.parent === hotwiredView.webViewRefresh
 
   private val webView: HotwireWebView get() = session.webView
 
@@ -165,6 +170,17 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     visit()
   }
 
+  override fun onDetachedFromWindow() {
+    // Leaving for a screen that started no visit of its own, a native screen or another
+    // session's page, so Turbo has not cached this page; cache it for the restore visit on
+    // return. Upstream does the same in onDestroyView. A page popped off a stack fails the
+    // location check: the revealed page's restore visit is already the current one.
+    _session?.let { active ->
+      if (holdsWebView && active.currentVisit?.location == _url) active.cacheSnapshot()
+    }
+    super.onDetachedFromWindow()
+  }
+
   private fun visit() {
     attachWebView { attachedToNewDestination ->
       isWebViewAttachedToNewDestination = attachedToNewDestination
@@ -212,7 +228,9 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
 
   override fun detachWebView() {
     // A view destroyed before it ever attached has no session; don't create one now.
-    val webView = _session?.webView ?: return
+    val active = _session ?: return
+    val webView = active.webView
+    active.unregisterSubscriber(this)
     captureScreenshot()
     (webView.parent as? ViewGroup)?.endViewTransition(webView)
     hotwiredView.detachWebView(webView) { forceLayout() }
@@ -353,6 +371,18 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
 
   override fun onRenderProcessGone() {
     onContentProcessDidTerminate(mapOf("url" to url))
+    // Android requires the dead WebView out of the hierarchy. The session is dead with it;
+    // the next `session` read creates a fresh one, and revisiting cold-boots the page there,
+    // as upstream does by re-routing the location on a new session.
+    _session?.let { dead ->
+      hotwiredView.webViewRefresh.removeView(dead.webView)
+      dead.unregisterSubscriber(this)
+    }
+    _session = null
+    if (isAttachedToWindow) {
+      session.registerSubscriber(this)
+      visit()
+    }
   }
 
   override fun onZoomed(newScale: Float) {

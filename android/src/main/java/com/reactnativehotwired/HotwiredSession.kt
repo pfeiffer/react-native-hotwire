@@ -85,8 +85,21 @@ class HotwiredSession(
 
   val currentVisit: Visit? get() = turboSession.currentVisit
 
+  /** The WebView's render process died; the session is dead with it and must be replaced. */
+  val isRenderProcessGone: Boolean get() = turboSession.isRenderProcessGone
+
   fun registerSubscriber(view: SessionSubscriber) {
     subscriber = view
+  }
+
+  /** Stops delivering events to a view that is going away, unless another already took over. */
+  fun unregisterSubscriber(view: SessionSubscriber) {
+    if (subscriber === view) subscriber = null
+  }
+
+  /** Asks Turbo to cache the current page's snapshot so a later restore visit can use it. */
+  fun cacheSnapshot() {
+    turboSession.cacheSnapshot()
   }
 
   fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

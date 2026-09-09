@@ -11,8 +11,13 @@ object SessionManager {
 
   fun session(handle: String): HotwiredSession? = sessions[handle]
 
+  /**
+   * A session whose render process died is replaced, WebView and all, the way upstream's
+   * Navigator creates a new session when a destination finds `isRenderProcessGone`.
+   */
   fun findOrCreateSession(appContext: AppContext, handle: String, applicationNameForUserAgent: String?): HotwiredSession =
-    sessions.getOrPut(handle) { HotwiredSession(appContext, handle, applicationNameForUserAgent) }
+    sessions[handle]?.takeUnless { it.isRenderProcessGone }
+      ?: HotwiredSession(appContext, handle, applicationNameForUserAgent).also { sessions[handle] = it }
 
   fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     sessions.values.forEach { it.onActivityResult(requestCode, resultCode, data) }
