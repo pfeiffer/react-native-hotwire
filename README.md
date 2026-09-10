@@ -105,6 +105,14 @@ defaults to `defaultApplicationNameForUserAgent`, the `Hotwire Native` and `Turb
 tokens a server keys on; an app that adds its own keeps them:
 `applicationNameForUserAgent={`${defaultApplicationNameForUserAgent} MyApp/1.0`}`.
 
+| `HotwireProvider` prop | Description |
+|---|---|
+| `applicationNameForUserAgent` | Appended to every web view's user agent, followed by the bridge component list. Defaults to `defaultApplicationNameForUserAgent`. |
+| `bridgeComponents` | The app's bridge components, made with `bridgeComponent`. Their names are advertised in the user agent. |
+| `webViewDebuggingEnabled` | Makes the web views inspectable from Safari and Chrome. Default `false`. |
+| `pathConfiguration` | The bundled path configuration document, available before the server's arrives. |
+| `pathConfigurationUrl` | The server's path configuration, loaded after the bundled one and cached for the next launch. |
+
 ### `HotwireScreen`
 
 A React Navigation screen that is a Hotwire page, with the defaults upstream's Navigator
@@ -143,27 +151,55 @@ not a route is a compile error. `modal_style` is read under `context: "modal"` o
 presentation that is not a modal at all is a property of the server's own, handled in
 `onVisitProposal`.
 
+| `hotwireScreens(Stack, options)` | Description |
+|---|---|
+| `Stack` | The app's `createNativeStackNavigator()`. Warns in development if it is not a native stack, whose presentations the screens rely on. |
+| `path` | The page the stack starts on, a path under the base URL. Default `/`. |
+| `component` | The screen for every web route. Default `HotwireScreen`; wrap it to set `onError` or `onVisitProposal` once for all of them. |
+| `routes` | Route names per presentation, the table the screens navigate by. Default `defaultVisitRoutes`. |
+| `options` | Navigation options per presentation, merged over the native presentation each gets. A style of the app's own gets `modal` unless its options say otherwise. |
+
 A screen placed by hand, a tab root say, gets `initialParams={{ fullPath: '/inbox' }}`, a path
 resolved against the linking prefix; screens reached through proposals or links carry their
-URL already. Everything `VisitableView` takes,
-`renderError` say, passes through. A URL on another host goes to `onOpenExternalUrl`, whose
-default `openExternalUrl` is exported so a handler that takes one scheme for itself, `sms:`
-say, can hand the rest back to it. For a
-hierarchy the flat model cannot express, named modal flows or screens placed by a config,
-compose `VisitableView` with your own router instead.
+URL already. Everything `VisitableView` takes, `renderError` say, passes through, with these
+differences:
+
+| `HotwireScreen` prop | Description |
+|---|---|
+| `sessionHandle` | Default: the chain of tab routes above the screen, `modal` for a modal route, else `default`, so every tab has a session as upstream's Navigators do. |
+| `routes` | Route names per presentation; see `VisitRoutes`. Default `defaultVisitRoutes`. |
+| `onVisitProposal(proposal, resolution)` | The app's say on every proposal, after `useVisitHandler` resolved it. Return nothing to accept, a resolution or navigation action to substitute, `null` to drop. |
+| `titleFromPage` | Sets the screen title from the page title on each load. Default `true`. |
+| `pullToRefreshEnabled` | Overrides the path configuration's `pull_to_refresh_enabled`, which defaults to `true`. |
+| `onError(error, screen)` | A visit failed. `renderError` shows regardless; `screen` offers `retry()`, `pop()` and `visit(urlOrPath, action)`. |
+| `onCrossOriginRedirect` | Default: pop the screen the redirected visit was pushed for, then `onOpenExternalUrl`, as upstream does. |
+
+A URL on another host goes to `onOpenExternalUrl`, whose default `openExternalUrl` is
+exported so a handler that takes one scheme for itself, `sms:` say, can hand the rest back
+to it. For a hierarchy the flat model cannot express, named modal flows or screens placed
+by a config, compose `VisitableView` with your own router instead.
 
 ### `VisitableView`
 
 | Prop | Description |
 |---|---|
-| `url` | Page to visit. Changing it visits the new URL in the same session. |
+| `url` | Required. The page to show. A new value visits it in the same session. |
 | `sessionHandle` | Screens sharing a handle share one web view and Turbo session. Default `"Default"`. |
-| `onVisitProposal` | Required. Turbo proposed a visit; navigate with `useVisit`. |
-| `onLoad`, `onError`, `onOpenExternalUrl`, `onFormSubmissionStart/End`, `onContentProcessDidTerminate`, `onMessage` | Session events. |
-| `onScroll` | React Native's `ScrollView` event, synthetic event and all, so `Animated.event` reads it. For chrome the app draws itself; native headers and tabs collapse on their own. |
-| `onAlert`, `onConfirm` | `(event, respond)`: replace the default `Alert` dialogs for `window.alert` / `window.confirm`. |
-| `renderLoading`, `renderError` | Overlays. |
-| `pullToRefreshEnabled`, `scrollEnabled`, `style`, `testID` | As on any view. |
+| `onVisitProposal(proposal)` | Required. Turbo proposed a visit: `{ url, action, properties }`. Navigate with `useVisit`, or route it with `useVisitHandler`. |
+| `onLoad(event)` | A page finished loading: `{ url, title }`. |
+| `onError(error)` | A visit failed: `{ url, statusCode, description }`, `statusCode` an HTTP status or a `SystemStatusCode`. `renderError` shows regardless. |
+| `onOpenExternalUrl(event)` | A link to another host, or a non-http scheme. Default `openExternalUrl`: an in-app browser when `expo-web-browser` is installed, else the system. |
+| `onCrossOriginRedirect(event)` | A visit followed a redirect to another origin, so this page never loaded. Default `onOpenExternalUrl`; `HotwireScreen` adds the pop. |
+| `onFormSubmissionStart(event)`, `onFormSubmissionEnd(event)` | The page submitted a form and got its response, Turbo's `turbo:submit-start` and `turbo:submit-end`: `{ url }`. |
+| `onContentProcessDidTerminate(event)` | The web content process died. Default: reload the view. |
+| `onMessage(message)` | Every message the page's bridge components send, before the native components see it. |
+| `onAlert(event, respond)`, `onConfirm(event, respond)` | Replace the `Alert` shown for `window.alert` and `window.confirm`. Call `respond` to let the page continue. |
+| `onScroll(event)` | The page scrolled. Unlike the other callbacks this is the synthetic event, with React Native's `ScrollView` shape under `nativeEvent`, so `Animated.event` and anything written for a `ScrollView` reads it. For chrome the app draws itself; native headers and tabs collapse on their own. |
+| `renderLoading()` | Overlay while a visit loads. Default: a centered spinner. |
+| `renderError(error, reload)` | Overlay for a failed visit. Default: a message and a Retry that reloads. |
+| `pullToRefreshEnabled` | Pull down to reload the page. Default `true`. |
+| `scrollEnabled` | Default `true`. |
+| `style`, `testID` | As on any view. |
 
 Ref (`VisitableViewRef`): `reload()` cold-boots the page, `refresh()` refreshes through
 Turbo, `injectJavaScript(script)`.
@@ -293,7 +329,7 @@ export const FormComponent = bridgeComponent('form', () => {
 `useBridgeMessage(event, handler)` calls the handler with each message for `event` and a
 `reply` bound to that message, merging the data given into the message's own. The reply can
 come later, after an await or from a button the handler set up, and still answers the
-message that asked; there is no "last message" to look up.
+message that asked.
 
 ### Navigation
 
@@ -306,9 +342,9 @@ message that asked; there is no "last message" to look up.
 - `useCurrentUrl(config?)`: the URL the current screen should load, its `fullPath` param or
   its configured path resolved against the base URL. Both come from the container's
   linking; `config` is for a path config other than the one linking uses.
-- `useVisit()`: `visit(urlOrPath, visitAction)`, Turbo's `visit` and the counterpart of React Navigation's
-  `useLinkTo`. Unmatched URLs resolve to the innermost screen named `Fallback`, so define one
-  in each navigator that should catch visits.
+- `useVisit()`: `visit(urlOrPath, visitAction)`, Turbo's `visit` and the counterpart of React
+  Navigation's `useLinkTo`: the URL is matched through the container's linking, so it lands
+  wherever a deep link to it would.
 - `useVisitBuilder()`: `buildAction(urlOrTarget, visitAction)` returns the navigation action
   and `willChangeTopmostNavigator` without dispatching, for a handler that adjusts it first.
 
