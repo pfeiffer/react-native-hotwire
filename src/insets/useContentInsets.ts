@@ -68,8 +68,9 @@ export function useContentInsets(ref: { current: { injectJavaScript(script: stri
     // The properties live on <html>. A page render replaces <body> and a frame
     // render its frame's children, both leaving them be; a morph reconciles
     // <html> itself and takes them with it, and a custom render may do the
-    // same. So the page re-applies them after every render, from values kept
-    // in one place so later injections just update them.
+    // same. turbo:render fires after either kind has finished, so the page
+    // re-applies them there, from values kept in one place so later
+    // injections just update them.
     ref.current?.injectJavaScript(`(function () {
       window.__hotwireInsets = { top: '${top}px', right: '${right}px', bottom: '${bottom}px', left: '${left}px' };
 
@@ -86,9 +87,7 @@ export function useContentInsets(ref: { current: { injectJavaScript(script: stri
 
       if (!window.__hotwireInsetsListening) {
         window.__hotwireInsetsListening = true;
-        ['turbo:render', 'turbo:morph'].forEach(
-          function (event) { document.addEventListener(event, applyHotwireInsets); }
-        );
+        document.addEventListener('turbo:render', applyHotwireInsets);
       }
     })();`);
   }, [ref, top, right, bottom, left]);
