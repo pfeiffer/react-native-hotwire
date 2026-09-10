@@ -18,6 +18,9 @@ dependencies {
   // Vendored Hotwire Native core, wired up by Expo autolinking (expo-module.config.json).
   implementation project(':hotwire-native-core')
 
+  // The version comes from the app's React Native Gradle plugin, as for every module.
+  implementation 'com.facebook.react:react-android'
+
   implementation 'androidx.appcompat:appcompat:1.7.0'
   implementation 'androidx.core:core-ktx:1.13.1'
   implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'

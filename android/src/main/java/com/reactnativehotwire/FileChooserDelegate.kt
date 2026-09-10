@@ -14,14 +14,19 @@ import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.facebook.react.modules.core.PermissionAwareActivity
 import java.io.File
 import java.io.IOException
 
 const val INPUT_FILE_REQUEST_CODE = 1
+private const val CAMERA_PERMISSION_REQUEST_CODE = 2
 
 /**
- * Handles <input type="file"> by offering the camera (when the app holds the permission)
- * alongside the system document picker. Based on react-native-webview's RNCWebViewModuleImpl.
+ * Handles <input type="file"> by offering the camera alongside the system document picker.
+ * An app that declares CAMERA in its manifest must hold it before a capture intent may
+ * launch, so such an app is asked first and the chooser opens with the answer; an app
+ * that declares nothing gets the system camera without a prompt. Based on
+ * react-native-webview's RNCWebViewModuleImpl.
  */
 class FileChooserDelegate(private val context: Context, private val currentActivity: () -> Activity?) {
   private var filePathCallback: ValueCallback<Array<Uri>>? = null
@@ -42,8 +47,26 @@ class FileChooserDelegate(private val context: Context, private val currentActiv
 
     this.filePathCallback = filePathCallback
 
+    val wantsCamera = acceptsImages(acceptTypes) || acceptsVideo(acceptTypes)
+    val permissionAware = activity as? PermissionAwareActivity
+    if (wantsCamera && needsCameraPermission(activity) && permissionAware != null) {
+      permissionAware.requestPermissions(arrayOf(Manifest.permission.CAMERA), CAMERA_PERMISSION_REQUEST_CODE) { code, _, results ->
+        if (code == CAMERA_PERMISSION_REQUEST_CODE) {
+          val granted = results.firstOrNull() == PackageManager.PERMISSION_GRANTED
+          openChooser(activity, acceptTypes, allowMultiple, withCamera = granted)
+        }
+        code == CAMERA_PERMISSION_REQUEST_CODE
+      }
+      return true
+    }
+
+    openChooser(activity, acceptTypes, allowMultiple, withCamera = !needsCameraPermission(activity))
+    return true
+  }
+
+  private fun openChooser(activity: Activity, acceptTypes: Array<String>, allowMultiple: Boolean, withCamera: Boolean) {
     val extraIntents = ArrayList<Parcelable>()
-    if (!needsCameraPermission(activity)) {
+    if (withCamera) {
       if (acceptsImages(acceptTypes)) photoIntent()?.let { extraIntents.add(it) }
       if (acceptsVideo(acceptTypes)) videoIntent()?.let { extraIntents.add(it) }
     }
@@ -53,7 +76,6 @@ class FileChooserDelegate(private val context: Context, private val currentActiv
       putExtra(Intent.EXTRA_INITIAL_INTENTS, extraIntents.toTypedArray())
     }
     activity.startActivityForResult(chooserIntent, INPUT_FILE_REQUEST_CODE)
-    return true
   }
 
   fun onActivityResult(resultCode: Int, data: Intent?) {
