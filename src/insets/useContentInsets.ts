@@ -65,11 +65,11 @@ export function useContentInsets(ref: { current: { injectJavaScript(script: stri
   const hasLoaded = useRef(false);
 
   const applyContentInsets = useCallback(() => {
-    // Writing the properties once isn't enough: a Turbo morph reconciles them
-    // away, and frame navigations and pull-to-refresh re-render without
-    // reaching `onLoad` at all. So install a listener the page re-applies them
-    // from, and keep the values it reads in one place so later injections just
-    // update them.
+    // The properties live on <html>. A page render replaces <body> and a frame
+    // render its frame's children, both leaving them be; a morph reconciles
+    // <html> itself and takes them with it, and a custom render may do the
+    // same. So the page re-applies them after every render, from values kept
+    // in one place so later injections just update them.
     ref.current?.injectJavaScript(`(function () {
       window.__hotwireInsets = { top: '${top}px', right: '${right}px', bottom: '${bottom}px', left: '${left}px' };
 
@@ -86,7 +86,7 @@ export function useContentInsets(ref: { current: { injectJavaScript(script: stri
 
       if (!window.__hotwireInsetsListening) {
         window.__hotwireInsetsListening = true;
-        ['turbo:load', 'turbo:render', 'turbo:morph', 'turbo:frame-render'].forEach(
+        ['turbo:render', 'turbo:morph'].forEach(
           function (event) { document.addEventListener(event, applyHotwireInsets); }
         );
       }
