@@ -9,6 +9,7 @@ import { useContentInsets } from './insets/useContentInsets';
 import { useWindowRect } from './insets/useWindowRect';
 import { useHotwireConfig } from './HotwireProvider';
 import { NativeVisitableView, type NativeVisitableViewRef } from './NativeVisitableView';
+import { MAIN_SESSION_HANDLE } from './navigation/useSessionHandle';
 import { openExternalUrl } from './openExternalUrl';
 import { normalizeProperties } from './pathConfiguration';
 import type {
@@ -26,7 +27,8 @@ export interface VisitableViewProps {
   /** The page to show. A new value visits it in the same session. */
   url: string;
   /**
-   * Screens sharing a handle share one web view and Turbo session. Defaults to "Default".
+   * Screens sharing a handle share one web view and Turbo session. Defaults to `main`, the
+   * session `useSessionHandle` gives a screen outside every tab.
    * The web view's user agent and bridge components come from HotwireProvider, once per app.
    */
   sessionHandle?: string;
@@ -90,7 +92,7 @@ export interface VisitableViewRef {
  * area and contexts, as a native bridge component would.
  */
 export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((props, ref) => {
-  const { url, sessionHandle = 'Default', onMessage } = props;
+  const { url, sessionHandle = MAIN_SESSION_HANDLE, onMessage } = props;
   const { bridgeComponents } = useHotwireConfig();
   const nativeRef = useRef<NativeVisitableViewRef>(null);
   const bridge = useBridge(nativeRef, bridgeComponents, onMessage as ((message: object) => void) | undefined);
@@ -128,7 +130,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, ContentProps>((props, 
     nativeRef,
     bridge: { initializeBridge, bridgeUserAgent, handleMessage },
     url,
-    sessionHandle = 'Default',
+    sessionHandle = MAIN_SESSION_HANDLE,
     pullToRefreshEnabled = true,
     scrollEnabled = true,
     renderLoading,

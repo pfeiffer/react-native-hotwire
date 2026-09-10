@@ -1,7 +1,7 @@
 import { StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import React, { forwardRef, useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react';
 
-import { useDefaultSessionHandle } from './navigation/useDefaultSessionHandle';
+import { MODAL_SESSION_HANDLE, useSessionHandle } from './navigation/useSessionHandle';
 import { defaultVisitRoutes, useVisitHandler, type VisitHandlerOptions, type VisitParams, type VisitRoutes } from './navigation/useVisitHandler';
 import { VisitableView, type VisitableViewProps, type VisitableViewRef } from './VisitableView';
 import { openExternalUrl } from './openExternalUrl';
@@ -91,11 +91,15 @@ export const HotwireScreen = forwardRef<VisitableViewRef, HotwireScreenProps>((p
   }, [params.url, params.fullPath, params.baseURL, resolve]);
 
   const resolvedRoutes: VisitRoutes = { ...defaultVisitRoutes, ...routes };
-  const defaultSessionHandle = useDefaultSessionHandle(
-    [resolvedRoutes.modal, resolvedRoutes.full, resolvedRoutes.medium, resolvedRoutes.page_sheet, resolvedRoutes.form_sheet].filter(
-      Boolean
-    ) as string[]
-  );
+  const modalRouteNames = [
+    resolvedRoutes.modal,
+    resolvedRoutes.full,
+    resolvedRoutes.medium,
+    resolvedRoutes.page_sheet,
+    resolvedRoutes.form_sheet,
+  ];
+  const screenSessionHandle = useSessionHandle();
+  const defaultSessionHandle = modalRouteNames.includes(route.name) ? MODAL_SESSION_HANDLE : screenSessionHandle;
 
   const refresh = useCallback(() => visitableRef.current?.refresh(), []);
   const handleVisitProposal = useVisitHandler({ routes, onVisitProposal, refresh });

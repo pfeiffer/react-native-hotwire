@@ -150,7 +150,7 @@ differences:
 
 | `HotwireScreen` prop | Description |
 |---|---|
-| `sessionHandle` | Default: the chain of tab routes above the screen, `modal` for a modal route, else `default`, so every tab has a session as upstream's Navigators do. |
+| `sessionHandle` | Default `useSessionHandle`: the chain of tab routes above the screen, `modal` for a modal route, else `main`, so every tab has a session as upstream's Navigators do. |
 | `routes` | Route names per presentation; see `VisitRoutes`. Default `defaultVisitRoutes`. |
 | `onVisitProposal(proposal, resolution)` | The app's say on every proposal, after `useVisitHandler` resolved it. Return nothing to accept, a resolution or navigation action to substitute, `null` to drop. |
 | `titleFromPage` | Sets the screen title from the page title on each load. Default `true`. |
@@ -262,7 +262,7 @@ and to the older `@hotwired/strada` (`window.Strada`).
 | Prop | Description |
 |---|---|
 | `url` | Required. The page to show. A new value visits it in the same session. |
-| `sessionHandle` | Screens sharing a handle share one web view and Turbo session. Default `"Default"`. |
+| `sessionHandle` | Screens sharing a handle share one web view and Turbo session. Default `main`. |
 | `onVisitProposal(proposal)` | Required. Turbo proposed a visit: `{ url, action, properties }`. Navigate with `useVisit`, or route it with `useVisitHandler`. |
 | `onLoad(event)` | A page finished loading: `{ url, title }`. |
 | `onError(error)` | A visit failed: `{ url, statusCode, description }`, `statusCode` an HTTP status or a `SystemStatusCode`. `renderError` shows regardless. |
@@ -306,9 +306,11 @@ only a page popped off a stack gives its web view up, and only a page that lacks
 session to restore it. A handle shared across tabs would show a stale screenshot on return.
 
 `getSessionHandles()`, `reloadSession(handle)`, `refreshSession(handle)`,
-`clearSessionSnapshotCache(handle)`. `useDefaultSessionHandle(modalRouteNames)` is the
-handle `HotwireScreen` uses, and `useTabSessionHandle()` its tab walk alone, for a screen of
-your own that decides what is modal differently.
+`clearSessionSnapshotCache(handle)`. `useSessionHandle()` names the session for the screen
+calling it the way `HotwireScreen` does: the tab chain, else `main`. What is modal is the
+caller's to know; `HotwireScreen` answers `modal` for its modal routes before using the
+hook's value, and a screen of your own does the same with its own test, so the handles line
+up.
 
 ### Content insets
 

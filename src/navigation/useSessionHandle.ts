@@ -2,26 +2,21 @@ import { useNavigation, useRoute, type NavigationState, type PartialState } from
 
 type State = NavigationState | PartialState<NavigationState>;
 
-/**
- * One session per tab, as Hotwire Native's Navigator per tab: every tab keeps its own web
- * view, so a tab switch is instant and needs no restore visit. The handle is the chain of
- * tab routes the screen sits under, outermost first, so a nested tab named the same in two
- * outer tabs still gets its own session. Modal routes share one handle, everything else
- * shares the default, the two sessions upstream's Navigator owns.
- */
-export function useDefaultSessionHandle(modalRouteNames: Iterable<string>): string {
-  const route = useRoute();
-  const tabHandle = useTabSessionHandle();
+/** The session of every screen outside a tab navigator, upstream's main Navigator. Also `VisitableView`'s default. */
+export const MAIN_SESSION_HANDLE = 'main';
 
-  return new Set(modalRouteNames).has(route.name) ? 'modal' : tabHandle;
-}
+/** The session every modal screen shares, upstream's modal Navigator. */
+export const MODAL_SESSION_HANDLE = 'modal';
 
 /**
- * The tab part alone: the chain of tab routes the screen sits under, outermost first, or
- * `default` outside every tab navigator. For an app with its own idea of which screens
- * are modal.
+ * The session handle for the screen calling it: the chain of tab routes the screen sits
+ * under, outermost first, else `main`. One session per tab, as Hotwire Native's Navigator
+ * per tab: every tab keeps its own web view, so a tab switch is instant and needs no
+ * restore visit. A nested tab named the same in two outer tabs still gets its own session,
+ * and everything outside a tab shares `main`, as upstream's main Navigator does. Modal
+ * screens are the caller's to know: it answers MODAL_SESSION_HANDLE for those instead.
  */
-export function useTabSessionHandle(): string {
+export function useSessionHandle(): string {
   const navigation = useNavigation();
   const route = useRoute();
 
@@ -49,5 +44,5 @@ export function useTabSessionHandle(): string {
     current = current.getParent();
   }
 
-  return tabRoutes.length > 0 ? tabRoutes.join('/') : 'default';
+  return tabRoutes.length > 0 ? tabRoutes.join('/') : MAIN_SESSION_HANDLE;
 }

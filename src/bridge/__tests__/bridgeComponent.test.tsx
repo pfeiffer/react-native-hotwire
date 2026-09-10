@@ -11,7 +11,7 @@ async function mount(Component: ReturnType<typeof bridgeComponent>) {
     <Component
       name={Component.componentName}
       url="https://example.com/"
-      sessionHandle="Default"
+      sessionHandle="main"
       registerMessageListener={(listener) => {
         listeners.push(listener);
         return { remove: () => listeners.splice(listeners.indexOf(listener), 1) };

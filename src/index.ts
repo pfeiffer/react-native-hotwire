@@ -4,7 +4,7 @@ export { hotwireScreens, hotwireScreenId, type HotwireScreensOptions, type Hotwi
 export { HotwireProvider, defaultApplicationNameForUserAgent, type HotwireProviderProps } from './HotwireProvider';
 export { bridgeComponent, useBridgeMessage, bridgeError, type BridgeReply, type BridgeError } from './bridge/bridgeComponent';
 export { getSessionHandles, reloadSession, refreshSession, clearSessionSnapshotCache } from './sessions';
-export { useDefaultSessionHandle, useTabSessionHandle } from './navigation/useDefaultSessionHandle';
+export { useSessionHandle, MAIN_SESSION_HANDLE, MODAL_SESSION_HANDLE } from './navigation/useSessionHandle';
 export { openExternalUrl } from './openExternalUrl';
 export {
   loadPathConfiguration,
