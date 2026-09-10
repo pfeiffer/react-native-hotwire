@@ -4,9 +4,15 @@ import React from 'react';
 import { HotwireScreen } from '../HotwireScreen';
 import { defaultVisitRoutes, type VisitPresentation, type VisitRoutes } from './useVisitHandler';
 
-// The Screen component is React Navigation's own, the same for every navigator, so
-// these elements belong to whichever native stack they are rendered in.
-const Stack = createNativeStackNavigator();
+// createNativeStackNavigator hands out one Navigator function for every call, which is
+// how an app's stack can be told from a JavaScript stack, a drawer or tabs.
+const NativeStackNavigator = createNativeStackNavigator().Navigator;
+
+/** What `createNativeStackNavigator()` returns; the app's own, so its screens are typed by it. */
+export interface HotwireStack {
+  Navigator: React.ComponentType<any>;
+  Screen: React.ComponentType<any>;
+}
 
 // Screens are identified by path: a link to a page already in the stack pops back to it
 // and updates its params, and a query change, a filter say, is the same page. React
@@ -47,18 +53,21 @@ const nativePresentations: Record<VisitPresentation, NativeStackNavigationOption
 
 /**
  * The web routes a stack needs, one per presentation, named from `routes` so that
- * `useVisitHandler` finds them. Render them inside a native stack next to the app's own
- * screens; each stack that shows pages gets its own set, modals included, as every
+ * `useVisitHandler` finds them. Render them inside the app's native stack, the `Stack`
+ * given, next to its own screens; each stack that shows pages gets its own set, modals included, as every
  * upstream Navigator has its own modal layer. Titles start empty so the route name
  * never shows before the page title does. A screen the app writes itself instead keeps
  * `hotwireScreenId` and its name in `routes`.
  */
-export function hotwireScreens<Style extends string = never>({
-  path = '/',
-  component = HotwireScreen,
-  routes: routeOverrides,
-  options = {},
-}: HotwireScreensOptions<Style> = {}) {
+export function hotwireScreens<Style extends string = never>(
+  Stack: HotwireStack,
+  { path = '/', component = HotwireScreen, routes: routeOverrides, options = {} }: HotwireScreensOptions<Style> = {}
+) {
+  if (__DEV__ && Stack.Navigator !== NativeStackNavigator) {
+    console.warn(
+      'react-native-hotwire: hotwireScreens is given a navigator that is not a native stack. Its presentations (formSheet, pageSheet, fullScreenModal) are native-stack options and will not apply here; declare the screens yourself with hotwireScreenId and name them in `routes`.'
+    );
+  }
   const routes = { ...defaultVisitRoutes, ...routeOverrides } as Record<string, string | undefined>;
   const styleOptions = options as Partial<Record<string, NativeStackNavigationOptions>>;
 

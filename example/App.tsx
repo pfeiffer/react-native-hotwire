@@ -40,7 +40,7 @@ function WebScreen(props: HotwireScreenProps) {
 // the tab's screens share the session named after it.
 function tabStack(path: string) {
   return function TabStack() {
-    return <Stack.Navigator>{hotwireScreens({ path, component: WebScreen })}</Stack.Navigator>;
+    return <Stack.Navigator>{hotwireScreens(Stack, { path, component: WebScreen })}</Stack.Navigator>;
   };
 }
 

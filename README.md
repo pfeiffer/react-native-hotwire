@@ -32,18 +32,18 @@ const Stack = createNativeStackNavigator();
 export default () => (
   <HotwireProvider pathConfiguration={configuration} pathConfigurationUrl={`${baseURL}/configurations/app.json`}>
     <NavigationContainer linking={hotwireLinking(baseURL)}>
-      <Stack.Navigator>{hotwireScreens()}</Stack.Navigator>
+      <Stack.Navigator>{hotwireScreens(Stack)}</Stack.Navigator>
     </NavigationContainer>
   </HotwireProvider>
 );
 ```
 
 `HotwireProvider` carries the app's user agent token, bridge components and path
-configuration. `hotwireScreens` is the web routes a stack needs, one per presentation, each a
-`HotwireScreen`, with the path configuration deciding which URL opens how, bundled for the
+configuration. `hotwireScreens` is the web routes the app's native stack needs, one per
+presentation, each a `HotwireScreen`, with the path configuration deciding which URL opens how, bundled for the
 first launch and refreshed from the server after. `hotwireLinking` hands every URL under the
 base URL to a web screen, and its prefix is the one place the origin is stated: everything
-under the container resolves paths against it, so `hotwireScreens({ path: '/inbox' })`,
+under the container resolves paths against it, so `hotwireScreens(Stack, { path: '/inbox' })`,
 `visit('/inbox')` and `screen.visit('/session/new', 'replace')` all work (`useBaseURL()` reads it). It is the model Hotwire Native itself has, one stack and one modal
 layer, and the navigators are yours: tabs, theme, header styling and everything else is
 plain React Navigation. `example/` is exactly this against the official demo server, three
@@ -54,7 +54,7 @@ Native screens sit next to the web ones:
 
 ```tsx
 <Stack.Navigator>
-  {hotwireScreens()}
+  {hotwireScreens(Stack)}
   <Stack.Screen name="settings" component={SettingsScreen} />
 </Stack.Navigator>
 ```
@@ -116,7 +116,7 @@ declares one per presentation; to change one, give it options by presentation, t
 path configuration's `context` and `modal_style` words:
 
 ```tsx
-{hotwireScreens({ options: { medium: { sheetAllowedDetents: [0.5, 1] } } })}
+{hotwireScreens(Stack, { options: { medium: { sheetAllowedDetents: [0.5, 1] } } })}
 ```
 
 The route names behind them are the app's. Rename them, or add a `modal_style` of your
@@ -125,7 +125,7 @@ own for the server to use, and `hotwireScreens` and every screen navigate by the
 ```tsx
 const routes: VisitRoutes<RootRoute, 'inline'> = { ...defaultVisitRoutes, medium: 'sheet', inline: 'inlineWeb' };
 
-{hotwireScreens({ routes, options: { inline: { presentation: 'containedModal' } } })}
+{hotwireScreens(Stack, { routes, options: { inline: { presentation: 'containedModal' } } })}
 <HotwireScreen {...props} routes={routes} />
 ```
 
