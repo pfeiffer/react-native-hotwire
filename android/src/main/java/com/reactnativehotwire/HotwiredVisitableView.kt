@@ -260,6 +260,19 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   }
 
   private fun attachWebView(onReady: (Boolean) -> Unit) {
+    // The view holding the WebView stays mounted underneath a pushed screen and gets it
+    // back on pop. It screenshots itself first, so the return shows the page as it was
+    // until the restore visit renders, instead of the loading overlay: what upstream's
+    // covered fragment does in onStop.
+    val holder = webView.parent?.parent?.parent as? HotwiredVisitableView
+    if (holder != null && holder !== this) {
+      holder.captureScreenshot { takeWebView(onReady) }
+    } else {
+      takeWebView(onReady)
+    }
+  }
+
+  private fun takeWebView(onReady: (Boolean) -> Unit) {
     val webView = webView
 
     // detachWebView isn't always called before attachWebView, e.g. when one session
@@ -289,10 +302,12 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     hotwiredView.detachWebView(webView) { forceLayout() }
   }
 
-  private fun captureScreenshot() {
-    lifecycleOwner?.lifecycleScope?.launch {
+  private fun captureScreenshot(then: () -> Unit = {}) {
+    val scope = lifecycleOwner?.lifecycleScope ?: return then()
+    scope.launch {
       screenshotHolder.captureScreenshot(hotwiredView)
       screenshotHolder.showScreenshotIfAvailable(hotwiredView)
+      then()
     }
   }
 
