@@ -85,18 +85,48 @@ export interface VisitableViewRef {
 /**
  * The safe area the view hands to the page (see useContentInsets) has to be read from a
  * provider that is the view itself, and a component cannot consume the context it renders,
- * so the provider is mounted here and the view proper is its child.
+ * so the provider is mounted here and the view proper is its child. The bridge components
+ * render beside it, not under it: they belong to the screen and read the screen's safe
+ * area and contexts, as a native bridge component would.
  */
-export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((props, ref) => (
-  <SafeAreaProvider style={props.style ?? styles.container}>
-    <VisitableViewContent {...props} ref={ref} style={styles.container} />
-  </SafeAreaProvider>
-));
+export const VisitableView = forwardRef<VisitableViewRef, VisitableViewProps>((props, ref) => {
+  const { url, sessionHandle = 'Default', onMessage } = props;
+  const { bridgeComponents } = useHotwireConfig();
+  const nativeRef = useRef<NativeVisitableViewRef>(null);
+  const bridge = useBridge(nativeRef, bridgeComponents, onMessage as ((message: object) => void) | undefined);
+
+  return (
+    <>
+      {/* Keyed by URL: a component belongs to a page, so a replace visit starts it over.
+          Upstream scopes components to the screen instead; this is the stricter reading. */}
+      {bridgeComponents.map((BridgeComponent, i) => (
+        <BridgeComponent
+          key={`${url}-${i}`}
+          url={url}
+          sessionHandle={sessionHandle}
+          name={BridgeComponent.componentName}
+          registerMessageListener={bridge.registerMessageListener}
+          sendToBridge={bridge.sendToBridge}
+        />
+      ))}
+      <SafeAreaProvider style={props.style ?? styles.container}>
+        <VisitableViewContent {...props} ref={ref} nativeRef={nativeRef} bridge={bridge} style={styles.container} />
+      </SafeAreaProvider>
+    </>
+  );
+});
 
 VisitableView.displayName = 'VisitableView';
 
-const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((props, ref) => {
+interface ContentProps extends VisitableViewProps {
+  nativeRef: React.RefObject<NativeVisitableViewRef | null>;
+  bridge: ReturnType<typeof useBridge>;
+}
+
+const VisitableViewContent = forwardRef<VisitableViewRef, ContentProps>((props, ref) => {
   const {
+    nativeRef,
+    bridge: { initializeBridge, bridgeUserAgent, handleMessage },
     url,
     sessionHandle = 'Default',
     pullToRefreshEnabled = true,
@@ -111,7 +141,6 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     onFormSubmissionEnd,
     onContentProcessDidTerminate,
     onError,
-    onMessage,
     onAlert,
     onConfirm,
     onScroll,
@@ -119,14 +148,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     testID,
   } = props;
 
-  const { applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled } = useHotwireConfig();
-  const nativeRef = useRef<NativeVisitableViewRef>(null);
-
-  const { initializeBridge, bridgeUserAgent, sendToBridge, registerMessageListener, handleMessage } = useBridge(
-    nativeRef,
-    bridgeComponents,
-    onMessage as ((message: object) => void) | undefined
-  );
+  const { applicationNameForUserAgent, webViewDebuggingEnabled } = useHotwireConfig();
   const { handleAlert, handleConfirm } = useWebViewDialogs(nativeRef, onAlert, onConfirm);
 
   const reload = useCallback(() => {
@@ -218,18 +240,6 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
 
   return (
     <View ref={layoutRef} onLayout={onLayout} style={style} testID={testID}>
-      {/* Keyed by URL: a component belongs to a page, so a replace visit starts it over.
-          Upstream scopes components to the screen instead; this is the stricter reading. */}
-      {bridgeComponents.map((BridgeComponent, i) => (
-        <BridgeComponent
-          key={`${url}-${i}`}
-          url={url}
-          sessionHandle={sessionHandle}
-          name={BridgeComponent.componentName}
-          registerMessageListener={registerMessageListener}
-          sendToBridge={sendToBridge}
-        />
-      ))}
       <NativeVisitableView
         ref={nativeRef}
         url={url}
