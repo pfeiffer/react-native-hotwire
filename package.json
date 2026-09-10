@@ -1,6 +1,6 @@
 {
   "name": "react-native-hotwire",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Hotwire Native (Turbo + Bridge Components) for React Native and Expo",
   "license": "MIT",
   "repository": "github:pfeiffer/react-native-hotwire",

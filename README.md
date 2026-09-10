@@ -10,7 +10,7 @@ Native, see `VENDOR.md`. Not published to npm; consume it from git.
 ## Install
 
 ```sh
-yarn add react-native-hotwire@github:pfeiffer/react-native-hotwire#v1.0.0
+yarn add react-native-hotwire@github:pfeiffer/react-native-hotwire#v0.1.0
 npx expo prebuild
 ```
 
