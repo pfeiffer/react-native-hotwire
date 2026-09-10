@@ -10,12 +10,20 @@ type State = NavigationState | PartialState<NavigationState>;
  * shares the default, the two sessions upstream's Navigator owns.
  */
 export function useDefaultSessionHandle(modalRouteNames: Iterable<string>): string {
+  const route = useRoute();
+  const tabHandle = useTabSessionHandle();
+
+  return new Set(modalRouteNames).has(route.name) ? 'modal' : tabHandle;
+}
+
+/**
+ * The tab part alone: the chain of tab routes the screen sits under, outermost first, or
+ * `default` outside every tab navigator. For an app with its own idea of which screens
+ * are modal.
+ */
+export function useTabSessionHandle(): string {
   const navigation = useNavigation();
   const route = useRoute();
-
-  if (new Set(modalRouteNames).has(route.name)) {
-    return 'modal';
-  }
 
   const tabRoutes: string[] = [];
   let current: typeof navigation | undefined = navigation;

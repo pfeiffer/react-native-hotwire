@@ -248,7 +248,11 @@ export const FormComponent = bridgeComponent('form', () => {
 `useBridgeMessage(event, handler)` calls the handler with each message for `event` and a
 `reply` bound to that message, merging the data given into the message's own. The reply can
 come later, after an await or from a button the handler set up, and still answers the
-message that asked.
+message that asked. A value the handler returns, or resolves to, is the reply when the
+handler has not replied itself, so `async ({ data }) => fetchThing(data.id)` is a complete
+handler. A throw or rejection replies `{ error }`, the error's own fields with `code` and
+`message` always set (`bridgeError(error)` builds it), so the page never waits on a
+failure.
 
 The adapter the view injects talks to `@hotwired/hotwire-native-bridge` (`window.HotwireNative`)
 and to the older `@hotwired/strada` (`window.Strada`).
@@ -302,7 +306,9 @@ only a page popped off a stack gives its web view up, and only a page that lacks
 session to restore it. A handle shared across tabs would show a stale screenshot on return.
 
 `getSessionHandles()`, `reloadSession(handle)`, `refreshSession(handle)`,
-`clearSessionSnapshotCache(handle)`.
+`clearSessionSnapshotCache(handle)`. `useDefaultSessionHandle(modalRouteNames)` is the
+handle `HotwireScreen` uses, and `useTabSessionHandle()` its tab walk alone, for a screen of
+your own that decides what is modal differently.
 
 ### Content insets
 

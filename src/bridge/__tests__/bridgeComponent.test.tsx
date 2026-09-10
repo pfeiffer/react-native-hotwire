@@ -102,3 +102,89 @@ describe('bridgeComponent', () => {
     error.mockRestore();
   });
 });
+
+describe('useBridgeMessage replies', () => {
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  it('sends what the handler resolves to when it has not replied itself', async () => {
+    const Menu = bridgeComponent('menu', () => {
+      useBridgeMessage('display', async () => ({ selectedIndex: 2 }));
+      return null;
+    });
+    const { deliver, sendToBridge } = await mount(Menu);
+
+    deliver(message('menu', 'display'));
+    await flush();
+
+    expect(sendToBridge).toHaveBeenCalledTimes(1);
+    expect(sendToBridge).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ selectedIndex: 2 }) }));
+  });
+
+  it('does not reply twice when the handler replied and returned a value', async () => {
+    const Menu = bridgeComponent('menu', () => {
+      useBridgeMessage('display', (_, reply) => {
+        reply({ selectedIndex: 1 });
+        return { selectedIndex: 2 };
+      });
+      return null;
+    });
+    const { deliver, sendToBridge } = await mount(Menu);
+
+    deliver(message('menu', 'display'));
+    await flush();
+
+    expect(sendToBridge).toHaveBeenCalledTimes(1);
+    expect(sendToBridge).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ selectedIndex: 1 }) }));
+  });
+
+  it('leaves a handler that returns nothing to reply on its own time', async () => {
+    const Form = bridgeComponent('form', () => {
+      useBridgeMessage('connect', () => {});
+      return null;
+    });
+    const { deliver, sendToBridge } = await mount(Form);
+
+    deliver(message('form', 'connect'));
+    await flush();
+
+    expect(sendToBridge).not.toHaveBeenCalled();
+  });
+
+  it('replies with the error when the handler rejects', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const Store = bridgeComponent('store', () => {
+      useBridgeMessage('buy', async () => {
+        throw Object.assign(new Error('Cancelled'), { code: 'E_USER_CANCELLED', subcode: 'cancel' });
+      });
+      return null;
+    });
+    const { deliver, sendToBridge } = await mount(Store);
+
+    deliver(message('store', 'buy'));
+    await flush();
+
+    expect(sendToBridge).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ error: { code: 'E_USER_CANCELLED', message: 'Cancelled', subcode: 'cancel' } }) })
+    );
+    error.mockRestore();
+  });
+
+  it('fills code and message in for an error without them', async () => {
+    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const Store = bridgeComponent('store', () => {
+      useBridgeMessage('buy', () => {
+        throw 'nope';
+      });
+      return null;
+    });
+    const { deliver, sendToBridge } = await mount(Store);
+
+    deliver(message('store', 'buy'));
+    await flush();
+
+    expect(sendToBridge).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ error: { code: 'ERR_UNKNOWN', message: 'nope' } }) })
+    );
+    error.mockRestore();
+  });
+});
