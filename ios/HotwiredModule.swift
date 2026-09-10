@@ -1,16 +1,5 @@
 import ExpoModulesCore
 
-struct ContentInsetRecord: Record {
-  @Field var top: Double = 0
-  @Field var left: Double = 0
-  @Field var bottom: Double = 0
-  @Field var right: Double = 0
-
-  var edgeInsets: UIEdgeInsets {
-    UIEdgeInsets(top: top, left: left, bottom: bottom, right: right)
-  }
-}
-
 final class NoSessionException: GenericException<String> {
   override var reason: String {
     "No session with handle \"\(param)\""
@@ -91,8 +80,9 @@ public class HotwiredModule: Module, PathConfigurationDelegate {
         "onWebConfirm",
         "onOpenExternalUrl",
         "onCrossOriginRedirect",
-        "onFormSubmissionStarted",
-        "onFormSubmissionFinished",
+        "onFormSubmissionStart",
+        "onFormSubmissionEnd",
+        "onScroll",
         "onShowLoading",
         "onHideLoading",
         "onContentProcessDidTerminate"
@@ -116,10 +106,6 @@ public class HotwiredModule: Module, PathConfigurationDelegate {
 
       Prop("scrollEnabled") { (view: HotwiredVisitableView, enabled: Bool) in
         view.scrollEnabled = enabled
-      }
-
-      Prop("contentInset") { (view: HotwiredVisitableView, inset: ContentInsetRecord?) in
-        view.contentInset = inset?.edgeInsets ?? .zero
       }
 
       Prop("webViewDebuggingEnabled") { (view: HotwiredVisitableView, enabled: Bool) in

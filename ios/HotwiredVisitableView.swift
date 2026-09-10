@@ -25,9 +25,6 @@ final class HotwiredVisitableView: ExpoView {
   var scrollEnabled = true {
     didSet { configureWebView() }
   }
-  var contentInset: UIEdgeInsets = .zero {
-    didSet { configureWebView() }
-  }
   var webViewDebuggingEnabled = false {
     didSet { configureWebView() }
   }
@@ -42,8 +39,9 @@ final class HotwiredVisitableView: ExpoView {
   let onWebConfirm = EventDispatcher()
   let onOpenExternalUrl = EventDispatcher()
   let onCrossOriginRedirect = EventDispatcher()
-  let onFormSubmissionStarted = EventDispatcher()
-  let onFormSubmissionFinished = EventDispatcher()
+  let onFormSubmissionStart = EventDispatcher()
+  let onFormSubmissionEnd = EventDispatcher()
+  let onScroll = EventDispatcher()
   let onShowLoading = EventDispatcher()
   let onHideLoading = EventDispatcher()
   let onContentProcessDidTerminate = EventDispatcher()
@@ -181,7 +179,6 @@ final class HotwiredVisitableView: ExpoView {
       webView.isInspectable = webViewDebuggingEnabled
     }
     webView.scrollView.isScrollEnabled = scrollEnabled
-    webView.scrollView.contentInset = contentInset
   }
 
   // MARK: Commands
@@ -261,11 +258,11 @@ extension HotwiredVisitableView: HotwiredSessionSubscriber {
   }
 
   func didStartFormSubmission() {
-    onFormSubmissionStarted(["url": url])
+    onFormSubmissionStart(["url": url])
   }
 
   func didFinishFormSubmission() {
-    onFormSubmissionFinished(["url": url])
+    onFormSubmissionEnd(["url": url])
   }
 
   func processDidTerminate() {
@@ -290,6 +287,22 @@ extension HotwiredVisitableView: HotwiredSessionSubscriber {
 // MARK: - HotwiredVisitableViewControllerDelegate
 
 extension HotwiredVisitableView: HotwiredVisitableViewControllerDelegate {
+  // React Native's ScrollView event, so what reads one reads this.
+  func visitableDidScroll(_ scrollView: UIScrollView) {
+    let velocity = scrollView.panGestureRecognizer.velocity(in: scrollView)
+    onScroll([
+      "contentInset": [
+        "top": scrollView.contentInset.top, "left": scrollView.contentInset.left,
+        "bottom": scrollView.contentInset.bottom, "right": scrollView.contentInset.right,
+      ],
+      "contentOffset": ["x": scrollView.contentOffset.x, "y": scrollView.contentOffset.y],
+      "contentSize": ["width": scrollView.contentSize.width, "height": scrollView.contentSize.height],
+      "layoutMeasurement": ["width": scrollView.bounds.width, "height": scrollView.bounds.height],
+      "velocity": ["x": velocity.x, "y": velocity.y],
+      "zoomScale": scrollView.zoomScale,
+    ])
+  }
+
   func visitableWillAppear() {
     createSessionIfNeeded().visitableViewWillAppear(self)
   }

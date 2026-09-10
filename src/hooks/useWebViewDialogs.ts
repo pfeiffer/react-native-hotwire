@@ -4,8 +4,10 @@ import { Alert, type NativeSyntheticEvent } from 'react-native';
 import type { NativeVisitableViewRef } from '../NativeVisitableView';
 import type { DialogEvent } from '../types';
 
-export type OnAlert = (message: string, okPressCallback: () => void) => void;
-export type OnConfirm = (message: string, confirmCallback: (value: boolean) => void) => void;
+/** `window.alert` from the page; call `respond` to let the page continue. */
+export type OnAlert = (event: DialogEvent, respond: () => void) => void;
+/** `window.confirm` from the page; call `respond` with the answer to let the page continue. */
+export type OnConfirm = (event: DialogEvent, respond: (ok: boolean) => void) => void;
 
 /**
  * Handles window.alert / window.confirm from the page. The native side blocks the page
@@ -17,26 +19,26 @@ export function useWebViewDialogs(
   onConfirm: OnConfirm | undefined
 ) {
   const handleAlert = useCallback(
-    ({ nativeEvent: { message } }: NativeSyntheticEvent<DialogEvent>) => {
+    ({ nativeEvent }: NativeSyntheticEvent<DialogEvent>) => {
       const done = () => nativeRef.current?.sendAlertResult();
 
       if (onAlert) {
-        onAlert(message, done);
+        onAlert(nativeEvent, done);
       } else {
-        Alert.alert(message, undefined, [{ text: 'OK', onPress: done }]);
+        Alert.alert(nativeEvent.message, undefined, [{ text: 'OK', onPress: done }]);
       }
     },
     [onAlert, nativeRef]
   );
 
   const handleConfirm = useCallback(
-    ({ nativeEvent: { message } }: NativeSyntheticEvent<DialogEvent>) => {
+    ({ nativeEvent }: NativeSyntheticEvent<DialogEvent>) => {
       const done = (value: boolean) => nativeRef.current?.sendConfirmResult(value);
 
       if (onConfirm) {
-        onConfirm(message, done);
+        onConfirm(nativeEvent, done);
       } else {
-        Alert.alert(message, undefined, [
+        Alert.alert(nativeEvent.message, undefined, [
           { text: 'OK', onPress: () => done(true) },
           { text: 'Cancel', onPress: () => done(false) },
         ]);

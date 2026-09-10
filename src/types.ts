@@ -51,13 +51,14 @@ export interface ErrorEvent {
   description?: string;
 }
 
-export type OnErrorCallback = (error: ErrorEvent) => void;
-
-export interface ContentInset {
-  top?: number;
-  left?: number;
-  bottom?: number;
-  right?: number;
+/** React Native's `ScrollView` scroll event; `velocity` is iOS only. Values are in points. */
+export interface ScrollEvent {
+  contentInset: { top: number; left: number; bottom: number; right: number };
+  contentOffset: { x: number; y: number };
+  contentSize: { width: number; height: number };
+  layoutMeasurement: { width: number; height: number };
+  velocity?: { x: number; y: number };
+  zoomScale: number;
 }
 
 export interface BridgeMessage {

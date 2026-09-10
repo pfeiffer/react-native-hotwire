@@ -3,7 +3,6 @@ import type React from 'react';
 import type { NativeSyntheticEvent, StyleProp, ViewStyle } from 'react-native';
 
 import type {
-  ContentInset,
   ContentProcessDidTerminateEvent,
   DialogEvent,
   ErrorEvent,
@@ -11,6 +10,7 @@ import type {
   LoadEvent,
   MessageEvent,
   OpenExternalUrlEvent,
+  ScrollEvent,
   VisitProposal,
 } from './types';
 
@@ -21,7 +21,6 @@ export interface NativeVisitableViewProps {
   applicationNameForUserAgent?: string;
   pullToRefreshEnabled: boolean;
   scrollEnabled: boolean;
-  contentInset?: ContentInset;
   /**
    * How much chrome overlaps the top of the view, in dp; what `--hotwire-inset-top`
    * tells the page. Android places the pull-to-refresh spinner below it, as iOS does
@@ -29,6 +28,7 @@ export interface NativeVisitableViewProps {
    */
   topInset: number;
   webViewDebuggingEnabled: boolean;
+  testID?: string;
   onLoad?: (e: NativeSyntheticEvent<LoadEvent>) => void;
   onMessage?: (e: NativeSyntheticEvent<MessageEvent>) => void;
   onError?: (e: NativeSyntheticEvent<ErrorEvent>) => void;
@@ -37,8 +37,9 @@ export interface NativeVisitableViewProps {
   onWebConfirm?: (e: NativeSyntheticEvent<DialogEvent>) => void;
   onOpenExternalUrl?: (e: NativeSyntheticEvent<OpenExternalUrlEvent>) => void;
   onCrossOriginRedirect?: (e: NativeSyntheticEvent<OpenExternalUrlEvent>) => void;
-  onFormSubmissionStarted?: (e: NativeSyntheticEvent<FormSubmissionEvent>) => void;
-  onFormSubmissionFinished?: (e: NativeSyntheticEvent<FormSubmissionEvent>) => void;
+  onFormSubmissionStart?: (e: NativeSyntheticEvent<FormSubmissionEvent>) => void;
+  onFormSubmissionEnd?: (e: NativeSyntheticEvent<FormSubmissionEvent>) => void;
+  onScroll?: (e: NativeSyntheticEvent<ScrollEvent>) => void;
   onShowLoading?: () => void;
   onHideLoading?: () => void;
   onContentProcessDidTerminate?: (

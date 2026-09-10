@@ -2,6 +2,7 @@ import UIKit
 import WebKit
 
 protocol HotwiredVisitableViewControllerDelegate: AnyObject {
+  func visitableDidScroll(_ scrollView: UIScrollView)
   func visitableWillAppear()
   func visitableDidAppear()
   func visitableWillDisappear()
@@ -150,16 +151,22 @@ final class HotwiredVisitableViewController: UIViewController, Visitable {
         self?.registerContentScrollView()
       }
     }
+    // Observed rather than delegated: the scroll view's delegate is WebKit's to set.
+    scrollObservation = webView.scrollView.observe(\.contentOffset) { [weak self] scrollView, _ in
+      self?.delegate?.visitableDidScroll(scrollView)
+    }
   }
 
   func visitableWillDeactivateWebView() {
     dragObservation = nil
+    scrollObservation = nil
     locationState = .deactivated(visitableView.webView?.url ?? initialVisitableURL)
   }
 
   // MARK: Content scroll view
 
   private var dragObservation: NSKeyValueObservation?
+  private var scrollObservation: NSKeyValueObservation?
 
   /// UIKit drives bar behavior from content scroll views: the navigation bar's large title
   /// and scroll-edge effect from the stack's top controller (the react-native-screens screen

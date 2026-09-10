@@ -40,7 +40,6 @@ export type {
   BridgeComponentProps,
   BridgeComponentType,
   BridgeMessage,
-  ContentInset,
   ContentProcessDidTerminateEvent,
   DialogEvent,
   ErrorEvent,
@@ -49,9 +48,9 @@ export type {
   LoadEvent,
   MessageEvent,
   MessageListener,
-  OnErrorCallback,
   OpenExternalUrlEvent,
   PathProperties,
+  ScrollEvent,
   VisitAction,
   VisitProposal,
 } from './types';

@@ -12,32 +12,35 @@ import { NativeVisitableView, type NativeVisitableViewRef } from './NativeVisita
 import { openExternalUrl } from './openExternalUrl';
 import { normalizeProperties } from './pathConfiguration';
 import type {
-  ContentInset,
+  BridgeMessage,
   ContentProcessDidTerminateEvent,
   ErrorEvent,
   FormSubmissionEvent,
   LoadEvent,
-  MessageListener,
-  OnErrorCallback,
   OpenExternalUrlEvent,
+  ScrollEvent,
   VisitProposal,
 } from './types';
 
 export interface VisitableViewProps {
+  /** The page to show. A new value visits it in the same session. */
   url: string;
   /**
    * Screens sharing a handle share one web view and Turbo session. Defaults to "Default".
    * The web view's user agent and bridge components come from HotwireProvider, once per app.
    */
   sessionHandle?: string;
+  /** Pull down to reload the page. Defaults to true. */
   pullToRefreshEnabled?: boolean;
+  /** Defaults to true. */
   scrollEnabled?: boolean;
-  /** iOS only. */
-  contentInset?: ContentInset;
-  /** Android only: position of the pull-to-refresh spinner. */
+  /** Overlay while a visit loads; the default is a centered spinner. */
   renderLoading?: RenderLoading;
+  /** Overlay for a failed visit; the default is a message and a Retry that reloads. */
   renderError?: RenderError;
+  /** Turbo proposed a visit; navigate with `useVisit`, or route it with `useVisitHandler`. */
   onVisitProposal: (proposal: VisitProposal) => void;
+  /** A page finished loading, with its title. */
   onLoad?: (event: LoadEvent) => void;
   /** Defaults to `openExternalUrl`: an in-app browser if expo-web-browser is installed, else the system. */
   onOpenExternalUrl?: (event: OpenExternalUrlEvent) => void;
@@ -47,16 +50,28 @@ export interface VisitableViewProps {
    * `onOpenExternalUrl` alone, and `HotwireScreen` adds the pop.
    */
   onCrossOriginRedirect?: (event: OpenExternalUrlEvent) => void;
-  onFormSubmissionStarted?: (event: FormSubmissionEvent) => void;
-  onFormSubmissionFinished?: (event: FormSubmissionEvent) => void;
-  /** Defaults to reloading the view. */
+  /** The page submitted a form; Turbo's `turbo:submit-start`. */
+  onFormSubmissionStart?: (event: FormSubmissionEvent) => void;
+  /** The submission got its response; Turbo's `turbo:submit-end`. */
+  onFormSubmissionEnd?: (event: FormSubmissionEvent) => void;
+  /** The web content process died. Defaults to reloading the view. */
   onContentProcessDidTerminate?: (event: ContentProcessDidTerminateEvent) => void;
-  onError?: OnErrorCallback;
-  /** Raw messages from the page, already JSON-parsed. Bridge components use this channel. */
-  onMessage?: MessageListener;
+  /** A visit failed: no response, or an HTTP error status. `renderError` shows regardless. */
+  onError?: (error: ErrorEvent) => void;
+  /** Every message the page's bridge components send, before the native components see it. */
+  onMessage?: (message: BridgeMessage) => void;
+  /** Replaces the `Alert` shown for `window.alert`. */
   onAlert?: OnAlert;
+  /** Replaces the `Alert` shown for `window.confirm`. */
   onConfirm?: OnConfirm;
+  /**
+   * The page scrolled. Unlike the other callbacks this receives the synthetic event, with
+   * React Native's `ScrollView` shape under `nativeEvent`, so `Animated.event` and anything
+   * written for a `ScrollView` or react-native-webview reads it unchanged.
+   */
+  onScroll?: (event: NativeSyntheticEvent<ScrollEvent>) => void;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }
 
 export interface VisitableViewRef {
@@ -86,21 +101,22 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     sessionHandle = 'Default',
     pullToRefreshEnabled = true,
     scrollEnabled = true,
-    contentInset,
     renderLoading,
     renderError,
     onVisitProposal,
     onLoad,
     onOpenExternalUrl = openExternalUrl,
     onCrossOriginRedirect,
-    onFormSubmissionStarted,
-    onFormSubmissionFinished,
+    onFormSubmissionStart,
+    onFormSubmissionEnd,
     onContentProcessDidTerminate,
     onError,
     onMessage,
     onAlert,
     onConfirm,
+    onScroll,
     style = styles.container,
+    testID,
   } = props;
 
   const { applicationNameForUserAgent, bridgeComponents, webViewDebuggingEnabled } = useHotwireConfig();
@@ -109,7 +125,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
   const { initializeBridge, bridgeUserAgent, sendToBridge, registerMessageListener, handleMessage } = useBridge(
     nativeRef,
     bridgeComponents,
-    onMessage
+    onMessage as ((message: object) => void) | undefined
   );
   const { handleAlert, handleConfirm } = useWebViewDialogs(nativeRef, onAlert, onConfirm);
 
@@ -183,14 +199,14 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     [onCrossOriginRedirect, onOpenExternalUrl]
   );
 
-  const handleFormSubmissionStarted = useCallback(
-    ({ nativeEvent }: NativeSyntheticEvent<FormSubmissionEvent>) => onFormSubmissionStarted?.(nativeEvent),
-    [onFormSubmissionStarted]
+  const handleFormSubmissionStart = useCallback(
+    ({ nativeEvent }: NativeSyntheticEvent<FormSubmissionEvent>) => onFormSubmissionStart?.(nativeEvent),
+    [onFormSubmissionStart]
   );
 
-  const handleFormSubmissionFinished = useCallback(
-    ({ nativeEvent }: NativeSyntheticEvent<FormSubmissionEvent>) => onFormSubmissionFinished?.(nativeEvent),
-    [onFormSubmissionFinished]
+  const handleFormSubmissionEnd = useCallback(
+    ({ nativeEvent }: NativeSyntheticEvent<FormSubmissionEvent>) => onFormSubmissionEnd?.(nativeEvent),
+    [onFormSubmissionEnd]
   );
 
   const handleContentProcessDidTerminate = useCallback(
@@ -200,7 +216,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
   );
 
   return (
-    <View ref={layoutRef} onLayout={onLayout} style={style}>
+    <View ref={layoutRef} onLayout={onLayout} style={style} testID={testID}>
       {/* Keyed by URL: a component belongs to a page, so a replace visit starts it over.
           Upstream scopes components to the screen instead; this is the stricter reading. */}
       {bridgeComponents.map((BridgeComponent, i) => (
@@ -220,7 +236,6 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
         applicationNameForUserAgent={userAgent}
         pullToRefreshEnabled={pullToRefreshEnabled}
         scrollEnabled={scrollEnabled}
-        contentInset={contentInset}
         topInset={topInset}
         webViewDebuggingEnabled={webViewDebuggingEnabled}
         onError={handleError}
@@ -231,8 +246,9 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
         onLoad={handleLoad}
         onWebAlert={handleAlert}
         onWebConfirm={handleConfirm}
-        onFormSubmissionStarted={handleFormSubmissionStarted}
-        onFormSubmissionFinished={handleFormSubmissionFinished}
+        onFormSubmissionStart={handleFormSubmissionStart}
+        onFormSubmissionEnd={handleFormSubmissionEnd}
+        onScroll={onScroll}
         onShowLoading={handleShowLoading}
         onHideLoading={handleHideLoading}
         onContentProcessDidTerminate={handleContentProcessDidTerminate}

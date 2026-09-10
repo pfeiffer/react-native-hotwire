@@ -100,8 +100,9 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   private val onWebConfirm by EventDispatcher<Map<String, Any?>>()
   private val onOpenExternalUrl by EventDispatcher<Map<String, Any?>>()
   private val onCrossOriginRedirect by EventDispatcher<Map<String, Any?>>()
-  private val onFormSubmissionStarted by EventDispatcher<Map<String, Any?>>()
-  private val onFormSubmissionFinished by EventDispatcher<Map<String, Any?>>()
+  private val onFormSubmissionStart by EventDispatcher<Map<String, Any?>>()
+  private val onFormSubmissionEnd by EventDispatcher<Map<String, Any?>>()
+  private val onScroll by EventDispatcher<Map<String, Any?>>()
   private val onShowLoading by EventDispatcher<Map<String, Any?>>()
   private val onHideLoading by EventDispatcher<Map<String, Any?>>()
   private val onContentProcessDidTerminate by EventDispatcher<Map<String, Any?>>()
@@ -301,6 +302,10 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
 
   private fun updateWebViewConfiguration() {
     val webView = _session?.webView ?: return
+    // The WebView is shared; the listener set last belongs to the view holding it.
+    webView.setOnScrollChangeListener { _, x, y, _, _ ->
+      if (holdsWebView) onScroll(scrollEvent(webView, x, y))
+    }
     if (scrollEnabled) {
       webView.setOnTouchListener { _, event -> lockScrollAxis(event); false }
     } else {
@@ -400,12 +405,26 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     onOpenExternalUrl(mapOf("url" to url))
   }
 
+  // React Native's ScrollView event, so what reads one reads this.
+  private fun scrollEvent(webView: WebView, x: Int, y: Int): Map<String, Any?> {
+    val density = resources.displayMetrics.density
+    @Suppress("DEPRECATION")
+    val contentHeight = webView.contentHeight * webView.scale / density
+    return mapOf(
+      "contentInset" to mapOf("top" to 0, "left" to 0, "bottom" to 0, "right" to 0),
+      "contentOffset" to mapOf("x" to x / density, "y" to y / density),
+      "contentSize" to mapOf("width" to webView.width / density, "height" to contentHeight),
+      "layoutMeasurement" to mapOf("width" to webView.width / density, "height" to webView.height / density),
+      "zoomScale" to 1,
+    )
+  }
+
   override fun didStartFormSubmission(url: String) {
-    onFormSubmissionStarted(mapOf("url" to url))
+    onFormSubmissionStart(mapOf("url" to url))
   }
 
   override fun didFinishFormSubmission(url: String) {
-    onFormSubmissionFinished(mapOf("url" to url))
+    onFormSubmissionEnd(mapOf("url" to url))
   }
 
   override fun visitProposedToLocation(location: String, options: VisitOptions) {

@@ -159,10 +159,11 @@ compose `VisitableView` with your own router instead.
 | `url` | Page to visit. Changing it visits the new URL in the same session. |
 | `sessionHandle` | Screens sharing a handle share one web view and Turbo session. Default `"Default"`. |
 | `onVisitProposal` | Required. Turbo proposed a visit; navigate with `useVisit`. |
-| `onLoad`, `onError`, `onOpenExternalUrl`, `onFormSubmissionStarted/Finished`, `onContentProcessDidTerminate`, `onMessage` | Session events. |
-| `onAlert`, `onConfirm` | Replace the default `Alert` dialogs for `window.alert` / `window.confirm`. |
+| `onLoad`, `onError`, `onOpenExternalUrl`, `onFormSubmissionStart/End`, `onContentProcessDidTerminate`, `onMessage` | Session events. |
+| `onScroll` | React Native's `ScrollView` event, synthetic event and all, so `Animated.event` reads it. For chrome the app draws itself; native headers and tabs collapse on their own. |
+| `onAlert`, `onConfirm` | `(event, respond)`: replace the default `Alert` dialogs for `window.alert` / `window.confirm`. |
 | `renderLoading`, `renderError` | Overlays. |
-| `pullToRefreshEnabled`, `scrollEnabled`, `contentInset` (iOS) | Web view configuration. |
+| `pullToRefreshEnabled`, `scrollEnabled`, `style`, `testID` | As on any view. |
 
 Ref (`VisitableViewRef`): `reload()` cold-boots the page, `refresh()` refreshes through
 Turbo, `injectJavaScript(script)`.
