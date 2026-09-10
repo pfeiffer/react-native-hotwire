@@ -17,8 +17,8 @@
     "README.md"
   ],
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "jest",
+    "typecheck": "example/node_modules/.bin/tsc --noEmit",
+    "test": "example/node_modules/.bin/jest",
     "sync-upstream": "sh scripts/sync-upstream.sh"
   },
   "peerDependencies": {
@@ -38,8 +38,9 @@
     "react-native-screens": { "optional": true }
   },
   "jest": {
-    "preset": "jest-expo",
+    "preset": "./example/node_modules/jest-expo/jest-preset",
     "roots": ["<rootDir>/src"],
+    "moduleDirectories": ["node_modules", "<rootDir>/example/node_modules"],
     "setupFiles": ["<rootDir>/jest.setup.js"],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|expo-modules-core)/)"

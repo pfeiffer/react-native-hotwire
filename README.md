@@ -368,9 +368,10 @@ message that asked.
 
 ## Development
 
-The library resolves its dependencies through the example app: `cd example && npm install`,
-then `ln -s example/node_modules node_modules` at the root. `yarn typecheck` and `yarn test`
-run from the root; the tests cover the visit routing, the fallback to declared routes,
+The library resolves its development dependencies through the example app, `cd example &&
+npm install`, and must never have a `node_modules` of its own: a `file:` install copies the
+directory wholesale, and Metro would resolve React Native from inside it. `yarn typecheck`
+and `yarn test` run from the root; the tests cover the visit routing, the fallback to declared routes,
 `hotwireScreens`, path resolution, linking params and the bridge hooks. Native code is
 compiled by the consuming app; there is no standalone build. `example/` is the app to build
 for both platforms against `https://hotwire-native-demo.dev` (Metro on port 8084).

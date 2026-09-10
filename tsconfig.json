@@ -11,6 +11,8 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "types": ["jest"],
+    "typeRoots": ["./example/node_modules/@types"],
+    "paths": { "*": ["./example/node_modules/@types/*", "./example/node_modules/*"] },
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src"]
