@@ -24,13 +24,12 @@ Point a stack at a Turbo-enabled site:
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HotwireProvider, hotwireLinking, hotwireScreens } from 'react-native-hotwire';
-import configuration from './path-configuration.json';
 
 const baseURL = 'https://example.com';
 const Stack = createNativeStackNavigator();
 
 export default () => (
-  <HotwireProvider pathConfiguration={configuration} pathConfigurationUrl={`${baseURL}/configurations/app.json`}>
+  <HotwireProvider>
     <NavigationContainer linking={hotwireLinking(baseURL)}>
       <Stack.Navigator>{hotwireScreens(Stack)}</Stack.Navigator>
     </NavigationContainer>
@@ -38,17 +37,29 @@ export default () => (
 );
 ```
 
-`HotwireProvider` carries the app's user agent token, bridge components and path
-configuration. `hotwireScreens` is the web routes the app's native stack needs, one per
-presentation, each a `HotwireScreen`, with the path configuration deciding which URL opens how, bundled for the
-first launch and refreshed from the server after. `hotwireLinking` hands every URL under the
-base URL to a web screen, and its prefix is the one place the origin is stated: everything
-under the container resolves paths against it, so `hotwireScreens(Stack, { path: '/inbox' })`,
-`visit('/inbox')` and `screen.visit('/session/new', 'replace')` all work (`useBaseURL()` reads it). It is the model Hotwire Native itself has, one stack and one modal
-layer, and the navigators are yours: tabs, theme, header styling and everything else is
-plain React Navigation. `example/` is exactly this against the official demo server, three
-tabs each with a stack and a session of their own, with the demo's rules written for this
-library in `example/path-configuration.json`.
+That is a working app: every link pushes, forms and redirects work, titles come from the
+pages, pull to refresh is on, other hosts open in the browser, a failed visit shows Retry.
+`hotwireScreens` is the web routes the app's native stack needs, one per presentation, each
+a `HotwireScreen`. `hotwireLinking` hands every URL under the base URL to a web screen, and
+its prefix is the one place the origin is stated: everything under the container resolves
+paths against it, so `hotwireScreens(Stack, { path: '/inbox' })`, `visit('/inbox')` and
+`screen.visit('/session/new', 'replace')` all work (`useBaseURL()` reads it). It is the
+model Hotwire Native itself has, one stack and one modal layer, and the navigators are
+yours: tabs, theme, header styling and everything else is plain React Navigation.
+
+`HotwireProvider` carries what belongs to a session rather than a screen, all optional: the
+user agent token, the bridge components, inspectability, and the path configuration that
+lets the server decide which URL opens as a modal or a native screen:
+
+```tsx
+import configuration from './path-configuration.json';
+
+<HotwireProvider pathConfiguration={configuration} pathConfigurationUrl={`${baseURL}/configurations/app.json`}>
+```
+
+`example/` is exactly this against the official demo server, three tabs each with a stack
+and a session of their own, with the demo's rules written for this library in
+`example/path-configuration.json`.
 
 Native screens sit next to the web ones:
 
