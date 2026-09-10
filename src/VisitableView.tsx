@@ -133,7 +133,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
     nativeRef.current?.reload();
   }, []);
 
-  const { webViewStateComponent, handleShowLoading, handleHideLoading, handleRenderError } =
+  const { webViewStateComponent, handleShowLoading, handleHideLoading, handleRenderError, handleLoaded } =
     useWebViewState(reload, renderLoading, renderError);
 
   // Where this view sits in the window decides how much of the chrome overlaps it. The
@@ -172,11 +172,12 @@ const VisitableViewContent = forwardRef<VisitableViewRef, VisitableViewProps>((p
 
   const handleLoad = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<LoadEvent>) => {
+      handleLoaded();
       initializeBridge();
       applyContentInsets();
       onLoad?.(nativeEvent);
     },
-    [applyContentInsets, initializeBridge, onLoad]
+    [applyContentInsets, handleLoaded, initializeBridge, onLoad]
   );
 
   const handleVisitProposal = useCallback(

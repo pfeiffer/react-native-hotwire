@@ -48,7 +48,11 @@ export function useWebViewState(
 
   const handleRenderError = useCallback((errorEvent: ErrorEvent) => setError(errorEvent), []);
 
-  return { webViewStateComponent, handleShowLoading, handleHideLoading, handleRenderError };
+  // A page that loaded makes any error stale, however the visit was started: a reload
+  // shows the refresh spinner rather than the loading overlay, so it never showed loading.
+  const handleLoaded = useCallback(() => setError(null), []);
+
+  return { webViewStateComponent, handleShowLoading, handleHideLoading, handleRenderError, handleLoaded };
 }
 
 const styles = StyleSheet.create({

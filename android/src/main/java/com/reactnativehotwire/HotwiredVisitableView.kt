@@ -379,9 +379,9 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     confirmCallback = null
   }
 
+  // Also the Retry after a failed first load, when the WebView has no URL yet: a reload
+  // visit resets the session and cold boots the view's URL again.
   override fun reload(displayProgress: Boolean) {
-    if (webView.url == null) return
-
     if (displayProgress && !hotwiredView.webViewRefresh.isRefreshing) {
       hotwiredView.webViewRefresh.isRefreshing = true
     }
