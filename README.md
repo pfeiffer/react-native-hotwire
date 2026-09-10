@@ -351,20 +351,25 @@ message that asked.
 ## Migrating from react-native-turbo / react-native-web-screen
 
 1. `package.json`: remove `react-native-turbo` and `react-native-web-screen`, add
-   `react-native-hotwire` (git URL above). Remove the `scripts.postinstall` override in the
-   old URL; nothing is built at install time any more.
-2. Imports: everything comes from `react-native-hotwire`.
-   `useWebviewNavigate` became `useVisit` and `useVisitBuilder`; `useCurrentUrl`,
-   `getLinkingObject` moved here.
-3. `stradaComponents` → `bridgeComponents`; `StradaComponent` → `BridgeComponentType`;
-   `StradaMessage` → `BridgeMessage`.
-4. `useRef<typeof VisitableView>` → `useRef<VisitableViewRef>`.
-5. Removed: `Session`, `withSession`, `buildWebScreen`, `refreshControlTopAnchor`.
-6. Delete `scripts/link-local-turbo.js`, the `REACT_NATIVE_TURBO_PATH` block in
-   `metro.config.js`, and the `postinstall` script entry. For local development use
-   `"react-native-hotwire": "file:../path/to/react-native-hotwire"`, or `yarn link`;
-   Expo autolinking picks the module up either way.
-7. `npx expo prebuild --clean`, then build both platforms.
+   `react-native-hotwire` from the git tag above. Nothing is built at install time, so the
+   `postinstall` override in the old URL, `scripts/link-local-turbo.js` and the
+   `REACT_NATIVE_TURBO_PATH` block in `metro.config.js` all go.
+2. Wrap the app in `HotwireProvider`. What was per view moves there once:
+   `stradaComponents` becomes `bridgeComponents`, and `applicationNameForUserAgent` and
+   `webViewDebuggingEnabled` are provider props.
+3. Bridge components are function components: `bridgeComponent(name, Component)` with
+   `useBridgeMessage(event, (message, reply) => …)`. The `StradaComponent` class, its
+   `onReceive` and `replyTo` are gone; `StradaMessage` is `BridgeMessage`.
+4. Imports come from `react-native-hotwire`. `useWebviewNavigate` became `useVisit` and
+   `useVisitBuilder`. `useCurrentUrl` takes no base URL; it and every path resolve against
+   the prefix of the container's linking.
+5. Double-check every `VisitableView` prop against the table above: several were renamed
+   or changed shape, among them `onFormSubmissionStart` and `onFormSubmissionEnd`,
+   `onAlert` and `onConfirm` receiving `(event, respond)`, and `onError` typed inline. The
+   ref is `useRef<VisitableViewRef>`. Removed: `Session`, `withSession`, `buildWebScreen`,
+   `refreshControlTopAnchor`, `contentInset`, `progressViewOffset`, and the app's own
+   keyboard handling on Android, which the view does itself.
+6. `npx expo prebuild --clean`, then build both platforms.
 
 ## Development
 
