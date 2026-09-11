@@ -196,8 +196,12 @@ export function useVisitHandler(options: VisitHandlerOptions = {}) {
             return { kind: 'pop' };
           }
           const leavingModal = modalRoutes.has(route.name) && lower(properties.context, 'default') !== 'modal';
+          // A modal target from a page that is not one is presented, whatever the action:
+          // upstream presents rather than replacing the page beneath, and a modal route in
+          // a page's place would show inline, with nothing beneath to pop to.
+          const enteringModal = !modalRoutes.has(route.name) && modalRoutes.has(name);
           const action =
-            leavingModal || proposal.action === 'replace'
+            (leavingModal || proposal.action === 'replace') && !enteringModal
               ? StackActions.replace(name, params)
               : CommonActions.navigate(name, params);
           return { kind: 'navigate', action };

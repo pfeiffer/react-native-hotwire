@@ -162,6 +162,19 @@ describe("upstream's pushOrReplace", () => {
     await handle(proposal('https://example.com/x', {}, 'replace'));
     expect(mockNavigation.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'REPLACE' }));
   });
+
+  it('presents a modal target on a replace action from a page that is not a modal', async () => {
+    // A redirect from a tab root to a modal page: the root cannot be replaced by a modal.
+    await handle(proposal('https://example.com/verify', { context: 'modal' }, 'replace'));
+    expect(mockNavigation.dispatch).toHaveBeenCalledWith(CommonActions.navigate('webModal', params('https://example.com/verify', { context: 'modal' })));
+  });
+
+  it('replaces the modal on a replace action from within it', async () => {
+    mockRoute = { name: 'webModal' };
+    stack([{ name: 'web' }, { name: 'webModal', params: { url: 'https://example.com/new' } }]);
+    await handle(proposal('https://example.com/verify', { context: 'modal' }, 'replace'));
+    expect(mockNavigation.dispatch).toHaveBeenCalledWith(StackActions.replace('webModal', params('https://example.com/verify', { context: 'modal' })));
+  });
 });
 
 describe('the app has the last word', () => {
