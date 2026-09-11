@@ -223,6 +223,10 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     session.registerSubscriber(this)
     visit(freshPage = urlChangedWhileDetached)
     urlChangedWhileDetached = false
+    if (reloadWhenAttached) {
+      reloadWhenAttached = false
+      reload(displayProgress = true)
+    }
   }
 
   override fun onDetachedFromWindow() {
@@ -261,6 +265,7 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   }
 
   private var urlChangedWhileDetached = false
+  private var reloadWhenAttached = false
 
   /** The URL prop changed on a mounted view: a new page for this screen, never a restore. */
   private fun visitChangedUrl() {
@@ -432,6 +437,12 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   // Also the Retry after a failed first load, when the WebView has no URL yet: a reload
   // visit resets the session and cold boots the view's URL again.
   override fun reload(displayProgress: Boolean) {
+    // Off the window there is no lifecycle to visit under; a screen asked to reload while
+    // it is still covered, on regaining focus say, reloads once it is back.
+    if (!isAttachedToWindow) {
+      reloadWhenAttached = true
+      return
+    }
     if (displayProgress && !hotwiredView.webViewRefresh.isRefreshing) {
       hotwiredView.webViewRefresh.isRefreshing = true
     }
