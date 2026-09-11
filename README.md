@@ -156,7 +156,14 @@ differences:
 | `titleFromPage` | Sets the screen title from the page title on each load. Default `true`. |
 | `pullToRefreshEnabled` | Overrides the path configuration's `pull_to_refresh_enabled`, which defaults to `true`. |
 | `onError(error, screen)` | A visit failed. `renderError` shows regardless; `screen` offers `retry()`, `pop()` and `visit(urlOrPath, action)`. |
-| `onCrossOriginRedirect` | Default: pop the screen the redirected visit was pushed for, then `onOpenExternalUrl`, as upstream does. |
+| `onCrossOriginRedirect` | A redirect to another host, from a cold boot or a visit. Default: pop the screen the redirected visit was pushed for, then `onOpenExternalUrl`, as upstream does. |
+
+A redirect on the same host is never followed inside the screen that asked: it arrives as
+a `replace` proposal with `redirected: true`, on a cold boot as on a visit, and the app
+routes it like any other. A screen that cannot be replaced, a tab root, is left on its
+own page and can `reload()` when it is next focused. A form submission's redirect is a
+different thing, the submission's result: its proposal carries the form's action and
+`redirected` is false.
 
 A URL on another host goes to `onOpenExternalUrl`, whose default `openExternalUrl` is
 exported so a handler that takes one scheme for itself, `sms:` say, can hand the rest back
@@ -263,11 +270,11 @@ and to the older `@hotwired/strada` (`window.Strada`).
 |---|---|
 | `url` | Required. The page to show. A new value visits it in the same session. |
 | `sessionHandle` | Screens sharing a handle share one web view and Turbo session. Default `main`. |
-| `onVisitProposal(proposal)` | Required. Turbo proposed a visit: `{ url, action, properties }`. Navigate with `useVisit`, or route it with `useVisitHandler`. |
+| `onVisitProposal(proposal)` | Required. Turbo proposed a visit: `{ url, action, properties, redirected }`. Navigate with `useVisit`, or route it with `useVisitHandler`. |
 | `onLoad(event)` | A page finished loading: `{ url, title }`. |
 | `onError(error)` | A visit failed: `{ url, statusCode, description }`, `statusCode` an HTTP status or a `SystemStatusCode`. `renderError` shows regardless. |
 | `onOpenExternalUrl(event)` | A link to another host, or a non-http scheme. Default `openExternalUrl`: an in-app browser when `expo-web-browser` is installed, else the system. |
-| `onCrossOriginRedirect(event)` | A visit followed a redirect to another origin, so this page never loaded. Default `onOpenExternalUrl`; `HotwireScreen` adds the pop. |
+| `onCrossOriginRedirect(event)` | A cold boot or a visit was redirected to another origin, so this page never loaded. Default `onOpenExternalUrl`; `HotwireScreen` adds the pop. |
 | `onFormSubmissionStart(event)`, `onFormSubmissionEnd(event)` | The page submitted a form and got its response, Turbo's `turbo:submit-start` and `turbo:submit-end`: `{ url }`. |
 | `onContentProcessDidTerminate(event)` | The web content process died. Default: reload the view. |
 | `onMessage(message)` | Every message the page's bridge components send, before the native components see it. |

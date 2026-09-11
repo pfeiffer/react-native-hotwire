@@ -47,8 +47,8 @@ export interface VisitableViewProps {
   /** Defaults to `openExternalUrl`: an in-app browser if expo-web-browser is installed, else the system. */
   onOpenExternalUrl?: (event: OpenExternalUrlEvent) => void;
   /**
-   * A visit followed a redirect to another origin, so the page this view was pushed for
-   * never loaded. Upstream pops the screen and opens the URL; this defaults to
+   * A cold boot or a visit was redirected to another origin, so the page this view was
+   * pushed for never loaded. Upstream pops the screen and opens the URL; this defaults to
    * `onOpenExternalUrl` alone, and `HotwireScreen` adds the pop.
    */
   onCrossOriginRedirect?: (event: OpenExternalUrlEvent) => void;

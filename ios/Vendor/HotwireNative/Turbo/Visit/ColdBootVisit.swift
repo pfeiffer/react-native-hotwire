@@ -5,9 +5,13 @@ import WebKit
 /// Subsequent visits go through Turbo and use `JavaScriptVisit`.
 final class ColdBootVisit: Visit {
     private(set) var navigation: WKNavigation?
+    // react-native-hotwire: the first main-frame policy decision is the request itself, with
+    // its URL as WebKit re-serializes it; the ones after it are redirects.
+    private var receivedInitialNavigationAction = false
 
     override func startVisit() {
         log("startVisit")
+        receivedInitialNavigationAction = false
 
         webView.navigationDelegate = self
         bridge.pageLoadDelegate = self
@@ -82,18 +86,27 @@ extension ColdBootVisit: WKNavigationDelegate {
             return
         }
 
-        let isRedirect = location != url
+        let isRedirect = receivedInitialNavigationAction && location != url
+        receivedInitialNavigationAction = true
         let redirectIsCrossOrigin = isRedirect && location.host != url.host
 
+        // react-native-hotwire: a redirect is reported by kind. The visit is cancelled before
+        // WebKit delivers the interrupted-load error for the ignored navigation. A same-origin
+        // redirect is proposed instead of followed.
         if redirectIsCrossOrigin {
             log("Cross-origin redirect detected: \(location) -> \(url).")
             decisionHandler(.cancel)
-            delegate?.visitDidProposeVisitToLocation(url)
+            cancel()
+            delegate?.visitDidProposeVisitToCrossOriginRedirect(url)
             return
         }
 
         if isRedirect {
             log("Same-origin redirect detected: \(location) -> \(url).")
+            decisionHandler(.cancel)
+            cancel()
+            delegate?.visitDidProposeVisitToRedirectLocation(url)
+            return
         }
 
         decisionHandler(.allow)

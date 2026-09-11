@@ -477,10 +477,12 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     onFormSubmissionEnd(mapOf("url" to url))
   }
 
-  override fun visitProposedToLocation(location: String, options: VisitOptions) {
-    val currentUrl = webView.url
-    if (currentUrl != null && currentUrl.toUri().host != location.toUri().host) {
-      didOpenExternalUrl(location)
+  override fun visitProposedToLocation(location: String, options: VisitOptions, redirected: Boolean) {
+    if (redirected) endRefreshing()
+    // A link Turbo did not intercept, or a redirect it could follow, can name another host.
+    val host = url.toUri().host?.lowercase()
+    if (host != null && location.toUri().host?.lowercase() != host) {
+      if (redirected) visitProposedToCrossOriginRedirect(location) else didOpenExternalUrl(location)
       return
     }
     onVisitProposal(
@@ -488,12 +490,20 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
         "url" to location,
         "action" to options.action.name.lowercase(),
         "properties" to Hotwire.config.pathConfiguration.properties(location),
+        "redirected" to redirected,
       )
     )
   }
 
   override fun visitProposedToCrossOriginRedirect(location: String) {
+    endRefreshing()
     onCrossOriginRedirect(mapOf("url" to location))
+  }
+
+  /** A visit that ends in a proposal never renders, so the pull-to-refresh it may have started ends here. */
+  private fun endRefreshing() {
+    hotwiredView.webViewRefresh.isRefreshing = false
+    hotwiredView.errorRefresh.isRefreshing = false
   }
 
   override fun onRenderProcessGone() {

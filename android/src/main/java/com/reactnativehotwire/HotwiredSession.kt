@@ -43,7 +43,7 @@ interface SessionSubscriber {
   fun visitCompleted(completedOffline: Boolean)
   fun visitLocationStarted(location: String)
   fun visitProposedToCrossOriginRedirect(location: String)
-  fun visitProposedToLocation(location: String, options: VisitOptions)
+  fun visitProposedToLocation(location: String, options: VisitOptions, redirected: Boolean)
   fun visitRendered()
 }
 
@@ -194,7 +194,15 @@ class HotwiredSession(
   override fun visitProposedToCrossOriginRedirect(location: String) { subscriber?.visitProposedToCrossOriginRedirect(location) }
   override fun visitProposedToLocation(location: String, options: VisitOptions) {
     SessionManager.storeProposedVisitOptions(location, options)
-    subscriber?.visitProposedToLocation(location, options)
+    // A form submission's redirect also carries the response, but with the form's action:
+    // it is the submission that was redirected, not the page the screen asked for.
+    val redirected = options.action == VisitAction.REPLACE && options.response?.redirected == true
+    subscriber?.visitProposedToLocation(location, options, redirected)
+  }
+  override fun visitProposedToRedirectLocation(location: String) {
+    val options = VisitOptions(action = VisitAction.REPLACE)
+    SessionManager.storeProposedVisitOptions(location, options)
+    subscriber?.visitProposedToLocation(location, options, redirected = true)
   }
   override fun visitRendered() { subscriber?.visitRendered() }
   override fun visitRequestFinished() {}

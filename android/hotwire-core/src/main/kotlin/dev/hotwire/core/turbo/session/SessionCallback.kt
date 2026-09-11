@@ -21,6 +21,8 @@ interface SessionCallback {
     fun visitLocationStarted(location: String)
     fun visitProposedToLocation(location: String, options: VisitOptions)
     fun visitProposedToCrossOriginRedirect(location: String)
+    // react-native-hotwire: a cold boot's same-origin redirect.
+    fun visitProposedToRedirectLocation(location: String)
     fun visitDestination(): VisitDestination
     fun formSubmissionStarted(location: String)
     fun formSubmissionFinished(location: String)

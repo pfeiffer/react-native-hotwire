@@ -3,6 +3,7 @@ package dev.hotwire.core.turbo.session
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
 import android.net.http.SslError
 import android.util.SparseArray
 import android.webkit.HttpAuthHandler
@@ -844,7 +845,8 @@ class Session(
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
             val location = request.url.toString()
             val isHttpRequest = request.isHttpGetRequest()
-            val isColdBootRedirect = isHttpRequest && isColdBooting && currentVisit?.location != location
+            // react-native-hotwire: a subframe's redirect is not the page's.
+            val isColdBootRedirect = isHttpRequest && request.isForMainFrame && isColdBooting && currentVisit?.location != location
             val shouldOverride = isReady || isColdBootRedirect
 
             // Don't allow onPageFinished to process its
@@ -856,13 +858,19 @@ class Session(
 
             val willProposeVisit = isColdBootRedirect || shouldProposeThrottledVisit()
             if (shouldOverride && willProposeVisit) {
-                // Replace the cold boot destination on a redirect
-                // since the original url isn't visitable.
-                val options = when (isColdBootRedirect) {
-                    true -> VisitOptions(action = VisitAction.REPLACE)
-                    else -> VisitOptions(action = VisitAction.ADVANCE)
+                // react-native-hotwire: a cold boot redirect is reported by kind, as the iOS cold
+                // boot does.
+                if (isColdBootRedirect) {
+                    val visitHost = currentVisit?.location?.let { Uri.parse(it).host }
+                    val redirectedAcrossOrigins = visitHost != Uri.parse(location).host
+                    if (redirectedAcrossOrigins) {
+                        callback { it.visitProposedToCrossOriginRedirect(location) }
+                    } else {
+                        callback { it.visitProposedToRedirectLocation(location) }
+                    }
+                } else {
+                    visitProposedToLocation(location, VisitOptions(action = VisitAction.ADVANCE).toJson())
                 }
-                visitProposedToLocation(location, options.toJson())
             }
 
             logEvent(

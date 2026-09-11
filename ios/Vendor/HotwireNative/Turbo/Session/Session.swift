@@ -237,6 +237,25 @@ extension Session: VisitDelegate {
         let proposal = VisitProposal(url: location, options: VisitOptions(), properties: properties)
         delegate?.session(self, didProposeVisit: proposal)
     }
+
+    // react-native-hotwire: a cold boot's same-origin redirect is a replace proposal marked
+    // `redirected` in its parameters, as a redirected JavaScript visit's is in its response.
+    func visitDidProposeVisitToRedirectLocation(_ location: URL) {
+        let properties = pathConfiguration?.properties(for: location) ?? [:]
+        let proposal = VisitProposal(
+            url: location,
+            options: VisitOptions(action: .replace),
+            properties: properties,
+            parameters: ["redirected": true]
+        )
+        delegate?.session(self, didProposeVisit: proposal)
+    }
+
+    // react-native-hotwire: a cold boot's cross-origin redirect takes the same route as a
+    // JavaScript visit's.
+    func visitDidProposeVisitToCrossOriginRedirect(_ location: URL) {
+        delegate?.session(self, didProposeVisitToCrossOriginRedirect: location)
+    }
 }
 
 extension Session: VisitableDelegate {

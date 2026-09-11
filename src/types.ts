@@ -9,6 +9,12 @@ export interface VisitProposal {
   url: string;
   action: VisitAction;
   properties: PathProperties;
+  /**
+   * The page the screen asked for was redirected here, on a cold boot or a visit, and the
+   * screen did not render it. A form submission's redirect is not this: that proposal
+   * carries the form's action.
+   */
+  redirected: boolean;
 }
 
 export interface LoadEvent {

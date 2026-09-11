@@ -229,20 +229,40 @@ extension HotwiredVisitableView: HotwiredSessionSubscriber {
   }
 
   func didProposeVisit(_ proposal: VisitProposal) {
-    if webView?.url == proposal.url && proposal.options.action == .replace {
-      // Reopening the current page: refresh in place instead of navigating.
-      refresh()
-    } else {
-      onVisitProposal([
-        "url": proposal.url.absoluteString,
-        "action": proposal.options.action.rawValue,
-        "properties": proposal.properties,
-      ])
+    // A cold boot's redirect says so in the parameters; a visit's in its response. A form
+    // submission's redirect also carries the response, but with the form's action: it is
+    // the submission that was redirected, not the page this screen asked for.
+    let redirected = proposal.parameters?["redirected"] as? Bool
+      ?? (proposal.options.action == .replace && proposal.options.response?.redirected == true)
+    if redirected {
+      endRefreshing()
     }
+    // A link Turbo did not intercept, or a redirect it could follow, can name another host.
+    if let host = URL(string: url)?.host?.lowercased(), proposal.url.host?.lowercased() != host {
+      if redirected {
+        didProposeVisitToCrossOriginRedirect(proposal.url)
+      } else {
+        didOpenExternalUrl(proposal.url)
+      }
+      return
+    }
+    onVisitProposal([
+      "url": proposal.url.absoluteString,
+      "action": proposal.options.action.rawValue,
+      "properties": proposal.properties,
+      "redirected": redirected,
+    ])
   }
 
   func didProposeVisitToCrossOriginRedirect(_ location: URL) {
+    endRefreshing()
     onCrossOriginRedirect(["url": location.absoluteString])
+  }
+
+  /// A visit that ends in a proposal never renders, so the pull-to-refresh it may have
+  /// started ends here.
+  private func endRefreshing() {
+    controller?.visitableView.refreshControl.endRefreshing()
   }
 
   func didFailRequest(for visitable: Visitable, error: HotwireNativeError) {

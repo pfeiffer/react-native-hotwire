@@ -30,7 +30,7 @@ function stack(routes: Route[], routeNames = ['web', 'webModal', 'webSheet', 'we
 }
 
 function proposal(url: string, properties: Record<string, unknown> = {}, action: VisitProposal['action'] = 'advance'): VisitProposal {
-  return { url, action, properties };
+  return { url, action, properties, redirected: false };
 }
 
 async function handle(p: VisitProposal, options?: VisitHandlerOptions) {

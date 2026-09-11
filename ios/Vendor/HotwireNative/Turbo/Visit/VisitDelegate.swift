@@ -16,6 +16,9 @@ protocol VisitDelegate: AnyObject {
     func visit(_ visit: Visit, requestDidFailWithError error: HotwireNativeError)
     func visitRequestDidFinish(_ visit: Visit)
     func visitDidProposeVisitToLocation(_ location: URL)
+    // react-native-hotwire: a cold boot's redirect, same-origin and cross-origin.
+    func visitDidProposeVisitToRedirectLocation(_ location: URL)
+    func visitDidProposeVisitToCrossOriginRedirect(_ location: URL)
 
     func visit(_ visit: Visit, didReceiveAuthenticationChallenge challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void)
 }

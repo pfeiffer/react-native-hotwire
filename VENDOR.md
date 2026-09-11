@@ -19,7 +19,7 @@ The vendored trees were verified against clones of these tags on 2026-09-08 (1.1
 Copied from `Source/` at the tag:
 
 - `Turbo/Session`, `Turbo/Visit`, `Turbo/Visitable`, `Turbo/WebView`, `Turbo/Networking`,
-  `Turbo/Path Configuration`, `Turbo/Errors`, `Turbo/Utils` (verbatim)
+  `Turbo/Path Configuration`, `Turbo/Errors`, `Turbo/Utils` (verbatim, except as listed below)
 - `Turbo/Navigator/Extensions/WKNavigationAction+Utils.swift`, copied to `Turbo/Extensions/`
   (verbatim; the session delegate's policy decisions use it)
 - `Logging/`, `ScriptMessageHandler.swift` (verbatim)
@@ -28,6 +28,19 @@ Not copied: the rest of `Turbo/Navigator`, `Turbo/ViewControllers`, `Turbo/Model
 `NavigationHandler.swift`, `WebView.swift`, `Hotwire.swift`, `HotwireConfig.swift`, Xcode project
 and SwiftPM metadata. Navigation is React
 Navigation's job and bridge components are implemented in JavaScript.
+
+Modified files, each marked with a `react-native-hotwire:` comment:
+
+- `Turbo/Visit/ColdBootVisit.swift`, `Turbo/Visit/VisitDelegate.swift`, `Turbo/Session/Session.swift`:
+  a redirect during a cold boot cancels the visit and is reported by kind through two new
+  `VisitDelegate` requirements. A same-origin redirect becomes a `replace` proposal with
+  `redirected: true` in its parameters instead of being followed; upstream iOS follows it
+  and leaves the screen with the URL it started from. A cross-origin redirect goes to
+  `session(_:didProposeVisitToCrossOriginRedirect:)`, the route a JavaScript visit's
+  already takes, instead of arriving as a plain proposal. Only the policy decision after
+  the first counts as a redirect: WebKit re-serializes the request URL for the first one.
+  The protocol change means step 4 below has an exception: `Session` must implement both
+  new `VisitDelegate` requirements.
 
 Replaced by our own files in `ios/`:
 
@@ -57,6 +70,13 @@ Modified files, each marked with a `react-native-hotwire:` comment:
 - `turbo/config/PathConfiguration.kt` and `turbo/config/PathConfigurationLoader.kt`:
   `Location.bundledJson`, a bundled configuration passed as a JSON string, for a document that
   ships in the JavaScript bundle rather than in the APK's assets.
+- `turbo/session/Session.kt` and `turbo/session/SessionCallback.kt`: a main-frame cold boot
+  redirect is reported by kind, as the iOS cold boot does. To another host it goes to
+  `visitProposedToCrossOriginRedirect`; on the same host to the new
+  `visitProposedToRedirectLocation`, so a destination can tell it from a page's own `replace`
+  proposal. Upstream proposed both as plain `replace` visits, subframes included.
+- `turbo/visit/VisitResponse.kt`: `redirected`, which Turbo sends and upstream drops, so the
+  proposal event can carry it.
 - `turbo/config/PathConfigurationRepository.kt`: the remote path configuration request runs
   `call.execute()` on the IO dispatcher instead of `executeAsync()`. React Native pins OkHttp 4
   and its cookie jar crashes against OkHttp 5, so `android/hotwire-core/build.gradle` keeps
