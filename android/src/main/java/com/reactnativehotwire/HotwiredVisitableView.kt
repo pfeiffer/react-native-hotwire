@@ -266,6 +266,12 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     // until the restore visit renders, instead of the loading overlay: what upstream's
     // covered fragment does in onStop.
     val holder = webView.parent?.parent?.parent as? HotwiredVisitableView
+    // Back on the window with the WebView still in place, a pop back to this screen:
+    // nothing to move and nothing to restore, the page is live.
+    if (holder === this) {
+      onReady(false)
+      return
+    }
     if (holder != null && holder !== this) {
       holder.captureScreenshot { takeWebView(onReady) }
     } else {
@@ -298,9 +304,12 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     val active = _session ?: return
     val webView = active.webView
     active.unregisterSubscriber(this)
-    captureScreenshot()
-    (webView.parent as? ViewGroup)?.endViewTransition(webView)
-    hotwiredView.detachWebView(webView) { forceLayout() }
+    // The screenshot stands in for the page while this view animates out; take it before
+    // the WebView goes.
+    captureScreenshot {
+      (webView.parent as? ViewGroup)?.endViewTransition(webView)
+      hotwiredView.detachWebView(webView) { forceLayout() }
+    }
   }
 
   private fun captureScreenshot(then: () -> Unit = {}) {
