@@ -50,7 +50,7 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     set(value) {
       val changedAfterFirstVisit = _url != null && _url != value
       _url = value
-      if (changedAfterFirstVisit) visit()
+      if (changedAfterFirstVisit) visitChangedUrl()
     }
 
   var sessionHandle: String = "Default"
@@ -221,7 +221,8 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     session.registerSubscriber(this)
-    visit()
+    visit(freshPage = urlChangedWhileDetached)
+    urlChangedWhileDetached = false
   }
 
   override fun onDetachedFromWindow() {
@@ -235,7 +236,8 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     super.onDetachedFromWindow()
   }
 
-  private fun visit() {
+  /** Attaches the WebView and visits `url`; a return to a page this view showed restores it. */
+  private fun visit(freshPage: Boolean = false) {
     attachWebView { attachedToNewDestination ->
       isWebViewAttachedToNewDestination = attachedToNewDestination
 
@@ -243,17 +245,40 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
       updateWebViewConfiguration()
 
       if (attachedToNewDestination) {
-        val restored = !isInitialVisit &&
+        val restored = !freshPage && !isInitialVisit &&
           session.currentVisit?.destinationIdentifier == url.hashCode() &&
           session.restoreCurrentVisit()
 
         if (!restored) {
-          showProgressView()
-          performVisit(restoreWithCachedSnapshot = !isInitialVisit, reload = false)
+          startVisit(restoreWithCachedSnapshot = !freshPage && !isInitialVisit)
           isInitialVisit = false
         }
+      } else if (freshPage) {
+        // The WebView never left this view; the page in it is the old one.
+        startVisit(restoreWithCachedSnapshot = false)
       }
     }
+  }
+
+  private var urlChangedWhileDetached = false
+
+  /** The URL prop changed on a mounted view: a new page for this screen, never a restore. */
+  private fun visitChangedUrl() {
+    // Off the window, the next onAttachedToWindow visits the new URL.
+    if (!isAttachedToWindow) {
+      urlChangedWhileDetached = true
+      return
+    }
+    if (holdsWebView) {
+      startVisit(restoreWithCachedSnapshot = false)
+    } else {
+      visit(freshPage = true)
+    }
+  }
+
+  private fun startVisit(restoreWithCachedSnapshot: Boolean) {
+    showProgressView()
+    performVisit(restoreWithCachedSnapshot, reload = false)
   }
 
   private fun performVisit(restoreWithCachedSnapshot: Boolean, reload: Boolean) {
