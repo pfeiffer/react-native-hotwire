@@ -23,6 +23,7 @@ import expo.modules.kotlin.views.ExpoView
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.max
+import org.json.JSONTokener
 
 // Turbo 8 exposes session.refresh; older Turbo falls back to a replace visit.
 // SwipeRefreshLayout's DEFAULT_CIRCLE_TARGET, which it keeps private.
@@ -488,7 +489,14 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   }
 
   override fun visitRendered() {
-    onLoad(mapOf("title" to webView.title, "url" to webView.url))
+    val loadedUrl = webView.url
+    // From the document, not `webView.title`: the WebView updates that property after the
+    // render message, so it can still name the previous page.
+    webView.evaluateJavascript("document.title") { result ->
+      // The result is a JSON literal: a quoted string, or null.
+      val title = (JSONTokener(result).nextValue() as? String).orEmpty()
+      onLoad(mapOf("title" to title, "url" to loadedUrl))
+    }
     updateWebViewConfiguration()
     removeTransitionalViews()
   }

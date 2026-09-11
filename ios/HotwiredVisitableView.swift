@@ -318,10 +318,16 @@ extension HotwiredVisitableView: HotwiredVisitableViewControllerDelegate {
   }
 
   func visitableDidRender() {
-    onLoad([
-      "title": webView?.title ?? "",
-      "url": webView?.url?.absoluteString ?? url,
-    ])
+    let loadedUrl = webView?.url?.absoluteString ?? url
+    guard let webView else {
+      onLoad(["title": "", "url": loadedUrl])
+      return
+    }
+    // From the document, not `webView.title`: WebKit updates that property after the
+    // render message, so it can still name the previous page.
+    webView.evaluateJavaScript("document.title") { [weak self] title, _ in
+      self?.onLoad(["title": title as? String ?? "", "url": loadedUrl])
+    }
   }
 
   func showVisitableActivityIndicator() {
