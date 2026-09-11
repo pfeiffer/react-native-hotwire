@@ -658,6 +658,14 @@ class Session(
         logEvent("visitLocationAsColdBoot", "location" to visit.location)
         isColdBooting = true
 
+        // react-native-hotwire: a response that came with the proposal, a form's or a
+        // redirect's, is rendered instead of being fetched again, as the iOS cold boot does.
+        val response = visit.options.response
+        if (response != null && response.statusCode in 200..299 && response.responseHTML != null) {
+            webView.loadDataWithBaseURL(visit.location, response.responseHTML, "text/html", "utf-8", visit.location)
+            return
+        }
+
         // When a page is invalidated by Turbo, we need to reload the
         // same URL in the WebView. For a URL with an anchor, the WebView
         // sees a WebView.loadUrl() request as a same-page visit instead of

@@ -81,6 +81,11 @@ Modified files, each marked with a `react-native-hotwire:` comment:
   `visitProposedToRedirectLocation`, so a destination can tell it from a page's own `replace`
   proposal. Upstream proposed both as plain `replace` visits, subframes included.
 - `assets/js/turbo.js`: the same redirected-visit change as the iOS adapter script.
+- `turbo/session/Session.kt`, `visitLocationAsColdBoot`: a cold boot given a response in its
+  options renders it with `loadDataWithBaseURL` instead of fetching the URL, as the iOS
+  `ColdBootVisit` does with `loadHTMLString`. Upstream always fetched, so a page opened in
+  another session from a form's or a redirect's proposal was requested twice and a flash
+  set on the redirect was lost.
 - `turbo/visit/VisitResponse.kt`: `redirected`, which Turbo sends and upstream drops, so the
   proposal event can carry it.
 - `turbo/config/PathConfigurationRepository.kt`: the remote path configuration request runs
