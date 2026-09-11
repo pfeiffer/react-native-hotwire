@@ -146,6 +146,15 @@
     }
 
     visitRequestCompleted(visit) {
+      // react-native-hotwire: a redirected response is proposed for the location it came
+      // from, with the response, instead of being rendered here and proposed afterwards
+      // (Turbo's followRedirect). The screen that asked keeps the page it had. The
+      // navigator drops the visit so that a later refresh of the page is not blocked by it.
+      if (visit.response?.redirected && visit.redirectedToLocation) {
+        Turbo.navigator.stop()
+        this.visitProposedToLocation(visit.redirectedToLocation, { action: "replace", response: visit.response })
+        return
+      }
       TurboSession.visitRequestCompleted(visit.identifier)
       this.loadResponseForVisitWithIdentifier(visit.identifier)
     }

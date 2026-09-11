@@ -41,6 +41,11 @@ Modified files, each marked with a `react-native-hotwire:` comment:
   the first counts as a redirect: WebKit re-serializes the request URL for the first one.
   The protocol change means step 4 below has an exception: `Session` must implement both
   new `VisitDelegate` requirements.
+- `Turbo/WebView/turbo.js`: a JavaScript visit whose response came from a redirect is not
+  rendered; the visit is cancelled and the redirect location is proposed as a `replace` visit
+  carrying the response, so a screen for it renders without a second request. Upstream renders
+  first and lets Turbo's `followRedirect` propose afterwards, which leaves the redirected
+  page in the screen that asked for another one.
 
 Replaced by our own files in `ios/`:
 
@@ -75,6 +80,7 @@ Modified files, each marked with a `react-native-hotwire:` comment:
   `visitProposedToCrossOriginRedirect`; on the same host to the new
   `visitProposedToRedirectLocation`, so a destination can tell it from a page's own `replace`
   proposal. Upstream proposed both as plain `replace` visits, subframes included.
+- `assets/js/turbo.js`: the same redirected-visit change as the iOS adapter script.
 - `turbo/visit/VisitResponse.kt`: `redirected`, which Turbo sends and upstream drops, so the
   proposal event can carry it.
 - `turbo/config/PathConfigurationRepository.kt`: the remote path configuration request runs
