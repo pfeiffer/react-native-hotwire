@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "types": ["jest"],
+    "types": ["jest", "node"],
     "typeRoots": ["./example/node_modules/@types"],
     "paths": { "*": ["./example/node_modules/@types/*", "./example/node_modules/*"] },
     "forceConsistentCasingInFileNames": true
