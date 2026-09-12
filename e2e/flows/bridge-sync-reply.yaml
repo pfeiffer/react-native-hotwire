@@ -1,0 +1,13 @@
+appId: dev.hotwire.e2e
+name: A bridge component's message is answered with the handler's return value
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Bridge page"
+- extendedWaitUntil:
+    visible: "Reply: HELLO"
+    timeout: 10000

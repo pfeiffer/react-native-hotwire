@@ -1,0 +1,24 @@
+appId: dev.hotwire.e2e
+name: A form's redirect pushes the result page, rendered from the redirect response, and the form page is still there beneath
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Form page"
+- extendedWaitUntil:
+    visible: "Submit form"
+    timeout: 10000
+- tapOn: "Submit form"
+- extendedWaitUntil:
+    visible: "Pushed page"
+    timeout: 10000
+- assertVisible: "Saved!"
+- runScript: lib/counts.js
+- assertTrue: ${output.counts['/page'] == 1}
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Form page"
+    timeout: 10000

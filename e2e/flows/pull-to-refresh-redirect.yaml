@@ -1,0 +1,27 @@
+appId: dev.hotwire.e2e
+name: Pull to refresh on a page the server now redirects opens the target and ends the spinner
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- runScript:
+    file: lib/scenario.js
+    env:
+      SCENARIO: '{"homeRedirect":"/modal/verify"}'
+- swipe:
+    start: 50%, 30%
+    end: 50%, 80%
+- extendedWaitUntil:
+    visible: "Verification modal"
+    timeout: 10000
+- runScript:
+    file: lib/scenario.js
+    env:
+      SCENARIO: '{"homeRedirect":null}'
+- tapOn: "Close modal"
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 10000

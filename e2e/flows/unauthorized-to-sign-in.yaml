@@ -1,0 +1,13 @@
+appId: dev.hotwire.e2e
+name: A page answering 401 becomes the sign-in page in its place
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Private page"
+- extendedWaitUntil:
+    visible: "Sign in page"
+    timeout: 10000

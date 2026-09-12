@@ -1,0 +1,17 @@
+appId: dev.hotwire.e2e
+name: A bridge component's message is answered later, when the native button it asked for is pressed
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Bridge page"
+- extendedWaitUntil:
+    visible: "Waiting for button"
+    timeout: 10000
+- tapOn: "Native action"
+- extendedWaitUntil:
+    visible: "Button pressed"
+    timeout: 10000

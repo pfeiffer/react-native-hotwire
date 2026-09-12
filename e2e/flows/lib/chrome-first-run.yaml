@@ -1,0 +1,12 @@
+appId: dev.hotwire.e2e
+# Chrome on a fresh emulator greets the first page with sign-in and sync offers.
+---
+- tapOn:
+    text: "Use without an account"
+    optional: true
+- tapOn:
+    text: "No thanks"
+    optional: true
+- tapOn:
+    text: "No, thanks"
+    optional: true

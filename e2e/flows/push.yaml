@@ -1,0 +1,19 @@
+appId: dev.hotwire.e2e
+name: A link pushes a page and its back link pops it; the page beneath is not fetched again
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Push page"
+- extendedWaitUntil:
+    visible: "Pushed page"
+    timeout: 10000
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 10000
+- runScript: lib/counts.js
+- assertTrue: ${output.counts['/'] == 1}

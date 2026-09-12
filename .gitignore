@@ -15,3 +15,8 @@ xcuserdata/
 example/ios/
 example/android/
 example/.expo/
+
+# The end-to-end app does the same.
+e2e/app/ios/
+e2e/app/android/
+e2e/app/.expo/

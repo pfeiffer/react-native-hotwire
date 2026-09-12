@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "Hotwire E2E",
+    "slug": "react-native-hotwire-e2e",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": { "bundleIdentifier": "dev.hotwire.e2e" },
+    "android": { "package": "dev.hotwire.e2e", "predictiveBackGestureEnabled": false },
+    "newArchEnabled": true
+  }
+}

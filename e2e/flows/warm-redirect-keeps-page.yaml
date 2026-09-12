@@ -1,0 +1,27 @@
+appId: dev.hotwire.e2e
+name: A page's own visit redirected to a modal opens the modal and leaves the page as it was; the page reloads once the modal closes
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- runScript:
+    file: lib/scenario.js
+    env:
+      SCENARIO: '{"homeRedirect":"/modal/verify"}'
+- tapOn: "Refresh page"
+- extendedWaitUntil:
+    visible: "Verification modal"
+    timeout: 10000
+- runScript:
+    file: lib/scenario.js
+    env:
+      SCENARIO: '{"homeRedirect":null}'
+- tapOn: "Close modal"
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 10000
+- runScript: lib/counts.js
+- assertTrue: ${output.counts['/'] == 2}

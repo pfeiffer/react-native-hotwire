@@ -1,0 +1,13 @@
+appId: dev.hotwire.e2e
+name: A handler that throws answers the page with the error
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Bridge page"
+- extendedWaitUntil:
+    visible: "Error: nope"
+    timeout: 10000

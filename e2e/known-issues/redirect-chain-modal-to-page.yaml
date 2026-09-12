@@ -1,0 +1,33 @@
+appId: dev.hotwire.e2e
+name: A tab's first load redirected to a modal page that redirects on to a default page shows that page in the tab and returns to the tab's own page
+---
+# KNOWN ISSUE (Android): the tab ends on a blank pushed screen; the final page is never
+# fetched. The second redirect leaves the presented modal for a default-context page, and
+# react-native-screens will not transition away from a modally-presented screen and show a
+# card in one state update (replace, reset and goBack+navigate all fail; see
+# modal-replaced-by-card.yaml). iOS ends on the page. Left unfixed by decision.
+- runScript: ../flows/lib/reset.js
+- runScript:
+    file: ../flows/lib/scenario.js
+    env:
+      SCENARIO: '{"resourcesRedirect":"/modal/redirect"}'
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn:
+    id: "tab-resources"
+- extendedWaitUntil:
+    visible: "Pushed page"
+    timeout: 10000
+- runScript: ../flows/lib/counts.js
+- assertTrue: ${output.counts['/page'] == 1}
+- runScript:
+    file: ../flows/lib/scenario.js
+    env:
+      SCENARIO: '{"resourcesRedirect":null}'
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Resources page"
+    timeout: 10000

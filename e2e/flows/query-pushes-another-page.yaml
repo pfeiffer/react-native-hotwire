@@ -1,0 +1,25 @@
+appId: dev.hotwire.e2e
+name: A query change without the replace rule visits the new URL in the same screen
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Pages page"
+- extendedWaitUntil:
+    visible: "Showing 1"
+    timeout: 10000
+# Screens are identified by path, so the same page with another query is the same
+# screen, given the new URL to visit; nothing is pushed.
+- tapOn: "Next pages page"
+- extendedWaitUntil:
+    visible: "Showing 2"
+    timeout: 10000
+- runScript: lib/counts.js
+- assertTrue: ${output.counts['/pages'] == 2}
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 10000

@@ -1,0 +1,19 @@
+appId: dev.hotwire.e2e
+name: A visit redirected twice on the same host ends on the final page, fetched once, with no screen for the hop between
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Redirect twice"
+- extendedWaitUntil:
+    visible: "Pushed page"
+    timeout: 10000
+- runScript: lib/counts.js
+- assertTrue: ${output.counts['/page'] == 1}
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 10000

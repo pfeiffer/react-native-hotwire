@@ -1,0 +1,23 @@
+appId: dev.hotwire.e2e
+name: Bridge components follow their page through a push and back
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Bridge page"
+- extendedWaitUntil:
+    visible: "Reply: HELLO"
+    timeout: 10000
+- tapOn: "Push bridge two"
+- extendedWaitUntil:
+    visible: "Reply: TWO"
+    timeout: 10000
+- assertNotVisible: "Reply: HELLO"
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Reply: HELLO"
+    timeout: 10000
+- assertNotVisible: "Reply: TWO"

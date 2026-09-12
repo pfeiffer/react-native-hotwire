@@ -1,0 +1,21 @@
+appId: dev.hotwire.e2e
+name: A replace visit from page script replaces the screen
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Replace page"
+- extendedWaitUntil:
+    visible: "Replace now"
+    timeout: 10000
+- tapOn: "Replace now"
+- extendedWaitUntil:
+    visible: "Pushed page"
+    timeout: 10000
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 10000

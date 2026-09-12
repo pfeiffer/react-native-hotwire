@@ -1,0 +1,34 @@
+appId: dev.hotwire.e2e
+name: A visit redirected to another host pops the pushed screen and opens the URL outside the session
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Redirect away"
+- runFlow:
+    when:
+      platform: Android
+    file: lib/chrome-first-run.yaml
+- extendedWaitUntil:
+    visible: "Elsewhere page"
+    timeout: 15000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Done"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 10000
+# Fetched by the browser that opened it, and on iOS once more by the session resolving
+# the redirect's final location before it reports it.
+- runScript: lib/counts.js
+- assertTrue: ${output.counts['/elsewhere'] >= 1}

@@ -1,0 +1,28 @@
+appId: dev.hotwire.e2e
+name: A default-context link inside a fully rendered modal replaces it with the target page
+---
+# RESULT (Android): a fully rendered modal replaced by a card blanks; the target is never
+# fetched. Broad bug: react-native-screens will not transition away from a modally-presented
+# screen and show a card in one state update. Tried and reverted replace, goBack+navigate,
+# and reset — none work in a single update. Only a sequenced dismiss-then-push across ticks
+# would, a fragile timing hack; left unfixed by decision. iOS renders the page.
+- runScript: ../flows/lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- extendedWaitUntil:
+    visible: "Open modal"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Open modal"
+    direction: DOWN
+- tapOn: "Open modal"
+- extendedWaitUntil:
+    visible: "Verification modal"
+    timeout: 15000
+- tapOn: "Push page"
+- extendedWaitUntil:
+    visible: "Pushed page"
+    timeout: 10000

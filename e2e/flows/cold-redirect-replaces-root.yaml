@@ -1,0 +1,20 @@
+appId: dev.hotwire.e2e
+name: A tab's first load redirected to a page shows that page in the tab
+---
+- runScript: lib/reset.js
+- runScript:
+    file: lib/scenario.js
+    env:
+      SCENARIO: '{"resourcesRedirect":"/page"}'
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn:
+    id: "tab-resources"
+- extendedWaitUntil:
+    visible: "Pushed page"
+    timeout: 10000
+- runScript: lib/counts.js
+- assertTrue: ${output.counts['/page'] == 1}

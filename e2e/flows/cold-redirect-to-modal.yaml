@@ -1,0 +1,31 @@
+appId: dev.hotwire.e2e
+name: A tab's first load redirected to a modal page opens the modal; the tab loads its page when the modal closes
+---
+- runScript: lib/reset.js
+- runScript:
+    file: lib/scenario.js
+    env:
+      SCENARIO: '{"resourcesRedirect":"/modal/verify"}'
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn:
+    id: "tab-resources"
+- extendedWaitUntil:
+    visible: "Verification modal"
+    timeout: 10000
+- assertNotVisible: "Resources page"
+# The cookie the redirect set survives the cancelled navigation.
+- assertVisible: "Redirected!"
+- runScript:
+    file: lib/scenario.js
+    env:
+      SCENARIO: '{"resourcesRedirect":null}'
+- tapOn: "Close modal"
+- extendedWaitUntil:
+    visible: "Resources page"
+    timeout: 10000
+- runScript: lib/counts.js
+- assertTrue: ${output.counts['/resources'] == 1}

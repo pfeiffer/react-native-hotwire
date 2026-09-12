@@ -1,0 +1,23 @@
+appId: dev.hotwire.e2e
+name: A query change on a page with query_string_presentation replace replaces the screen
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "List page"
+- extendedWaitUntil:
+    visible: "Showing 1"
+    timeout: 10000
+- tapOn: "Next list page"
+- extendedWaitUntil:
+    visible: "Showing 2"
+    timeout: 10000
+# The first list screen was replaced, so popping lands on Home, not on "Showing 1".
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 10000
+- assertNotVisible: "Showing 1"

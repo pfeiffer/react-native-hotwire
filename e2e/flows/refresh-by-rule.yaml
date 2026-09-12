@@ -1,0 +1,14 @@
+appId: dev.hotwire.e2e
+name: A link with presentation refresh refreshes the page instead of navigating
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Refresh by rule"
+- extendedWaitUntil:
+    visible: "Visits: 2"
+    timeout: 10000
+- assertVisible: "Home page"

@@ -1,0 +1,25 @@
+appId: dev.hotwire.e2e
+name: The library hands the page the safe-area insets as CSS custom properties, and they survive a visit
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Insets page"
+- extendedWaitUntil:
+    visible: "Insets page"
+    timeout: 10000
+# Each property resolved to a real px value, not the page's "pending" placeholder or "unset".
+- assertVisible: "inset-top: [0-9.]+px"
+- assertVisible: "inset-right: [0-9.]+px"
+- assertVisible: "inset-bottom: [0-9.]+px"
+- assertVisible: "inset-left: [0-9.]+px"
+# A fresh page in the same session receives them too.
+- tapOn: "Push insets two"
+- extendedWaitUntil:
+    visible: "Insets two"
+    timeout: 10000
+- assertVisible: "inset-top: [0-9.]+px"
+- assertVisible: "inset-bottom: [0-9.]+px"

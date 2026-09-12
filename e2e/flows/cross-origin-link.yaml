@@ -1,0 +1,32 @@
+appId: dev.hotwire.e2e
+name: A link to another host opens outside the session and leaves the page in place
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn: "Elsewhere link"
+- runFlow:
+    when:
+      platform: Android
+    file: lib/chrome-first-run.yaml
+- extendedWaitUntil:
+    visible: "Elsewhere page"
+    timeout: 15000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Done"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 10000
+- runScript: lib/counts.js
+- assertTrue: ${output.counts['/'] == 1}
