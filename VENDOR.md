@@ -41,6 +41,11 @@ Modified files, each marked with a `react-native-hotwire:` comment:
   the first counts as a redirect: WebKit re-serializes the request URL for the first one.
   The protocol change means step 4 below has an exception: `Session` must implement both
   new `VisitDelegate` requirements.
+- `Turbo/Session/Session.swift`, `visitableViewWillAppear`: a current visit that has already
+  completed for the appearing visitable counts as the forward navigation. Visits start when
+  the screen mounts, before its appearance, so a quick one is complete by then; upstream, whose
+  visits start from the appearance, only expected `.started`, and treated the completed one as a
+  return to a page beneath, starting a restore visit that fetched the page a second time.
 - `Turbo/WebView/turbo.js`: a JavaScript visit whose response came from a redirect is not
   rendered; the visit is cancelled and the redirect location is proposed as a `replace` visit
   carrying the response, so a screen for it renders without a second request. Upstream renders

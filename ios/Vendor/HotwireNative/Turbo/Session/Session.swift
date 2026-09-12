@@ -290,11 +290,11 @@ extension Session: VisitableDelegate {
 
         // Navigating forward - complete navigation early.
         if visitable === currentVisit.visitable {
-            let currentVisitHasResponse = currentVisit.options.response?.responseHTML != nil
-            
-            /// Most visits will be `.started` here, but form submission redirects containing `response.responseHTML` in
-            /// the modal context while navigating back to the default context will already be `.completed` at this point.
-            if currentVisit.state == .started || (currentVisitHasResponse && currentVisit.state == .completed) {
+            // react-native-hotwire: the visit starts when the screen mounts, before its appearance,
+            // so a quick visit is already complete here. That is still the forward navigation,
+            // not a return to a page beneath, which would start a restore visit and fetch the
+            // page a second time.
+            if currentVisit.state == .started || currentVisit.state == .completed {
                 completeNavigationForCurrentVisit()
                 return
             }
