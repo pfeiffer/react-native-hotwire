@@ -221,11 +221,15 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     session.registerSubscriber(this)
+    // A fresh visit already loads the latest page, so a reload queued while detached is
+    // redundant after one; without a URL change, honour the queued reload.
+    val visitedFreshPage = urlChangedWhileDetached
     visit(freshPage = urlChangedWhileDetached)
     urlChangedWhileDetached = false
-    if (reloadWhenAttached) {
-      reloadWhenAttached = false
-      reload(displayProgress = true)
+    val queuedReload = reloadWhenAttached
+    reloadWhenAttached = null
+    if (queuedReload != null && !visitedFreshPage) {
+      reload(displayProgress = queuedReload)
     }
   }
 
@@ -265,7 +269,7 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   }
 
   private var urlChangedWhileDetached = false
-  private var reloadWhenAttached = false
+  private var reloadWhenAttached: Boolean? = null
 
   /** The URL prop changed on a mounted view: a new page for this screen, never a restore. */
   private fun visitChangedUrl() {
@@ -440,7 +444,7 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
     // Off the window there is no lifecycle to visit under; a screen asked to reload while
     // it is still covered, on regaining focus say, reloads once it is back.
     if (!isAttachedToWindow) {
-      reloadWhenAttached = true
+      reloadWhenAttached = displayProgress
       return
     }
     if (displayProgress && !hotwiredView.webViewRefresh.isRefreshing) {
