@@ -17,8 +17,7 @@ git tag.
 **Contents**
 
 - [Getting started](#getting-started): [Install](#install), [A minimal app](#a-minimal-app),
-  [Path configuration](#path-configuration), [Native screens](#native-screens),
-  [Paths and the base URL](#paths-and-the-base-url)
+  [Path configuration](#path-configuration), [Native screens](#native-screens)
 - [Guides](#guides): [Path configuration in depth](#path-configuration-in-depth),
   [Bridge components](#bridge-components), [Sessions](#sessions),
   [Errors and authentication](#errors-and-authentication),
@@ -76,8 +75,10 @@ This is a working app:
 
 `hotwireScreens(Stack)` adds one screen per presentation: push, modal, sheet. Each is a
 `HotwireScreen`. `hotwireLinking(baseURL)` sends every URL under the base URL to those
-screens. This is the model Hotwire Native itself has, one stack and one modal layer. The
-navigators are yours: tabs, themes and header styling are plain React Navigation.
+screens. It is also the only place the base URL is given: wherever the library takes a URL,
+`visit('/inbox')` for instance, a path works too. This is the model Hotwire Native itself
+has, one stack and one modal layer. The navigators are yours: tabs, themes and header
+styling are plain React Navigation.
 
 `example/` is this app against the official demo server, with three tabs. Look there for a
 complete setup.
@@ -121,18 +122,6 @@ Three ways lead to it:
 
 To set `onError` or `onVisitProposal` once for every web screen, give `hotwireScreens` a
 `component` that wraps `HotwireScreen` with them.
-
-### Paths and the base URL
-
-The base URL is stated once, as the prefix of the container's linking. Everything under the
-container resolves paths against it:
-
-- `hotwireScreens(Stack, { path: '/inbox' })`
-- `visit('/inbox')` from `useVisit()`
-- `screen.visit('/session/new', 'replace')` in an error handler
-- `initialParams={{ fullPath: '/inbox' }}` on a screen you place yourself
-
-`useBaseURL()` returns it.
 
 ## Guides
 
