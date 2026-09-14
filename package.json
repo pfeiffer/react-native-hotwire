@@ -19,6 +19,7 @@
   "scripts": {
     "typecheck": "example/node_modules/.bin/tsc --noEmit",
     "test": "example/node_modules/.bin/jest",
+    "test:ios": "sh scripts/test-ios.sh",
     "sync-upstream": "sh scripts/sync-upstream.sh"
   },
   "peerDependencies": {

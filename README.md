@@ -406,6 +406,10 @@ npm install`, and must never have a `node_modules` of its own: a `file:` install
 directory wholesale, and Metro would resolve React Native from inside it. `yarn typecheck`
 and `yarn test` run from the root; the tests cover the visit routing, the fallback to
 declared routes, `hotwireScreens`, path resolution, linking params and the bridge hooks.
-Native code is compiled by the consuming app; there is no standalone build. `example/` is
+`yarn test:ios` runs the XCTest package in `ios/` on a simulator: the vendored Hotwire
+sources and the view controller, without Expo, against a real session and web view; it
+covers the session appearance rules and the view controller's location tracking, pop
+hand-over and scroll view registration. Native code is otherwise compiled by the consuming
+app; there is no standalone build. `example/` is
 the app to build for both platforms against `https://hotwire-native-demo.dev`, with Metro
 on port 8084.

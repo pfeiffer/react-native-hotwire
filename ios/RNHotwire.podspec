@@ -23,6 +23,8 @@ Pod::Spec.new do |s|
 
   # Our adapter plus the vendored Hotwire Native sources under Vendor/ (see VENDOR.md).
   s.source_files = '**/*.swift'
+  # The Swift package in this directory only serves `xcodebuild test`.
+  s.exclude_files = 'Package.swift', 'Tests/**/*'
 
   # Hotwire Native loads turbo.js through `Bundle.module`, which SwiftPM generates.
   # Bundle+Module.swift resolves it to this resource bundle instead.

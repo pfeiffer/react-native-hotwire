@@ -8,6 +8,8 @@ android/hotwire-core/build/
 android/.gradle/
 ios/build/
 ios/Pods/
+ios/.build/
+ios/.swiftpm/
 xcuserdata/
 *.xcuserstate
 
