@@ -72,7 +72,17 @@ final class HotwiredVisitableViewController: UIViewController, Visitable {
 
   override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    sessionNeedsAppearance = visitableView.webView == nil || session?.topmostVisitable !== self
+    // Still the session's topmost page, but another page's visit has taken the web view:
+    // this page is being left, not returned to (a modal closing over it while the next page
+    // is pushed). Reporting the appearance would start a restore visit for this page,
+    // cancel the forward visit and record the other page's URL as this page's location.
+    // A page popped before it appeared has given the web view back, so this page restores.
+    let leftByForwardVisit =
+      session?.topmostVisitable === self
+      && session?.activeVisitable != nil
+      && session?.activeVisitable !== self
+    sessionNeedsAppearance =
+      !leftByForwardVisit && (visitableView.webView == nil || session?.topmostVisitable !== self)
     if sessionNeedsAppearance {
       visitableDelegate?.visitableViewWillAppear(self)
     }
