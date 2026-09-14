@@ -80,7 +80,8 @@ final class SessionAppearanceTests: XCTestCase {
     session.visit(controller, options: VisitOptions(action: .advance, response: response))
     controller.viewWillAppear(false)
     controller.viewDidAppear(false)
-    wait(for: [loaded], timeout: 60)
+    // The first web view in a process waits for WebKit to start; a CI runner takes over a minute.
+    wait(for: [loaded], timeout: 180)
     pages.onLoadWebView = nil
     XCTAssertTrue(session.topmostVisitable === controller)
     XCTAssertTrue(session.activeVisitable === controller)
