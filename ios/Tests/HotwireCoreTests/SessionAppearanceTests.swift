@@ -10,12 +10,25 @@ import XCTest
 final class SessionAppearanceTests: XCTestCase {
   private var session: Session!
   private var pages: PageDelegate!
+  private var window: UIWindow!
 
   override func setUp() {
     super.setUp()
     session = Session(webViewConfiguration: WKWebViewConfiguration())
     pages = PageDelegate()
     session.delegate = pages
+    // Turbo reports a page loaded after its next repaint, and a web view outside a window
+    // never repaints on a headless simulator. The pages' views go into a window; their
+    // appearance callbacks stay the tests' to send, as the views are no child controllers.
+    window = UIWindow(frame: UIScreen.main.bounds)
+    window.rootViewController = UIViewController()
+    window.makeKeyAndVisible()
+  }
+
+  override func tearDown() {
+    window.isHidden = true
+    window = nil
+    super.tearDown()
   }
 
   /// Settings beneath a modal; a deep link closes the modal and pushes a profile. The
@@ -68,6 +81,8 @@ final class SessionAppearanceTests: XCTestCase {
   private func page(_ url: String) -> HotwiredVisitableViewController {
     let controller = HotwiredVisitableViewController(hostViewController: nil, delegate: pages)
     controller.setInitialURL(URL(string: url)!)
+    controller.view.frame = window.bounds
+    window.rootViewController!.view.addSubview(controller.view)
     return controller
   }
 
