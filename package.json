@@ -20,6 +20,8 @@
     "typecheck": "example/node_modules/.bin/tsc --noEmit",
     "test": "example/node_modules/.bin/jest",
     "test:ios": "sh scripts/test-ios.sh",
+    "e2e:ios": "sh e2e/run.sh ios",
+    "e2e:android": "sh e2e/run.sh android",
     "sync-upstream": "sh scripts/sync-upstream.sh"
   },
   "peerDependencies": {
