@@ -55,7 +55,7 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
 
   var sessionHandle: String = "Default"
   var applicationNameForUserAgent: String? = null
-  var injectedJavaScriptBeforeContentLoaded: String? = null
+  var injectedJavaScriptBeforeContentLoaded: String = ""
 
   var scrollEnabled: Boolean = true
     set(value) {

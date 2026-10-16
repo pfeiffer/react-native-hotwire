@@ -21,7 +21,7 @@ object SessionManager {
     appContext: AppContext,
     handle: String,
     applicationNameForUserAgent: String?,
-    injectedJavaScriptBeforeContentLoaded: String?,
+    injectedJavaScriptBeforeContentLoaded: String,
   ): HotwiredSession =
     sessions[handle]?.takeUnless { it.isRenderProcessGone }
       ?: HotwiredSession(appContext, handle, applicationNameForUserAgent, injectedJavaScriptBeforeContentLoaded).also { sessions[handle] = it }

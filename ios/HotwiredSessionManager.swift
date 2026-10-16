@@ -44,7 +44,7 @@ final class HotwiredSessionManager {
   func findOrCreateSession(
     handle: String,
     webViewConfiguration: WKWebViewConfiguration,
-    injectedJavaScriptBeforeContentLoaded: String?
+    injectedJavaScriptBeforeContentLoaded: String
   ) -> HotwiredSession {
     if let session = sessions[handle] {
       return session

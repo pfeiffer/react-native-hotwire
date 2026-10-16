@@ -100,7 +100,7 @@ public class HotwiredModule: Module, PathConfigurationDelegate {
         view.applicationNameForUserAgent = name
       }
 
-      Prop("injectedJavaScriptBeforeContentLoaded") { (view: HotwiredVisitableView, script: String?) in
+      Prop("injectedJavaScriptBeforeContentLoaded") { (view: HotwiredVisitableView, script: String) in
         view.injectedJavaScriptBeforeContentLoaded = script
       }
 

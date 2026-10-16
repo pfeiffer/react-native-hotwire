@@ -19,7 +19,7 @@ final class HotwiredVisitableView: ExpoView {
   var applicationNameForUserAgent: String? {
     didSet { webViewConfiguration.applicationNameForUserAgent = applicationNameForUserAgent }
   }
-  var injectedJavaScriptBeforeContentLoaded: String?
+  var injectedJavaScriptBeforeContentLoaded = ""
   var pullToRefreshEnabled = true {
     didSet { controller?.visitableView.allowsPullToRefresh = pullToRefreshEnabled }
   }
