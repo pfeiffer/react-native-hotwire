@@ -69,7 +69,11 @@ class HotwiredSession(
   private val chromeClient: HotwiredWebChromeClient
   val webView: HotwireWebView
 
-  /** The document start script on a WebView that cannot run it itself; `onPageStarted` evaluates it. */
+  /**
+   * The document start script on a WebView that cannot run it itself; `onPageStarted`
+   * evaluates it. Best effort: that callback follows the navigation's commit, and only
+   * during a visit.
+   */
   private val pageStartedScript: String?
 
   init {

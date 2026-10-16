@@ -19,9 +19,6 @@ final class HotwiredVisitableView: ExpoView {
   var applicationNameForUserAgent: String? {
     didSet { webViewConfiguration.applicationNameForUserAgent = applicationNameForUserAgent }
   }
-  /// Reaches the configuration in `createSessionIfNeeded`, not here: once a web view
-  /// exists it shares the user content controller, and user scripts can only be removed
-  /// wholesale, Turbo's included.
   var injectedJavaScriptBeforeContentLoaded: String?
   var pullToRefreshEnabled = true {
     didSet { controller?.visitableView.allowsPullToRefresh = pullToRefreshEnabled }
@@ -80,23 +77,13 @@ final class HotwiredVisitableView: ExpoView {
     if let session {
       return session
     }
-    installInjectedJavaScript()
     let created = HotwiredSessionManager.shared.findOrCreateSession(
       handle: sessionHandle,
-      webViewConfiguration: webViewConfiguration
+      webViewConfiguration: webViewConfiguration,
+      injectedJavaScriptBeforeContentLoaded: injectedJavaScriptBeforeContentLoaded
     )
     session = created
     return created
-  }
-
-  private var injectedJavaScriptInstalled = false
-
-  private func installInjectedJavaScript() {
-    guard !injectedJavaScriptInstalled, let injectedJavaScriptBeforeContentLoaded else { return }
-    injectedJavaScriptInstalled = true
-    webViewConfiguration.userContentController.addUserScript(
-      WKUserScript(source: injectedJavaScriptBeforeContentLoaded, injectionTime: .atDocumentStart, forMainFrameOnly: true)
-    )
   }
 
   private lazy var controller: HotwiredVisitableViewController? = HotwiredVisitableViewController(

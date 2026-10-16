@@ -9,7 +9,8 @@ import { Platform } from 'react-native';
  */
 export const bridgeScript = (componentNames: string[]) => `
 (() => {
-  if (window.nativeBridge !== undefined) {
+  // Android's document start scripts run in every frame; iOS's only in the main one.
+  if (window !== window.top || window.nativeBridge !== undefined) {
     return;
   }
 
@@ -105,15 +106,9 @@ export const bridgeScript = (componentNames: string[]) => `
     }
   }
 
-  function initializeBridge() {
-    window.nativeBridge = new NativeBridge();
-    window.nativeBridge.register(${JSON.stringify(componentNames)});
-  }
-
-  if (document.readyState === 'interactive' || document.readyState === 'complete') {
-    initializeBridge();
-  } else {
-    document.addEventListener('DOMContentLoaded', initializeBridge);
-  }
+  // Right away, not on DOMContentLoaded: module scripts, and so the web bridge's start and
+  // Stimulus's connects, run before that event. registerAdapter waits for the web bridge.
+  window.nativeBridge = new NativeBridge();
+  window.nativeBridge.register(${JSON.stringify(componentNames)});
 })();
 `;
