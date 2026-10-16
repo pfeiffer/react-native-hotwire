@@ -19,11 +19,7 @@ export interface NativeVisitableViewProps {
   url: string;
   sessionHandle: string;
   applicationNameForUserAgent?: string;
-  /**
-   * Run in every new document before the page's own scripts (a WKUserScript at document
-   * start; `addDocumentStartJavaScript` on Android). Set, like the user agent, by the
-   * first view on a session handle.
-   */
+  /** Runs in every new document before the page's own scripts. Like the user agent, only the first view on a handle sets it. */
   documentStartScript?: string;
   pullToRefreshEnabled: boolean;
   scrollEnabled: boolean;

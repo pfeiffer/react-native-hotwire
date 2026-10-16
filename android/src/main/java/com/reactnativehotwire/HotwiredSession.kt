@@ -69,10 +69,7 @@ class HotwiredSession(
   private val chromeClient: HotwiredWebChromeClient
   val webView: HotwireWebView
 
-  /**
-   * The document start script when the WebView cannot run it itself; evaluated from
-   * `onPageStarted`, the earliest point we hear about a new document.
-   */
+  /** The document start script on a WebView that cannot run it itself; `onPageStarted` evaluates it. */
   private val pageStartedScript: String?
 
   init {
@@ -93,8 +90,7 @@ class HotwiredSession(
     ).joinToString(" ")
     webView.webChromeClient = chromeClient
 
-    // Before the page's own scripts, in every new document of this WebView. Every origin:
-    // the session follows the app's pages wherever they are served from.
+    // "*": the pages may be served from any origin.
     pageStartedScript = if (
       documentStartScript != null && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)
     ) {

@@ -172,12 +172,6 @@ const VisitableViewContent = forwardRef<VisitableViewRef, ContentProps>((props, 
     [applicationNameForUserAgent, bridgeUserAgent]
   );
 
-  // Runs in every new document before the page's own scripts, so the bridge adapter is
-  // registered by the time Stimulus controllers connect. Like the user agent, the first
-  // view on a handle sets it for that handle's web view. A list, so a consumer script can
-  // join it later without the native side changing.
-  const documentStartScript = useMemo(() => [bridgeScript].join('\n'), [bridgeScript]);
-
   useImperativeHandle(
     ref,
     () => ({
@@ -252,7 +246,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, ContentProps>((props, 
         url={url}
         sessionHandle={sessionHandle}
         applicationNameForUserAgent={userAgent}
-        documentStartScript={documentStartScript}
+        documentStartScript={bridgeScript}
         pullToRefreshEnabled={pullToRefreshEnabled}
         scrollEnabled={scrollEnabled}
         topInset={topInset}

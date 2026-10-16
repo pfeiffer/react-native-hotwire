@@ -19,9 +19,9 @@ final class HotwiredVisitableView: ExpoView {
   var applicationNameForUserAgent: String? {
     didSet { webViewConfiguration.applicationNameForUserAgent = applicationNameForUserAgent }
   }
-  /// Added to the configuration when the session is created, not here: the user content
-  /// controller is shared with the web view once one exists, and WebKit can only remove
-  /// user scripts wholesale, Turbo's included.
+  /// Reaches the configuration in `createSessionIfNeeded`, not here: once a web view
+  /// exists it shares the user content controller, and user scripts can only be removed
+  /// wholesale, Turbo's included.
   var documentStartScript: String?
   var pullToRefreshEnabled = true {
     didSet { controller?.visitableView.allowsPullToRefresh = pullToRefreshEnabled }
@@ -90,8 +90,6 @@ final class HotwiredVisitableView: ExpoView {
 
   private var documentStartScriptInstalled = false
 
-  /// Before the page's own scripts, as Turbo's script is added at document end in
-  /// WebViewBridge. Once per view: the controller is shared with the web view afterwards.
   private func installDocumentStartScript() {
     guard !documentStartScriptInstalled, let documentStartScript else { return }
     documentStartScriptInstalled = true
