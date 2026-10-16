@@ -6,9 +6,10 @@ import type { NativeVisitableViewRef } from '../NativeVisitableView';
 import type { BridgeComponentType, BridgeMessage, EventSubscription, MessageEvent, MessageListener } from '../types';
 
 /**
- * The native side of the web bridge for one view: installs the adapter script, advertises
- * the components in the user agent, sends replies, and fans every message from the page
- * out to the components' listeners and the view's `onMessage`.
+ * The native side of the web bridge for one view: builds the adapter script the web view
+ * runs at document start, advertises the components in the user agent, sends replies, and
+ * fans every message from the page out to the components' listeners and the view's
+ * `onMessage`.
  */
 export function useBridge(
   nativeRef: React.RefObject<NativeVisitableViewRef | null>,
@@ -24,10 +25,6 @@ export function useBridge(
       bridgeUserAgent: `bridge-components: [${componentNames.join(' ')}]`,
     };
   }, [bridgeComponents]);
-
-  const initializeBridge = useCallback(() => {
-    nativeRef.current?.injectJavaScript(script);
-  }, [nativeRef, script]);
 
   // Injected into whichever page the session shows at that moment. A reply that comes
   // after the user has navigated on reaches the new page, whose web bridge drops it
@@ -74,5 +71,5 @@ export function useBridge(
     }
   }, []);
 
-  return { initializeBridge, bridgeUserAgent, sendToBridge, registerMessageListener, handleMessage };
+  return { script, bridgeUserAgent, sendToBridge, registerMessageListener, handleMessage };
 }

@@ -1,7 +1,8 @@
 import { Platform } from 'react-native';
 
 /**
- * Installed into the page after every load. Implements the "native adapter" that the
+ * Runs at document start, before the page's own scripts, so `supportsComponent()` is
+ * truthful from the first Stimulus connect. Implements the "native adapter" that the
  * web side of Hotwire bridge components expects (`@hotwired/hotwire-native-bridge`,
  * or its predecessor `@hotwired/strada`), forwarding messages to native through
  * `webkit.messageHandlers.nativeApp` on iOS and `AndroidInterface` on Android.

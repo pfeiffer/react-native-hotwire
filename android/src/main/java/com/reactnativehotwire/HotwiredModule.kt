@@ -111,6 +111,10 @@ class HotwiredModule : Module() {
         view.applicationNameForUserAgent = name
       }
 
+      Prop("documentStartScript") { view: HotwiredVisitableView, script: String? ->
+        view.documentStartScript = script
+      }
+
       Prop("pullToRefreshEnabled") { view: HotwiredVisitableView, enabled: Boolean ->
         view.pullToRefreshEnabled = enabled
       }

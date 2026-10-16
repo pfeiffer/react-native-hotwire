@@ -10,6 +10,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.whenStateAtLeast
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import dev.hotwire.core.config.Hotwire
 import dev.hotwire.core.turbo.errors.VisitError
 import dev.hotwire.core.turbo.session.Session
@@ -57,6 +59,7 @@ class HotwiredSession(
   private val appContext: AppContext,
   val handle: String,
   applicationNameForUserAgent: String?,
+  documentStartScript: String?,
 ) : SessionCallback, VisitDestination {
 
   var subscriber: SessionSubscriber? = null
@@ -65,6 +68,12 @@ class HotwiredSession(
   private val turboSession: Session
   private val chromeClient: HotwiredWebChromeClient
   val webView: HotwireWebView
+
+  /**
+   * The document start script when the WebView cannot run it itself; evaluated from
+   * `onPageStarted`, the earliest point we hear about a new document.
+   */
+  private val pageStartedScript: String?
 
   init {
     val activity = appContext.currentActivity as? AppCompatActivity
@@ -83,6 +92,17 @@ class HotwiredSession(
       applicationNameForUserAgent,
     ).joinToString(" ")
     webView.webChromeClient = chromeClient
+
+    // Before the page's own scripts, in every new document of this WebView. Every origin:
+    // the session follows the app's pages wherever they are served from.
+    pageStartedScript = if (
+      documentStartScript != null && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)
+    ) {
+      WebViewCompat.addDocumentStartJavaScript(webView, documentStartScript, setOf("*"))
+      null
+    } else {
+      documentStartScript
+    }
   }
 
   val currentVisit: Visit? get() = turboSession.currentVisit
@@ -181,7 +201,9 @@ class HotwiredSession(
   // region SessionCallback
 
   override fun visitDestination(): VisitDestination = this
-  override fun onPageStarted(location: String) {}
+  override fun onPageStarted(location: String) {
+    pageStartedScript?.let { webView.evaluateJavascript(it, null) }
+  }
   override fun onPageFinished(location: String) {}
   override fun pageInvalidated() {}
   override fun onReceivedHttpAuthRequest(handler: HttpAuthHandler, host: String, realm: String) {}

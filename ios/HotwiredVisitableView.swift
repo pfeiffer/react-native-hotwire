@@ -19,6 +19,10 @@ final class HotwiredVisitableView: ExpoView {
   var applicationNameForUserAgent: String? {
     didSet { webViewConfiguration.applicationNameForUserAgent = applicationNameForUserAgent }
   }
+  /// Added to the configuration when the session is created, not here: the user content
+  /// controller is shared with the web view once one exists, and WebKit can only remove
+  /// user scripts wholesale, Turbo's included.
+  var documentStartScript: String?
   var pullToRefreshEnabled = true {
     didSet { controller?.visitableView.allowsPullToRefresh = pullToRefreshEnabled }
   }
@@ -68,19 +72,32 @@ final class HotwiredVisitableView: ExpoView {
 
   /// Called from `visitIfNeeded` and `visitableWillAppear`, both of which run after all
   /// props for the render are applied. Props arrive in arbitrary order, and the WKWebView
-  /// must not exist before `applicationNameForUserAgent` reached its configuration.
-  /// Note the configuration only matters for the first view on a handle: later views
-  /// join the existing session and web view (see README, "Sessions").
+  /// must not exist before `applicationNameForUserAgent` and `documentStartScript` reached
+  /// its configuration. Note the configuration only matters for the first view on a
+  /// handle: later views join the existing session and web view (see README, "Sessions").
   private func createSessionIfNeeded() -> HotwiredSession {
     if let session {
       return session
     }
+    installDocumentStartScript()
     let created = HotwiredSessionManager.shared.findOrCreateSession(
       handle: sessionHandle,
       webViewConfiguration: webViewConfiguration
     )
     session = created
     return created
+  }
+
+  private var documentStartScriptInstalled = false
+
+  /// Before the page's own scripts, as Turbo's script is added at document end in
+  /// WebViewBridge. Once per view: the controller is shared with the web view afterwards.
+  private func installDocumentStartScript() {
+    guard !documentStartScriptInstalled, let documentStartScript else { return }
+    documentStartScriptInstalled = true
+    webViewConfiguration.userContentController.addUserScript(
+      WKUserScript(source: documentStartScript, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+    )
   }
 
   private lazy var controller: HotwiredVisitableViewController? = HotwiredVisitableViewController(

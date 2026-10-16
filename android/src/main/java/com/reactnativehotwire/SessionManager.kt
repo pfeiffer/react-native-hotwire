@@ -17,9 +17,14 @@ object SessionManager {
    * A session whose render process died is replaced, WebView and all, the way upstream's
    * Navigator creates a new session when a destination finds `isRenderProcessGone`.
    */
-  fun findOrCreateSession(appContext: AppContext, handle: String, applicationNameForUserAgent: String?): HotwiredSession =
+  fun findOrCreateSession(
+    appContext: AppContext,
+    handle: String,
+    applicationNameForUserAgent: String?,
+    documentStartScript: String?,
+  ): HotwiredSession =
     sessions[handle]?.takeUnless { it.isRenderProcessGone }
-      ?: HotwiredSession(appContext, handle, applicationNameForUserAgent).also { sessions[handle] = it }
+      ?: HotwiredSession(appContext, handle, applicationNameForUserAgent, documentStartScript).also { sessions[handle] = it }
 
   // A proposal carries the visit's options, and after a form submission that includes the
   // redirect's response, status and HTML. Upstream visits the new screen with those, so

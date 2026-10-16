@@ -152,6 +152,10 @@ Screens sharing a session handle share one web view. `HotwireScreen` uses one ha
 tab, `modal` for modals and `main` otherwise. `useSessionHandle()` returns the current
 screen's handle; `reloadSession(handle)` and `refreshSession(handle)` reload its page.
 
+The first screen on a handle configures its web view: the user agent and the bridge
+components, which it registers before the page's own scripts run. Later screens on the
+handle join that web view as it is.
+
 ## `HotwireProvider`
 
 Wraps the app once, above the navigators.
