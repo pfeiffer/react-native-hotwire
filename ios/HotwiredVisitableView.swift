@@ -22,7 +22,7 @@ final class HotwiredVisitableView: ExpoView {
   /// Reaches the configuration in `createSessionIfNeeded`, not here: once a web view
   /// exists it shares the user content controller, and user scripts can only be removed
   /// wholesale, Turbo's included.
-  var documentStartScript: String?
+  var injectedJavaScriptBeforeContentLoaded: String?
   var pullToRefreshEnabled = true {
     didSet { controller?.visitableView.allowsPullToRefresh = pullToRefreshEnabled }
   }
@@ -72,14 +72,15 @@ final class HotwiredVisitableView: ExpoView {
 
   /// Called from `visitIfNeeded` and `visitableWillAppear`, both of which run after all
   /// props for the render are applied. Props arrive in arbitrary order, and the WKWebView
-  /// must not exist before `applicationNameForUserAgent` and `documentStartScript` reached
-  /// its configuration. Note the configuration only matters for the first view on a
-  /// handle: later views join the existing session and web view (see README, "Sessions").
+  /// must not exist before `applicationNameForUserAgent` and
+  /// `injectedJavaScriptBeforeContentLoaded` reached its configuration. Note the
+  /// configuration only matters for the first view on a handle: later views join the
+  /// existing session and web view (see README, "Sessions").
   private func createSessionIfNeeded() -> HotwiredSession {
     if let session {
       return session
     }
-    installDocumentStartScript()
+    installInjectedJavaScript()
     let created = HotwiredSessionManager.shared.findOrCreateSession(
       handle: sessionHandle,
       webViewConfiguration: webViewConfiguration
@@ -88,13 +89,13 @@ final class HotwiredVisitableView: ExpoView {
     return created
   }
 
-  private var documentStartScriptInstalled = false
+  private var injectedJavaScriptInstalled = false
 
-  private func installDocumentStartScript() {
-    guard !documentStartScriptInstalled, let documentStartScript else { return }
-    documentStartScriptInstalled = true
+  private func installInjectedJavaScript() {
+    guard !injectedJavaScriptInstalled, let injectedJavaScriptBeforeContentLoaded else { return }
+    injectedJavaScriptInstalled = true
     webViewConfiguration.userContentController.addUserScript(
-      WKUserScript(source: documentStartScript, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+      WKUserScript(source: injectedJavaScriptBeforeContentLoaded, injectionTime: .atDocumentStart, forMainFrameOnly: true)
     )
   }
 

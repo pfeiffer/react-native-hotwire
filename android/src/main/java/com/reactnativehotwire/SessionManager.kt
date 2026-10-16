@@ -21,10 +21,10 @@ object SessionManager {
     appContext: AppContext,
     handle: String,
     applicationNameForUserAgent: String?,
-    documentStartScript: String?,
+    injectedJavaScriptBeforeContentLoaded: String?,
   ): HotwiredSession =
     sessions[handle]?.takeUnless { it.isRenderProcessGone }
-      ?: HotwiredSession(appContext, handle, applicationNameForUserAgent, documentStartScript).also { sessions[handle] = it }
+      ?: HotwiredSession(appContext, handle, applicationNameForUserAgent, injectedJavaScriptBeforeContentLoaded).also { sessions[handle] = it }
 
   // A proposal carries the visit's options, and after a form submission that includes the
   // redirect's response, status and HTML. Upstream visits the new screen with those, so

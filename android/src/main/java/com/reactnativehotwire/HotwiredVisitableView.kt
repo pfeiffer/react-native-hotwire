@@ -55,7 +55,7 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
 
   var sessionHandle: String = "Default"
   var applicationNameForUserAgent: String? = null
-  var documentStartScript: String? = null
+  var injectedJavaScriptBeforeContentLoaded: String? = null
 
   var scrollEnabled: Boolean = true
     set(value) {
@@ -116,7 +116,7 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   private var _session: HotwiredSession? = null
   private val session: HotwiredSession
     get() = _session?.takeUnless { it.isRenderProcessGone }
-      ?: SessionManager.findOrCreateSession(appContext, sessionHandle, applicationNameForUserAgent, documentStartScript)
+      ?: SessionManager.findOrCreateSession(appContext, sessionHandle, applicationNameForUserAgent, injectedJavaScriptBeforeContentLoaded)
         .also { _session = it }
 
   /** Whether the session's WebView currently sits in this view. */

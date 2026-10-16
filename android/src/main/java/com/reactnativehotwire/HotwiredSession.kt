@@ -59,7 +59,7 @@ class HotwiredSession(
   private val appContext: AppContext,
   val handle: String,
   applicationNameForUserAgent: String?,
-  documentStartScript: String?,
+  injectedJavaScriptBeforeContentLoaded: String?,
 ) : SessionCallback, VisitDestination {
 
   var subscriber: SessionSubscriber? = null
@@ -92,12 +92,12 @@ class HotwiredSession(
 
     // "*": the pages may be served from any origin.
     pageStartedScript = if (
-      documentStartScript != null && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)
+      injectedJavaScriptBeforeContentLoaded != null && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)
     ) {
-      WebViewCompat.addDocumentStartJavaScript(webView, documentStartScript, setOf("*"))
+      WebViewCompat.addDocumentStartJavaScript(webView, injectedJavaScriptBeforeContentLoaded, setOf("*"))
       null
     } else {
-      documentStartScript
+      injectedJavaScriptBeforeContentLoaded
     }
   }
 

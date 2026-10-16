@@ -20,7 +20,7 @@ export interface NativeVisitableViewProps {
   sessionHandle: string;
   applicationNameForUserAgent?: string;
   /** Runs in every new document before the page's own scripts. Like the user agent, only the first view on a handle sets it. */
-  documentStartScript?: string;
+  injectedJavaScriptBeforeContentLoaded?: string;
   pullToRefreshEnabled: boolean;
   scrollEnabled: boolean;
   /**
