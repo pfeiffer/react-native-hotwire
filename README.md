@@ -22,7 +22,7 @@ yarn add react-native-hotwire@github:pfeiffer/react-native-hotwire#v0.1.5
 npx expo prebuild
 ```
 
-Requires Expo SDK 57+, React Native 0.86+, React Navigation 7 and the New Architecture.
+Requires Expo SDK 57+, React Native 0.86+, React Navigation 7 and the New Architecture. On Android the system WebView must support document start scripts; one updated from Play in the last few years does.
 
 ### Minimal example
 
