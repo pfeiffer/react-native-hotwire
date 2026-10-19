@@ -26,9 +26,10 @@ function reset() {
   scenario = {};
 }
 
-// Bridge components on the web side, three of them, each sending on connect and showing
-// the reply: `echo` expects a value back at once, `button` a reply when a native button
-// is pressed, `failing` an error. The module is in the head, so Turbo runs it once.
+// Bridge components on the web side. Three send on connect and show the reply: `echo`
+// expects a value back at once, `button` a reply when a native button is pressed,
+// `failing` an error. `probe` only shows whether the native side supported it when it
+// connected. The module is in the head, so Turbo runs it once.
 const bridgeHead = `
 <script type="importmap">{"imports":{"@hotwired/stimulus":"/stimulus.js","@hotwired/strada":"/strada.js"}}</script>
 <script type="module">
@@ -46,10 +47,15 @@ class Failing extends BridgeComponent {
   static component = "failing";
   connect() { super.connect(); this.send("boom", {}, (m) => { this.element.textContent = "Error: " + m.data.error.message; }); }
 }
+class Probe extends BridgeComponent {
+  static component = "probe";
+  connect() { super.connect(); this.element.textContent = "Probe enabled on connect: " + this.enabled; }
+}
 const app = Application.start();
 app.register("echo", Echo);
 app.register("button", NativeButton);
 app.register("failing", Failing);
+app.register("probe", Probe);
 </script>`;
 
 // The document title differs from the heading, "Home title" for "Home page", so a flow can
@@ -102,10 +108,13 @@ const insetsBody = (nextHref, nextText) =>
   link(nextText, nextHref);
 
 const pages = {
+  // The first page of a fresh web view, so its probe connects before any script the
+  // native side could run on load.
   '/': () =>
     page(
       'Home page',
       visits('/') +
+        `<p data-controller="probe">Waiting for probe</p>` +
         `<button type="button" onclick="Turbo.visit(window.location.href, { action: 'replace' })">Refresh page</button>` +
         link('Bridge page', '/bridge') +
         link('Insets page', '/insets') +
@@ -121,7 +130,8 @@ const pages = {
         link('Redirect away', '/redirect/external') +
         link('Form page', '/form') +
         link('Replace page', '/js-replace') +
-        link('Open modal', '/modal/verify')
+        link('Open modal', '/modal/verify'),
+      bridgeHead
     ),
   '/bridge': () =>
     page(

@@ -1,0 +1,9 @@
+appId: dev.hotwire.e2e
+name: A bridge component on the first page of a fresh web view is enabled when it connects
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Probe enabled on connect: true"
+    timeout: 60000
