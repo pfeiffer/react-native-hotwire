@@ -1,14 +1,16 @@
 import { Platform } from 'react-native';
 
 /**
- * Installed into the page after every load. Implements the "native adapter" that the
- * web side of Hotwire bridge components expects (`@hotwired/hotwire-native-bridge`,
- * or its predecessor `@hotwired/strada`), forwarding messages to native through
- * `webkit.messageHandlers.nativeApp` on iOS and `AndroidInterface` on Android.
+ * Implements the "native adapter" that the web side of Hotwire bridge components expects
+ * (`@hotwired/hotwire-native-bridge`, or its predecessor `@hotwired/strada`), forwarding
+ * messages to native through `webkit.messageHandlers.nativeApp` on iOS and
+ * `AndroidInterface` on Android. Runs at document start, so `supportsComponent()` is
+ * right from the first Stimulus connect.
  */
 export const bridgeScript = (componentNames: string[]) => `
 (() => {
-  if (window.nativeBridge !== undefined) {
+  // Android's document start scripts run in every frame; iOS's only in the main one.
+  if (window !== window.top) {
     return;
   }
 
@@ -104,15 +106,8 @@ export const bridgeScript = (componentNames: string[]) => `
     }
   }
 
-  function initializeBridge() {
-    window.nativeBridge = new NativeBridge();
-    window.nativeBridge.register(${JSON.stringify(componentNames)});
-  }
-
-  if (document.readyState === 'interactive' || document.readyState === 'complete') {
-    initializeBridge();
-  } else {
-    document.addEventListener('DOMContentLoaded', initializeBridge);
-  }
+  // The web bridge's own script has not run yet; registerAdapter waits for it.
+  window.nativeBridge = new NativeBridge();
+  window.nativeBridge.register(${JSON.stringify(componentNames)});
 })();
 `;

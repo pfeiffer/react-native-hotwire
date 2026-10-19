@@ -41,11 +41,19 @@ final class HotwiredSessionManager {
     return Date().timeIntervalSince(entry.at) < 3 ? entry.options : nil
   }
 
-  func findOrCreateSession(handle: String, webViewConfiguration: WKWebViewConfiguration) -> HotwiredSession {
+  func findOrCreateSession(
+    handle: String,
+    webViewConfiguration: WKWebViewConfiguration,
+    injectedJavaScriptBeforeContentLoaded: String
+  ) -> HotwiredSession {
     if let session = sessions[handle] {
       return session
     }
-    let session = HotwiredSession(handle: handle, webViewConfiguration: webViewConfiguration)
+    let session = HotwiredSession(
+      handle: handle,
+      webViewConfiguration: webViewConfiguration,
+      injectedJavaScriptBeforeContentLoaded: injectedJavaScriptBeforeContentLoaded
+    )
     sessions[handle] = session
     return session
   }

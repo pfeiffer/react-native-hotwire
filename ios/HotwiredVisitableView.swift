@@ -19,6 +19,7 @@ final class HotwiredVisitableView: ExpoView {
   var applicationNameForUserAgent: String? {
     didSet { webViewConfiguration.applicationNameForUserAgent = applicationNameForUserAgent }
   }
+  var injectedJavaScriptBeforeContentLoaded = ""
   var pullToRefreshEnabled = true {
     didSet { controller?.visitableView.allowsPullToRefresh = pullToRefreshEnabled }
   }
@@ -68,16 +69,18 @@ final class HotwiredVisitableView: ExpoView {
 
   /// Called from `visitIfNeeded` and `visitableWillAppear`, both of which run after all
   /// props for the render are applied. Props arrive in arbitrary order, and the WKWebView
-  /// must not exist before `applicationNameForUserAgent` reached its configuration.
-  /// Note the configuration only matters for the first view on a handle: later views
-  /// join the existing session and web view (see README, "Sessions").
+  /// must not exist before `applicationNameForUserAgent` and
+  /// `injectedJavaScriptBeforeContentLoaded` reached its configuration. Note the
+  /// configuration only matters for the first view on a handle: later views join the
+  /// existing session and web view (see README, "Sessions").
   private func createSessionIfNeeded() -> HotwiredSession {
     if let session {
       return session
     }
     let created = HotwiredSessionManager.shared.findOrCreateSession(
       handle: sessionHandle,
-      webViewConfiguration: webViewConfiguration
+      webViewConfiguration: webViewConfiguration,
+      injectedJavaScriptBeforeContentLoaded: injectedJavaScriptBeforeContentLoaded
     )
     session = created
     return created

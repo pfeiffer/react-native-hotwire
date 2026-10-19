@@ -12,7 +12,7 @@ import {
   type VisitableViewRef,
 } from 'react-native-hotwire';
 
-import { ButtonComponent, EchoComponent, FailingComponent } from './bridge';
+import { ButtonComponent, EchoComponent, FailingComponent, ProbeComponent } from './bridge';
 import configuration from './path-configuration.json';
 
 // The app the end-to-end flows drive: two tabs of pages from the fixture server in
@@ -80,7 +80,7 @@ export default function App() {
   return (
     <HotwireProvider
       pathConfiguration={configuration}
-      bridgeComponents={[EchoComponent, ButtonComponent, FailingComponent]}
+      bridgeComponents={[EchoComponent, ButtonComponent, FailingComponent, ProbeComponent]}
       webViewDebuggingEnabled>
       <NavigationContainer linking={linking}>
         <Tabs.Navigator screenOptions={{ headerShown: false }}>

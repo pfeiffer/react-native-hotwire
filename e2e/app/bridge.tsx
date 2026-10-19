@@ -3,7 +3,7 @@ import { useLayoutEffect, useState } from 'react';
 import { Button } from 'react-native';
 import { bridgeComponent, useBridgeMessage } from 'react-native-hotwire';
 
-// The native side of the fixture server's three bridge components (see server.js).
+// The native side of the fixture server's bridge components (see server.js).
 
 /** Replies at once with what it returns. */
 export const EchoComponent = bridgeComponent('echo', () => {
@@ -36,3 +36,6 @@ export const FailingComponent = bridgeComponent('failing', () => {
   });
   return null;
 });
+
+/** Registered only, so the page's probe finds it supported. */
+export const ProbeComponent = bridgeComponent('probe', () => null);

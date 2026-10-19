@@ -23,11 +23,23 @@ final class HotwiredSession: NSObject {
   private let webViewConfiguration: WKWebViewConfiguration
   private weak var subscriber: HotwiredSessionSubscriber?
 
-  init(handle: String, webViewConfiguration: WKWebViewConfiguration) {
+  init(
+    handle: String,
+    webViewConfiguration: WKWebViewConfiguration,
+    injectedJavaScriptBeforeContentLoaded: String
+  ) {
     self.handle = handle
     self.webViewConfiguration = webViewConfiguration
     super.init()
-    webViewConfiguration.userContentController.add(self, name: "nativeApp")
+    let userContentController = webViewConfiguration.userContentController
+    userContentController.add(self, name: "nativeApp")
+    userContentController.addUserScript(
+      WKUserScript(
+        source: injectedJavaScriptBeforeContentLoaded,
+        injectionTime: .atDocumentStart,
+        forMainFrameOnly: true
+      )
+    )
   }
 
   private(set) lazy var turboSession: Session = makeSession()

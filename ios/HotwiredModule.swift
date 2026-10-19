@@ -100,6 +100,10 @@ public class HotwiredModule: Module, PathConfigurationDelegate {
         view.applicationNameForUserAgent = name
       }
 
+      Prop("injectedJavaScriptBeforeContentLoaded") { (view: HotwiredVisitableView, script: String) in
+        view.injectedJavaScriptBeforeContentLoaded = script
+      }
+
       Prop("pullToRefreshEnabled") { (view: HotwiredVisitableView, enabled: Bool) in
         view.pullToRefreshEnabled = enabled
       }

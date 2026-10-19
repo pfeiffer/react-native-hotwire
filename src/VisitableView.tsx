@@ -128,7 +128,7 @@ interface ContentProps extends VisitableViewProps {
 const VisitableViewContent = forwardRef<VisitableViewRef, ContentProps>((props, ref) => {
   const {
     nativeRef,
-    bridge: { initializeBridge, bridgeUserAgent, handleMessage },
+    bridge: { script: bridgeScript, bridgeUserAgent, handleMessage },
     url,
     sessionHandle = MAIN_SESSION_HANDLE,
     pullToRefreshEnabled = true,
@@ -197,11 +197,10 @@ const VisitableViewContent = forwardRef<VisitableViewRef, ContentProps>((props, 
   const handleLoad = useCallback(
     ({ nativeEvent }: NativeSyntheticEvent<LoadEvent>) => {
       handleLoaded();
-      initializeBridge();
       applyContentInsets();
       onLoad?.(nativeEvent);
     },
-    [applyContentInsets, handleLoaded, initializeBridge, onLoad]
+    [applyContentInsets, handleLoaded, onLoad]
   );
 
   const handleVisitProposal = useCallback(
@@ -247,6 +246,7 @@ const VisitableViewContent = forwardRef<VisitableViewRef, ContentProps>((props, 
         url={url}
         sessionHandle={sessionHandle}
         applicationNameForUserAgent={userAgent}
+        injectedJavaScriptBeforeContentLoaded={bridgeScript}
         pullToRefreshEnabled={pullToRefreshEnabled}
         scrollEnabled={scrollEnabled}
         topInset={topInset}
