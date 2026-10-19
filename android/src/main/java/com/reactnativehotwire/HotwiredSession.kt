@@ -69,6 +69,13 @@ class HotwiredSession(
   private val chromeClient: HotwiredWebChromeClient
   val webView: HotwireWebView
 
+  /**
+   * The document start script on a WebView that cannot run it itself; `onPageStarted`
+   * evaluates it. Best effort: that callback follows the navigation's commit, and only
+   * during a visit.
+   */
+  private val pageStartedScript: String?
+
   init {
     val activity = appContext.currentActivity as? AppCompatActivity
       ?: throw IllegalStateException("react-native-hotwire needs an AppCompatActivity")
@@ -87,11 +94,13 @@ class HotwiredSession(
     ).joinToString(" ")
     webView.webChromeClient = chromeClient
 
-    if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-      throw IllegalStateException("react-native-hotwire: this device's Android System WebView is too old to run document start scripts")
-    }
     // "*": the pages may be served from any origin.
-    WebViewCompat.addDocumentStartJavaScript(webView, injectedJavaScriptBeforeContentLoaded, setOf("*"))
+    pageStartedScript = if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+      WebViewCompat.addDocumentStartJavaScript(webView, injectedJavaScriptBeforeContentLoaded, setOf("*"))
+      null
+    } else {
+      injectedJavaScriptBeforeContentLoaded
+    }
   }
 
   val currentVisit: Visit? get() = turboSession.currentVisit
@@ -190,7 +199,9 @@ class HotwiredSession(
   // region SessionCallback
 
   override fun visitDestination(): VisitDestination = this
-  override fun onPageStarted(location: String) {}
+  override fun onPageStarted(location: String) {
+    pageStartedScript?.let { webView.evaluateJavascript(it, null) }
+  }
   override fun onPageFinished(location: String) {}
   override fun pageInvalidated() {}
   override fun onReceivedHttpAuthRequest(handler: HttpAuthHandler, host: String, realm: String) {}
