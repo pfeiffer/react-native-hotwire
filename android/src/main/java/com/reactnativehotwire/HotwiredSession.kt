@@ -88,7 +88,7 @@ class HotwiredSession(
     webView.webChromeClient = chromeClient
 
     if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-      throw IllegalStateException("react-native-hotwire needs a WebView that supports document start scripts; update Android System WebView")
+      throw IllegalStateException("react-native-hotwire: this device's Android System WebView is too old to run document start scripts")
     }
     // "*": the pages may be served from any origin.
     WebViewCompat.addDocumentStartJavaScript(webView, injectedJavaScriptBeforeContentLoaded, setOf("*"))
