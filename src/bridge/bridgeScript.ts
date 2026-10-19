@@ -1,16 +1,16 @@
 import { Platform } from 'react-native';
 
 /**
- * Runs at document start, so `supportsComponent()` is right from the first Stimulus
- * connect. Implements the "native adapter" that the
- * web side of Hotwire bridge components expects (`@hotwired/hotwire-native-bridge`,
- * or its predecessor `@hotwired/strada`), forwarding messages to native through
- * `webkit.messageHandlers.nativeApp` on iOS and `AndroidInterface` on Android.
+ * Implements the "native adapter" that the web side of Hotwire bridge components expects
+ * (`@hotwired/hotwire-native-bridge`, or its predecessor `@hotwired/strada`), forwarding
+ * messages to native through `webkit.messageHandlers.nativeApp` on iOS and
+ * `AndroidInterface` on Android. Runs at document start, so `supportsComponent()` is
+ * right from the first Stimulus connect.
  */
 export const bridgeScript = (componentNames: string[]) => `
 (() => {
   // Android's document start scripts run in every frame; iOS's only in the main one.
-  if (window !== window.top || window.nativeBridge !== undefined) {
+  if (window !== window.top) {
     return;
   }
 
@@ -106,8 +106,7 @@ export const bridgeScript = (componentNames: string[]) => `
     }
   }
 
-  // Right away, not on DOMContentLoaded: module scripts, and so the web bridge's start and
-  // Stimulus's connects, run before that event. registerAdapter waits for the web bridge.
+  // The web bridge's own script has not run yet; registerAdapter waits for it.
   window.nativeBridge = new NativeBridge();
   window.nativeBridge.register(${JSON.stringify(componentNames)});
 })();

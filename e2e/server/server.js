@@ -108,8 +108,7 @@ const insetsBody = (nextHref, nextText) =>
   link(nextText, nextHref);
 
 const pages = {
-  // The first page of a fresh web view, so its probe connects before any script the
-  // native side could run on load.
+  // The first page a fresh web view loads, which is where the probe's answer matters.
   '/': () =>
     page(
       'Home page',
