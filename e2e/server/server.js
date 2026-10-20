@@ -59,7 +59,8 @@ app.register("probe", Probe);
 </script>`;
 
 // The document title differs from the heading, "Home title" for "Home page", so a flow can
-// tell the screen's title from the page's text.
+// tell the screen's title from the page's text. The body pads its bottom by the inset the
+// library hands the page, so the last links scroll clear of a tab bar floating over the view.
 // The flash of the request being rendered, set per request below.
 let currentFlash = '';
 
@@ -74,7 +75,7 @@ function page(title, body, head = '') {
 <title>${documentTitle}</title>
 <script src="/turbo.js"></script>
 ${head}
-<style>body { font-family: -apple-system, sans-serif; font-size: 20px; padding: 24px; } a, button { display: block; margin: 12px 0; font-size: 20px; }</style>
+<style>body { font-family: -apple-system, sans-serif; font-size: 20px; padding: 24px; padding-bottom: calc(24px + var(--hotwire-inset-bottom, 0px)); } a, button { display: inline-block; margin: 8px 16px 8px 0; font-size: 20px; white-space: nowrap; }</style>
 </head>
 <body>
 <h1>${title}</h1>

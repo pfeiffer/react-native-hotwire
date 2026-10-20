@@ -24,7 +24,8 @@ name: A visit redirected to another host pops the pushed screen and opens the UR
     when:
       platform: Android
     commands:
-      - back
+      # The custom tab's own close button: a back press can go to a sheet Chrome shows first.
+      - tapOn: "Close tab"
 - extendedWaitUntil:
     visible: "Home page"
     timeout: 10000
