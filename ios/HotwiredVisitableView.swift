@@ -170,6 +170,7 @@ final class HotwiredVisitableView: ExpoView {
     }
     controller.setInitialURL(target)
     let activeSession = createSessionIfNeeded()
+    activeSession.subscribe(self)
     // Apply props that were set before the web view existed.
     configureWebView()
     activeSession.visit(controller)

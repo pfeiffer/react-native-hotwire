@@ -133,9 +133,13 @@
     visitStarted(visit) {
       this.currentVisit = visit
       this.postMessage("visitStarted", { identifier: visit.identifier, hasCachedSnapshot: visit.hasCachedSnapshot(), isPageRefresh: visit.isPageRefresh || false })
+      // react-native-hotwire: the cached snapshot before the request, as Turbo's own
+      // BrowserAdapter orders them. A preloaded response (a redirected form submission, a
+      // followed redirect) is handled synchronously inside issueRequest, and the cached
+      // snapshot's render that followed cancelled its render, so the visit never completed.
+      this.loadCachedSnapshotForVisitWithIdentifier(visit.identifier)
       this.issueRequestForVisitWithIdentifier(visit.identifier)
       this.changeHistoryForVisitWithIdentifier(visit.identifier)
-      this.loadCachedSnapshotForVisitWithIdentifier(visit.identifier)
     }
 
     visitRequestStarted(visit) {
