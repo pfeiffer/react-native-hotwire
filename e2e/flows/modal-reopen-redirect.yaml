@@ -1,0 +1,49 @@
+appId: dev.hotwire.e2e
+name: A modal reopened onto the page its session already shows, through a redirect, fetches and renders the page again
+---
+- runScript: lib/reset.js
+# Two hops: the tab's page redirects to the modal page, which redirects on to the step page.
+# The modal's own visit then follows a redirect too and proposes with the response.
+- runScript:
+    file: lib/scenario.js
+    env:
+      SCENARIO: '{"resourcesRedirect":"/modal/verify","verifyRedirect":"/modal/verify/step"}'
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- tapOn:
+    id: "tab-resources"
+- extendedWaitUntil:
+    visible: "Verification step"
+    timeout: 10000
+- extendedWaitUntil:
+    visible: "Visits: 1"
+    timeout: 10000
+# Closing the modal reloads the tab's page, which redirects to the modal again. The session
+# already shows the step page; the reopened modal must still fetch and render it anew. A
+# stale page keeps the old count, a missed page shows nothing.
+- tapOn: "Close modal"
+- extendedWaitUntil:
+    visible: "Verification step"
+    timeout: 10000
+- extendedWaitUntil:
+    visible: "Visits: 2"
+    timeout: 10000
+- tapOn: "Close modal"
+- extendedWaitUntil:
+    visible: "Verification step"
+    timeout: 10000
+- extendedWaitUntil:
+    visible: "Visits: 3"
+    timeout: 10000
+- tapOn: "Close modal"
+- extendedWaitUntil:
+    visible: "Verification step"
+    timeout: 10000
+- extendedWaitUntil:
+    visible: "Visits: 4"
+    timeout: 10000
+- runScript: lib/counts.js
+- assertTrue: ${output.counts['/modal/verify/step'] == 4}

@@ -150,6 +150,9 @@ const pages = {
   '/page': () => page('Pushed page', visits('/page') + link('Open modal', '/modal/verify') + link('Go back', '/close')),
   '/modal/verify': () =>
     page('Verification modal', visits('/modal/verify') + link('Close modal', '/close') + link('Push page', '/page')),
+  // Where `/modal/verify` sends the visitor under `verifyRedirect`: a second hop, so a
+  // visit that follows the first lands on a response for another location.
+  '/modal/verify/step': () => page('Verification step', visits('/modal/verify/step') + link('Close modal', '/close')),
   '/form': () =>
     page(
       'Form page',
@@ -180,6 +183,7 @@ const pages = {
 const redirects = {
   '/': () => scenario.homeRedirect,
   '/resources': () => scenario.resourcesRedirect,
+  '/modal/verify': () => scenario.verifyRedirect,
   '/redirect/page': () => '/page',
   '/redirect/redirect': () => '/redirect/page',
   // A modal-context page that sends the visitor on to a default-context page.
