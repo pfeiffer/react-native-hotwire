@@ -1,6 +1,10 @@
 appId: dev.hotwire.e2e
-# Chrome on a fresh emulator greets the first page with sign-in and sync offers.
+# Chrome on a fresh emulator greets the first page with sign-in and sync offers. Its first
+# start is slow, so wait for either the offer or the page before the optional taps.
 ---
+- extendedWaitUntil:
+    visible: "Make Chrome your own|Elsewhere page"
+    timeout: 30000
 - tapOn:
     text: "Use without an account"
     optional: true
