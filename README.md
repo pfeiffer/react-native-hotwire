@@ -18,7 +18,7 @@ The package is not on npm. Install it from a git tag, using the latest one from 
 [releases](https://github.com/pfeiffer/react-native-hotwire/tags):
 
 ```sh
-yarn add react-native-hotwire@github:pfeiffer/react-native-hotwire#v0.1.6
+yarn add react-native-hotwire@github:pfeiffer/react-native-hotwire#v0.1.7
 npx expo prebuild
 ```
 
