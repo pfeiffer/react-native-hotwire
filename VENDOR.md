@@ -50,7 +50,11 @@ Modified files, each marked with a `react-native-hotwire:` comment:
   rendered; the visit is cancelled and the redirect location is proposed as a `replace` visit
   carrying the response, so a screen for it renders without a second request. Upstream renders
   first and lets Turbo's `followRedirect` propose afterwards, which leaves the redirected
-  page in the screen that asked for another one.
+  page in the screen that asked for another one. Also, `visitStarted` loads the cached
+  snapshot before it issues the request, as Turbo's own `BrowserAdapter` does. Upstream
+  issues the request first; a visit given a preloaded response handles it synchronously
+  there, and the cached snapshot's render that followed cancelled the response's render, so
+  a visit to a page with a cached snapshot never completed.
 
 Replaced by our own files in `ios/`:
 
@@ -85,7 +89,8 @@ Modified files, each marked with a `react-native-hotwire:` comment:
   `visitProposedToCrossOriginRedirect`; on the same host to the new
   `visitProposedToRedirectLocation`, so a destination can tell it from a page's own `replace`
   proposal. Upstream proposed both as plain `replace` visits, subframes included.
-- `assets/js/turbo.js`: the same redirected-visit change as the iOS adapter script.
+- `assets/js/turbo.js`: the same redirected-visit and `visitStarted` ordering changes as the
+  iOS adapter script.
 - `turbo/session/Session.kt`, `visitLocationAsColdBoot`: a cold boot given a response in its
   options renders it with `loadDataWithBaseURL` instead of fetching the URL, as the iOS
   `ColdBootVisit` does with `loadHTMLString`. Upstream always fetched, so a page opened in

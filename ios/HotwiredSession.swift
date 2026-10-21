@@ -106,8 +106,16 @@ final class HotwiredSession: NSObject {
     turboSession.visit(visitable, options: VisitOptions(action: .replace))
   }
 
-  func visitableViewWillAppear(_ view: HotwiredSessionSubscriber) {
+  /// The view the session's events go to: the one that most recently started a visit or
+  /// appeared. A visit starts when its view mounts, before the view appears, and a modal
+  /// presented while the previous one is still dismissing appears late; a proposal that
+  /// visit makes in the meantime must still reach the view.
+  func subscribe(_ view: HotwiredSessionSubscriber) {
     subscriber = view
+  }
+
+  func visitableViewWillAppear(_ view: HotwiredSessionSubscriber) {
+    subscribe(view)
   }
 
   func visit(_ visitable: Visitable) {
