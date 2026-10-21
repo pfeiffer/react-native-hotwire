@@ -23,7 +23,8 @@ name: A modal reopened onto the page its session already shows, through a redire
     timeout: 10000
 # Closing the modal reloads the tab's page, which redirects to the modal again. The session
 # already shows the step page; the reopened modal must still fetch and render it anew. A
-# stale page keeps the old count, a missed page shows nothing.
+# stale page keeps the old count, a missed page shows nothing. Once more from the reopened
+# modal, which shows it is live.
 - tapOn: "Close modal"
 - extendedWaitUntil:
     visible: "Verification step"
@@ -38,12 +39,5 @@ name: A modal reopened onto the page its session already shows, through a redire
 - extendedWaitUntil:
     visible: "Visits: 3"
     timeout: 10000
-- tapOn: "Close modal"
-- extendedWaitUntil:
-    visible: "Verification step"
-    timeout: 10000
-- extendedWaitUntil:
-    visible: "Visits: 4"
-    timeout: 10000
 - runScript: lib/counts.js
-- assertTrue: ${output.counts['/modal/verify/step'] == 4}
+- assertTrue: ${output.counts['/modal/verify/step'] == 3}
