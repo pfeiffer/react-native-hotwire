@@ -11,6 +11,7 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import dev.hotwire.core.config.Hotwire
@@ -348,8 +349,12 @@ class HotwiredVisitableView(context: Context, appContext: AppContext) : ExpoView
   }
 
   private fun captureScreenshot(then: () -> Unit = {}) {
-    val scope = lifecycleOwner?.lifecycleScope ?: return then()
-    scope.launch {
+    val owner = lifecycleOwner ?: return then()
+    // A screen whose fragment is gone, a dismissed modal say, can still hold the WebView.
+    // Its scope is cancelled with the fragment's view, so nothing launched there runs, and
+    // the WebView would stay with it while every later screen shows nothing.
+    if (owner.lifecycle.currentState == Lifecycle.State.DESTROYED) return then()
+    owner.lifecycleScope.launch {
       screenshotHolder.captureScreenshot(hotwiredView)
       screenshotHolder.showScreenshotIfAvailable(hotwiredView)
       then()

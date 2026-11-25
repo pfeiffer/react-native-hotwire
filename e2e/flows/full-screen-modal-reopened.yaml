@@ -1,0 +1,32 @@
+appId: dev.hotwire.e2e
+name: A full-screen modal opened again after it was closed from its second page renders
+---
+- runScript: lib/reset.js
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 60000
+- scrollUntilVisible:
+    element: "Open full-screen modal"
+- tapOn: "Open full-screen modal"
+- extendedWaitUntil:
+    visible: "Full-screen modal"
+    timeout: 10000
+- tapOn:
+    text: "Next step"
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: "Next step page"
+    timeout: 10000
+- back
+- back
+- extendedWaitUntil:
+    visible: "Home page"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Open full-screen modal"
+- tapOn: "Open full-screen modal"
+- extendedWaitUntil:
+    visible: "Full-screen modal"
+    timeout: 10000

@@ -130,7 +130,8 @@ const pages = {
         link('Redirect away', '/redirect/external') +
         link('Form page', '/form') +
         link('Replace page', '/js-replace') +
-        link('Open modal', '/modal/verify'),
+        link('Open modal', '/modal/verify') +
+        link('Open full-screen modal', '/full/verify'),
       bridgeHead
     ),
   '/bridge': () =>
@@ -149,6 +150,9 @@ const pages = {
   '/components': () => page('Components page', visits('/components')),
   '/resources': () => page('Resources page', visits('/resources') + link('Push page', '/page')),
   '/page': () => page('Pushed page', visits('/page') + link('Open modal', '/modal/verify') + link('Go back', '/close')),
+  '/full/verify': () =>
+    page('Full-screen modal', visits('/full/verify') + link('Next step', '/full-next') + link('Close modal', '/close')),
+  '/full-next': () => page('Next step page', visits('/full-next') + link('Close step', '/close')),
   '/modal/verify': () =>
     page('Verification modal', visits('/modal/verify') + link('Close modal', '/close') + link('Push page', '/page')),
   // Where `/modal/verify` sends the visitor under `verifyRedirect`: a second hop, so a

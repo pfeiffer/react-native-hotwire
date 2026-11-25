@@ -10,6 +10,10 @@
       "properties": { "context": "modal", "pull_to_refresh_enabled": false }
     },
     {
+      "patterns": ["^/full/"],
+      "properties": { "context": "modal", "screen": "FullModal", "pull_to_refresh_enabled": false }
+    },
+    {
       "patterns": ["^/close$"],
       "properties": { "presentation": "pop" }
     },
