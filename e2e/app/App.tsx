@@ -74,6 +74,19 @@ function tabStack(path: string) {
 const HomeTab = tabStack('/');
 const ResourcesTab = tabStack('/resources');
 
+// A modal that is a stack of its own, presented full screen over the tabs, as apps that
+// group a flow's pages in one modal do.
+const FullModalStack = tabStack('/full/verify');
+
+function TabsScreen() {
+  return (
+    <Tabs.Navigator screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="Home" component={HomeTab} options={{ tabBarButtonTestID: 'tab-home' }} />
+      <Tabs.Screen name="Resources" component={ResourcesTab} options={{ tabBarButtonTestID: 'tab-resources' }} />
+    </Tabs.Navigator>
+  );
+}
+
 const linking = hotwireLinking(serverUrl);
 
 export default function App() {
@@ -83,10 +96,10 @@ export default function App() {
       bridgeComponents={[EchoComponent, ButtonComponent, FailingComponent, ProbeComponent]}
       webViewDebuggingEnabled>
       <NavigationContainer linking={linking}>
-        <Tabs.Navigator screenOptions={{ headerShown: false }}>
-          <Tabs.Screen name="Home" component={HomeTab} options={{ tabBarButtonTestID: 'tab-home' }} />
-          <Tabs.Screen name="Resources" component={ResourcesTab} options={{ tabBarButtonTestID: 'tab-resources' }} />
-        </Tabs.Navigator>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Tabs" component={TabsScreen} />
+          <Stack.Screen name="FullModal" component={FullModalStack} options={{ presentation: 'fullScreenModal' }} />
+        </Stack.Navigator>
       </NavigationContainer>
     </HotwireProvider>
   );
